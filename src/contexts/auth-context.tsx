@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services';
+import { api } from '@/lib/api';
 import type { AdminAuth, LoginCredentials } from '@/types';
 
 interface AuthContextType {
@@ -26,8 +27,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const currentUser = await authService.getCurrentUser();
           setUser(currentUser);
+          // Update user role cookie
+          api.setUserRole(currentUser.role);
         } catch {
           await authService.logout();
+          api.setUserRole(null);
         }
       }
       setIsLoading(false);
@@ -42,6 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authService.login(credentials);
       const currentUser = await authService.getCurrentUser();
       setUser(currentUser);
+      // Set user role for middleware
+      api.setUserRole(currentUser.role);
       router.push('/dashboard/default');
     } catch (error) {
       setIsLoading(false);
@@ -52,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await authService.logout();
+    api.setUserRole(null);
     setUser(null);
     router.push('/auth/signin');
   };

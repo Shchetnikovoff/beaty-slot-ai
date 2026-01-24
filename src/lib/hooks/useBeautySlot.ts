@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { clientsService, subscriptionsService, paymentsService } from '@/services';
+import { clientsService, subscriptionsService, paymentsService, documentsService } from '@/services';
 import type {
   Client,
   ClientsListParams,
@@ -13,6 +13,9 @@ import type {
   Payment,
   PaymentsListParams,
   PaymentsListResponse,
+  Document,
+  DocumentsListParams,
+  DocumentsListResponse,
 } from '@/types';
 
 interface UseQueryResult<T> {
@@ -194,6 +197,59 @@ export function useDashboardStats(): UseQueryResult<{
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  return { data, loading, error, refetch: fetch };
+}
+
+// Hook for documents list
+export function useDocuments(params?: DocumentsListParams): UseQueryResult<DocumentsListResponse> {
+  const [data, setData] = useState<DocumentsListResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetch = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await documentsService.getList(params);
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch documents'));
+    } finally {
+      setLoading(false);
+    }
+  }, [params?.skip, params?.limit, params?.type, params?.status]);
+
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  return { data, loading, error, refetch: fetch };
+}
+
+// Hook for single document
+export function useDocument(id: number | null): UseQueryResult<Document> {
+  const [data, setData] = useState<Document | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetch = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await documentsService.getById(id);
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch document'));
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
     fetch();

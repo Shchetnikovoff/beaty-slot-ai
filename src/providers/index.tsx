@@ -1,6 +1,7 @@
 import React from 'react';
 import { ThemeCustomizerProvider } from '@/contexts/theme-customizer';
 import { SystemNotificationsProvider } from '@/contexts/system-notifications';
+import { AuthProvider } from '@/contexts/auth-context';
 import { ThemeProvider } from '@/providers/theme';
 import { DirectionProvider } from '@mantine/core';
 
@@ -9,7 +10,9 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
     <DirectionProvider>
       <SystemNotificationsProvider>
         <ThemeCustomizerProvider>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </ThemeProvider>
         </ThemeCustomizerProvider>
       </SystemNotificationsProvider>
     </DirectionProvider>

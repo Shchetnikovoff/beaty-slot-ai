@@ -24,3 +24,4 @@ export * from './subscription';
 export * from './payment';
 export * from './auth';
 export * from './salon';
+export * from './document';
