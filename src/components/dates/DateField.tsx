@@ -15,7 +15,7 @@ const DateField = ({ ...others }: DateFieldProps) => {
   const [value, setValue] = useState<Date | null>(null);
   return (
     // @ts-ignore
-    <DateInput label="Pick date" placeholder="Pick date" {...others} />
+    <DateInput label="Выберите дату" placeholder="Выберите дату" {...others} />
   );
 };
 

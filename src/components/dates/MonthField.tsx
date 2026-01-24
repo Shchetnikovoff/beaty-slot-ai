@@ -16,8 +16,8 @@ const MonthField = ({ ...others }: MonthFieldProps) => {
 
   return (
     <MonthPickerInput
-      label="Pick date"
-      placeholder="Pick date"
+      label="Выберите месяц"
+      placeholder="Выберите месяц"
       value={value}
       // @ts-ignore
       onChange={setValue}

@@ -16,8 +16,8 @@ const YearField = ({ ...others }: YearFieldProps) => {
 
   return (
     <YearPickerInput
-      label="Pick date"
-      placeholder="Pick date"
+      label="Выберите год"
+      placeholder="Выберите год"
       value={value}
       // @ts-ignore
       onChange={setValue}

@@ -10,8 +10,8 @@ type DateTimeFieldProps = DateTimePickerProps;
 const DateTimeField = ({ ...others }: DateTimeFieldProps) => {
   return (
     <DateTimePicker
-      label="Pick date and time"
-      placeholder="Pick date and time"
+      label="Выберите дату и время"
+      placeholder="Выберите дату и время"
       {...others}
     />
   );

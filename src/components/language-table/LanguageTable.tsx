@@ -43,9 +43,9 @@ const LanguageTable = ({
           verticalSpacing="sm"
           highlightOnHover
           columns={[
-            { accessor: 'code' },
-            { accessor: 'name' },
-            { accessor: 'native_name' },
+            { accessor: 'code', title: 'Код' },
+            { accessor: 'name', title: 'Название' },
+            { accessor: 'native_name', title: 'Оригинальное название' },
           ]}
           records={data}
           fetching={loading}

@@ -1,28 +1,28 @@
 {
   "data": [
     {
-      "title": "Sales Today",
+      "title": "Продажи сегодня",
       "icon": "receipt",
       "value": "13,456",
       "diff": 34,
-      "period": "today"
+      "period": "сегодня"
     },
     {
-      "title": "Visitors",
+      "title": "Посетители",
       "icon": "coin",
       "value": "4,145",
       "diff": -13,
-      "period": "annual"
+      "period": "за год"
     },
     {
-      "title": "Total Earnings",
+      "title": "Общий доход",
       "icon": "discount",
-      "value": "$ 74,5",
+      "value": "74,5 тыс. ₽",
       "diff": 18,
-      "period": "monthly"
+      "period": "за месяц"
     },
     {
-      "title": "Pending Orders",
+      "title": "Ожидающие заказы",
       "icon": "user",
       "value": "188",
       "diff": -30

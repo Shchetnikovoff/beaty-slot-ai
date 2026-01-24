@@ -26,11 +26,11 @@ const SalesChart = ({ ...others }: SalesChartProps) => {
   } = useFetch<IApiResponse<any[]>>('/api/sales');
 
   const data = [
-    { name: 'Category 1', value: 44, color: theme.colors[theme.primaryColor][9] },
-    { name: 'Category 2', value: 55, color: theme.colors[theme.primaryColor][5] },
-    { name: 'Category 3', value: 41, color: theme.colors[theme.primaryColor][3] },
-    { name: 'Category 4', value: 17, color: theme.colors[theme.primaryColor][2] },
-    { name: 'Category 5', value: 15, color: theme.colors[theme.primaryColor][1] },
+    { name: 'Категория 1', value: 44, color: theme.colors[theme.primaryColor][9] },
+    { name: 'Категория 2', value: 55, color: theme.colors[theme.primaryColor][5] },
+    { name: 'Категория 3', value: 41, color: theme.colors[theme.primaryColor][3] },
+    { name: 'Категория 4', value: 17, color: theme.colors[theme.primaryColor][2] },
+    { name: 'Категория 5', value: 15, color: theme.colors[theme.primaryColor][1] },
   ];
 
   return (
@@ -58,9 +58,9 @@ const SalesChart = ({ ...others }: SalesChartProps) => {
         <DataTable
           highlightOnHover
           columns={[
-            { accessor: 'source' },
-            { accessor: 'revenue' },
-            { accessor: 'value' },
+            { accessor: 'source', title: 'Источник' },
+            { accessor: 'revenue', title: 'Доход' },
+            { accessor: 'value', title: 'Значение' },
           ]}
           records={salesData?.data?.slice(0, 4) ?? []}
           height={200}

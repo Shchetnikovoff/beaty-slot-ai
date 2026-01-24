@@ -44,18 +44,19 @@ const TrafficTable = ({
           verticalSpacing="sm"
           highlightOnHover
           columns={[
-            { accessor: 'source' },
-            { accessor: 'visitors' },
-            { accessor: 'pageviews' },
+            { accessor: 'source', title: 'Источник' },
+            { accessor: 'visitors', title: 'Посетители' },
+            { accessor: 'pageviews', title: 'Просмотры' },
             {
               accessor: 'bounce_rate',
+              title: 'Отказы',
               render: ({ bounce_rate }) => <Text fz="sm">{bounce_rate}%</Text>,
             },
             {
               accessor: 'avg_session_duration',
               title: 'Ср. сессия (сек)',
               render: ({ avg_session_period }) => (
-                <Text fz="sm">{avg_session_period}s</Text>
+                <Text fz="sm">{avg_session_period} с</Text>
               ),
             },
           ]}

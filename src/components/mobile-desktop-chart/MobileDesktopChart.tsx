@@ -18,39 +18,39 @@ const MobileDesktopChart = ({ ...others }: MobileDesktopChartProps) => {
 
   const data = [
     {
-      month: 'Jan',
-      'Product A': 44,
-      'Product B': 13,
+      month: 'Янв',
+      'Тариф A': 44,
+      'Тариф B': 13,
     },
     {
-      month: 'Feb',
-      'Product A': 55,
-      'Product B': 23,
+      month: 'Фев',
+      'Тариф A': 55,
+      'Тариф B': 23,
     },
     {
-      month: 'Mar',
-      'Product A': 41,
-      'Product B': 20,
+      month: 'Мар',
+      'Тариф A': 41,
+      'Тариф B': 20,
     },
     {
-      month: 'Apr',
-      'Product A': 67,
-      'Product B': 8,
+      month: 'Апр',
+      'Тариф A': 67,
+      'Тариф B': 8,
     },
     {
-      month: 'May',
-      'Product A': 22,
-      'Product B': 13,
+      month: 'Май',
+      'Тариф A': 22,
+      'Тариф B': 13,
     },
     {
-      month: 'Jun',
-      'Product A': 43,
-      'Product B': 27,
+      month: 'Июн',
+      'Тариф A': 43,
+      'Тариф B': 27,
     },
     {
-      month: 'Jul',
-      'Product A': 34,
-      'Product B': 10,
+      month: 'Июл',
+      'Тариф A': 34,
+      'Тариф B': 10,
     },
   ];
 
@@ -70,8 +70,8 @@ const MobileDesktopChart = ({ ...others }: MobileDesktopChartProps) => {
         dataKey="month"
         type="stacked"
         series={[
-          { name: 'Product A', color: theme.colors[theme.primaryColor][8] },
-          { name: 'Product B', color: theme.colors[theme.primaryColor][2] },
+          { name: 'Тариф A', color: theme.colors[theme.primaryColor][8] },
+          { name: 'Тариф B', color: theme.colors[theme.primaryColor][2] },
         ]}
         withLegend
         legendProps={{ verticalAlign: 'bottom', height: 50 }}

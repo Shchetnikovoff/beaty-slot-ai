@@ -20,38 +20,38 @@ const RevenueChart = ({ ...others }: RevenueChartProps) => {
   const data = [
     {
       date: '00:00',
-      series1: 31,
-      series2: 11,
+      Услуги: 31,
+      Товары: 11,
     },
     {
       date: '01:30',
-      series1: 40,
-      series2: 32,
+      Услуги: 40,
+      Товары: 32,
     },
     {
       date: '02:30',
-      series1: 28,
-      series2: 45,
+      Услуги: 28,
+      Товары: 45,
     },
     {
       date: '03:30',
-      series1: 51,
-      series2: 32,
+      Услуги: 51,
+      Товары: 32,
     },
     {
       date: '04:30',
-      series1: 42,
-      series2: 34,
+      Услуги: 42,
+      Товары: 34,
     },
     {
       date: '05:30',
-      series1: 109,
-      series2: 52,
+      Услуги: 109,
+      Товары: 52,
     },
     {
       date: '06:30',
-      series1: 100,
-      series2: 41,
+      Услуги: 100,
+      Товары: 41,
     },
   ];
 
@@ -70,8 +70,8 @@ const RevenueChart = ({ ...others }: RevenueChartProps) => {
         data={data}
         dataKey="date"
         series={[
-          { name: 'series1', color: theme.colors[theme.primaryColor][5] },
-          { name: 'series2', color: theme.colors[theme.primaryColor][2] },
+          { name: 'Услуги', color: theme.colors[theme.primaryColor][5] },
+          { name: 'Товары', color: theme.colors[theme.primaryColor][2] },
         ]}
         curveType="natural"
         withLegend
