@@ -30,22 +30,22 @@ const FooterNav = () => {
           </Menu.Target>
 
           <Menu.Dropdown>
-            <Menu.Item>Support</Menu.Item>
-            <Menu.Item>Help Center</Menu.Item>
-            <Menu.Item>Privacy</Menu.Item>
-            <Menu.Item>Terms of Use</Menu.Item>
+            <Menu.Item>Поддержка</Menu.Item>
+            <Menu.Item>Справка</Menu.Item>
+            <Menu.Item>Конфиденциальность</Menu.Item>
+            <Menu.Item>Условия использования</Menu.Item>
           </Menu.Dropdown>
         </Menu>
       ) : (
         <Group gap={4}>
-          <Button {...BUTTON_PROPS}>Support</Button>
-          <Button {...BUTTON_PROPS}>Help Center</Button>
-          <Button {...BUTTON_PROPS}>Privacy</Button>
-          <Button {...BUTTON_PROPS}>Terms of Use</Button>
+          <Button {...BUTTON_PROPS}>Поддержка</Button>
+          <Button {...BUTTON_PROPS}>Справка</Button>
+          <Button {...BUTTON_PROPS}>Конфиденциальность</Button>
+          <Button {...BUTTON_PROPS}>Условия использования</Button>
         </Group>
       )}
       <Text component="a" href={PATH_GITHUB.org} target="_blank">
-        &copy;&nbsp;{new Date().getFullYear()}&nbsp;DesignSparx
+        &copy;&nbsp;{new Date().getFullYear()}&nbsp;Beauty Slot
       </Text>
     </Group>
   );
