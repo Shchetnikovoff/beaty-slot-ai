@@ -5,7 +5,7 @@ export * from './components';
 export * from './table';
 export * from './chart';
 
-// API Data Types
+// API Data Types (Mantine Dashboard)
 export * from './invoice';
 export * from './products';
 export * from './projects';
@@ -17,3 +17,10 @@ export * from './customer';
 export * from './email';
 export * from './notification';
 export * from './api-response';
+
+// Beauty Slot Types
+export * from './client';
+export * from './subscription';
+export * from './payment';
+export * from './auth';
+export * from './salon';
