@@ -43,9 +43,9 @@ import { PATH_DASHBOARD } from '@/routes';
 import classes from './page.module.css';
 
 const items = [
-  { title: 'Dashboard', href: PATH_DASHBOARD.default },
-  { title: 'Apps', href: '#' },
-  { title: 'Profile', href: '#' },
+  { title: 'Дашборд', href: PATH_DASHBOARD.default },
+  { title: 'Приложения', href: '#' },
+  { title: 'Профиль', href: '#' },
 ].map((item, index) => (
   <Anchor href={item.href} key={index}>
     {item.title}
@@ -82,22 +82,22 @@ function Profile() {
   return (
     <>
       <>
-        <title>Profile | DesignSparx</title>
+        <title>Профиль | Beauty Slot</title>
         <meta
           name="description"
-          content="Explore our versatile dashboard website template featuring a stunning array of themes and meticulously crafted components. Elevate your web project with seamless integration, customizable themes, and a rich variety of components for a dynamic user experience. Effortlessly bring your data to life with our intuitive dashboard template, designed to streamline development and captivate users. Discover endless possibilities in design and functionality today!"
+          content="Профиль администратора салона красоты Beauty Slot"
         />
       </>
       <Container fluid>
         <Stack gap="lg">
-          <PageHeader title="Profile" breadcrumbItems={items} />
+          <PageHeader title="Профиль" breadcrumbItems={items} />
           <Grid>
             <Grid.Col span={{ base: 12, md: 5, lg: 4 }}>
               <Stack>
                 <UserProfileCard data={UserData} {...PAPER_PROPS} />
                 <Surface {...PAPER_PROPS}>
                   <Text size="lg" fw={600} mb="md">
-                    Skills
+                    Навыки
                   </Text>
                   <Group gap="xs">
                     {skills.map((s) => (
@@ -110,15 +110,15 @@ function Profile() {
                 <Surface {...PAPER_PROPS}>
                   <Stack>
                     <Text size="lg" fw={600}>
-                      About
+                      О себе
                     </Text>
                     <Group>
                       <IconHome size={ICON_SIZE} />
-                      <Text>Lives in Nairobi, Kenya</Text>
+                      <Text>Москва, Россия</Text>
                     </Group>
                     <Group>
                       <IconMapPinFilled size={ICON_SIZE} />
-                      <Text>Works at Company ABC</Text>
+                      <Text>Работает в Beauty Slot</Text>
                     </Group>
                   </Stack>
                 </Surface>
@@ -129,7 +129,7 @@ function Profile() {
                     align={{ base: 'center', md: 'stretch' }}
                   >
                     <Text size="lg" fw={600}>
-                      Social
+                      Соц. сети
                     </Text>
                     <UnstyledButton
                       component="a"
@@ -185,7 +185,7 @@ function Profile() {
                 >
                   <ProfileStatsCard
                     amount={81314}
-                    title="total earnings"
+                    title="общий доход"
                     icon={IconCoins}
                     progressValue={45}
                     color="indigo.7"
@@ -194,7 +194,7 @@ function Profile() {
                   />
                   <ProfileStatsCard
                     amount={2532}
-                    title="today's orders"
+                    title="заказов сегодня"
                     icon={IconListCheck}
                     progressValue={72}
                     color="teal.7"
@@ -202,7 +202,7 @@ function Profile() {
                   />
                   <ProfileStatsCard
                     amount={97219}
-                    title="total revenue"
+                    title="общая выручка"
                     icon={IconBusinessplan}
                     progressValue={12}
                     color="lime.7"
@@ -213,7 +213,7 @@ function Profile() {
                 <Surface {...PAPER_PROPS}>
                   <Group justify="space-between" mb="md">
                     <Text size="lg" fw={600}>
-                      Projects
+                      Проекты
                     </Text>
                     <ActionIcon>
                       <IconDotsVertical size={ICON_SIZE} />

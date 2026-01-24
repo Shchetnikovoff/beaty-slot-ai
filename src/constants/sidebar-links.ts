@@ -55,7 +55,7 @@ export const SIDEBAR_LINKS = [
     title: 'Коммуникации',
     links: [
       { label: 'Уведомления', icon: IconBell, link: PATH_APPS.notifications },
-      { label: 'Рассылки', icon: IconSend, link: '/apps/broadcasts', badge: 'NEW' },
+      { label: 'Рассылки', icon: IconSend, link: '/apps/broadcasts', badge: 'НОВОЕ' },
     ],
   },
   {
@@ -63,14 +63,14 @@ export const SIDEBAR_LINKS = [
     links: [
       { label: 'Профиль', icon: IconUserCircle, link: PATH_APPS.profile },
       { label: 'Настройки', icon: IconSettings, link: PATH_APPS.settings },
-      { label: 'Документы', icon: IconFileText, link: '/apps/documents', badge: 'NEW' },
+      { label: 'Документы', icon: IconFileText, link: '/apps/documents', badge: 'НОВОЕ' },
     ],
   },
   {
-    title: 'Superadmin',
+    title: 'Суперадмин',
     links: [
-      { label: 'Салоны', icon: IconBuilding, link: '/apps/superadmin/salons', badge: 'SA' },
-      { label: 'Статистика', icon: IconChartPie, link: '/apps/superadmin/stats', badge: 'SA' },
+      { label: 'Салоны', icon: IconBuilding, link: '/apps/superadmin/salons', badge: 'СА' },
+      { label: 'Статистика', icon: IconChartPie, link: '/apps/superadmin/stats', badge: 'СА' },
     ],
   },
 ];

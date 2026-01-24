@@ -98,9 +98,9 @@ const HeaderNav = (props: HeaderNavProps) => {
   };
 
   const getSidebarToggleTooltip = () => {
-    if (mobile_match) return 'Toggle menu';
-    if (!sidebarVisible) return 'Show sidebar';
-    return 'Hide sidebar';
+    if (mobile_match) return 'Переключить меню';
+    if (!sidebarVisible) return 'Показать боковую панель';
+    return 'Скрыть боковую панель';
   };
 
   const messages = MESSAGES.map((m) => (
@@ -175,7 +175,7 @@ const HeaderNav = (props: HeaderNavProps) => {
 
       {/* Middle Section: Navigation & Search */}
       <Group gap={4} justify="center" style={{ flex: '1 1 auto' }}>
-        <Tooltip label="Go back">
+        <Tooltip label="Назад">
           <ActionIcon
             onClick={() => router.back()}
             variant={headerVariant === 'colored' ? 'transparent' : 'default'}
@@ -184,7 +184,7 @@ const HeaderNav = (props: HeaderNavProps) => {
             <IconArrowLeft size={ICON_SIZE} color={textColor} />
           </ActionIcon>
         </Tooltip>
-        <Tooltip label="Go forward">
+        <Tooltip label="Вперёд">
           <ActionIcon
             onClick={() => router.forward()}
             variant={headerVariant === 'colored' ? 'transparent' : 'default'}
@@ -196,7 +196,7 @@ const HeaderNav = (props: HeaderNavProps) => {
 
         {!mobile_match && (
           <TextInput
-            placeholder="search"
+            placeholder="поиск"
             rightSection={<IconSearch size={ICON_SIZE} />}
             ms="md"
             style={{
@@ -220,10 +220,10 @@ const HeaderNav = (props: HeaderNavProps) => {
         <Menu shadow="lg" width={320}>
           <Menu.Target>
             <Indicator processing size={10} offset={6}>
-              <Tooltip label="Messages">
+              <Tooltip label="Сообщения">
                 <ActionIcon
                   size="lg"
-                  title="Messages"
+                  title="Сообщения"
                   variant={
                     headerVariant === 'colored' ? 'transparent' : 'default'
                   }
@@ -235,21 +235,21 @@ const HeaderNav = (props: HeaderNavProps) => {
           </Menu.Target>
           <Menu.Dropdown>
             <Menu.Label tt="uppercase" ta="center" fw={600}>
-              {MESSAGES.length} new messages
+              {MESSAGES.length} новых сообщений
             </Menu.Label>
             {messages}
             <Menu.Item tt="uppercase" ta="center" fw={600}>
-              Show all messages
+              Показать все сообщения
             </Menu.Item>
           </Menu.Dropdown>
         </Menu>
         <Menu shadow="lg" width={320}>
           <Menu.Target>
             <Indicator processing size={10} offset={6}>
-              <Tooltip label="Notifications">
+              <Tooltip label="Уведомления">
                 <ActionIcon
                   size="lg"
-                  title="Notifications"
+                  title="Уведомления"
                   variant={
                     headerVariant === 'colored' ? 'transparent' : 'default'
                   }
@@ -261,17 +261,17 @@ const HeaderNav = (props: HeaderNavProps) => {
           </Menu.Target>
           <Menu.Dropdown>
             <Menu.Label tt="uppercase" ta="center" fw={600}>
-              {NOTIFICATIONS.length} new notifications
+              {NOTIFICATIONS.length} новых уведомлений
             </Menu.Label>
             {notifications}
             <Menu.Item tt="uppercase" ta="center" fw={600}>
-              Show all notifications
+              Показать все уведомления
             </Menu.Item>
           </Menu.Dropdown>
         </Menu>
         <Menu shadow="lg" width={280}>
           <Menu.Target>
-            <Tooltip label="Account">
+            <Tooltip label="Аккаунт">
               <ActionIcon
                 size="lg"
                 variant={
@@ -297,9 +297,9 @@ const HeaderNav = (props: HeaderNavProps) => {
               </Stack>
             </Menu.Label>
             <Menu.Divider />
-            <Menu.Item leftSection={<IconUser size={16} />}>Profile</Menu.Item>
+            <Menu.Item leftSection={<IconUser size={16} />}>Профиль</Menu.Item>
             <Menu.Item leftSection={<IconSettings size={16} />}>
-              Settings
+              Настройки
             </Menu.Item>
             <Menu.Divider />
             <Menu.Item
@@ -307,7 +307,7 @@ const HeaderNav = (props: HeaderNavProps) => {
               color="red"
               onClick={() => router.push('/')}
             >
-              Logout
+              Выход
             </Menu.Item>
           </Menu.Dropdown>
         </Menu>

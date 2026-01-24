@@ -25,9 +25,9 @@ import { useProfile } from '@/lib/hooks/useApi';
 import { PATH_DASHBOARD } from '@/routes';
 
 const items = [
-  { title: 'Dashboard', href: PATH_DASHBOARD.default },
-  { title: 'Apps', href: '#' },
-  { title: 'Settings', href: '#' },
+  { title: 'Дашборд', href: PATH_DASHBOARD.default },
+  { title: 'Приложения', href: '#' },
+  { title: 'Настройки', href: '#' },
 ].map((item, index) => (
   <Anchor href={item.href} key={index}>
     {item.title}
@@ -42,9 +42,9 @@ const PAPER_PROPS: PaperProps = {
 };
 
 const BIO =
-  'A dynamic software engineering graduate from Nairobi, Kenya with 5+ years of experience. Passionate about turning creative sparks into seamless applications through technological experimentation. Experienced in crafting intuitive solutions and translating innovative concepts into user-friendly applications. Thrives on transforming the way we experience technology, one line of code at a time.\n' +
+  'Администратор салона красоты с опытом работы в сфере управления и обслуживания клиентов. Отвечает за координацию работы персонала, ведение клиентской базы и контроль качества услуг.\n' +
   '\n' +
-  'Enthusiastic pioneer, constantly seeking the next big thing in tech. Eager to apply my passion and skills at Alternate Limited to bring ideas to life.';
+  'Стремится к постоянному улучшению сервиса и повышению удовлетворённости клиентов.';
 
 function Settings() {
   const [file, setFile] = useState<File | null>(null);
@@ -70,8 +70,8 @@ function Settings() {
     },
     validate: {
       email: (value) => {
-        if (!value) return 'Email is required';
-        return /^\S+@\S+$/.test(value) ? null : 'Invalid email';
+        if (!value) return 'Email обязателен';
+        return /^\S+@\S+$/.test(value) ? null : 'Некорректный email';
       },
     },
   });
@@ -96,14 +96,14 @@ function Settings() {
       // Note: In this mock template, profile data is read-only from JSON files
       // For a real implementation, you would send a PUT request here
       notifications.show({
-        title: 'Success',
-        message: 'Profile updated successfully',
+        title: 'Успешно',
+        message: 'Профиль успешно обновлён',
         color: 'green',
       });
     } catch (error) {
       notifications.show({
-        title: 'Error',
-        message: 'Failed to update profile',
+        title: 'Ошибка',
+        message: 'Не удалось обновить профиль',
         color: 'red',
       });
     }
@@ -112,35 +112,35 @@ function Settings() {
   return (
     <>
       <>
-        <title>Settings | DesignSparx</title>
+        <title>Настройки | Beauty Slot</title>
         <meta
           name="description"
-          content="Explore our versatile dashboard website template featuring a stunning array of themes and meticulously crafted components. Elevate your web project with seamless integration, customizable themes, and a rich variety of components for a dynamic user experience. Effortlessly bring your data to life with our intuitive dashboard template, designed to streamline development and captivate users. Discover endless possibilities in design and functionality today!"
+          content="Настройки профиля администратора салона красоты Beauty Slot"
         />
       </>
       <Container fluid>
         <Stack gap="lg">
-          <PageHeader title="Settings" breadcrumbItems={items} />
+          <PageHeader title="Настройки" breadcrumbItems={items} />
           <Grid>
             <Grid.Col span={{ base: 12, md: 8 }}>
               <Surface {...PAPER_PROPS}>
                 <Text size="lg" fw={600} mb="md">
-                  User information
+                  Информация о пользователе
                 </Text>
                 <Grid gutter={{ base: 5, xs: 'md', md: 'md', lg: 'lg' }}>
                   <Grid.Col span={{ base: 12, md: 6, lg: 9, xl: 9 }}>
                     <Stack>
                       <TextInput
-                        label="User Name"
-                        placeholder="user name"
+                        label="Имя пользователя"
+                        placeholder="имя пользователя"
                         {...accountForm.getInputProps('username')}
                       />
-                      <TextEditor content={BIO} label="Biography" />
+                      <TextEditor content={BIO} label="Биография" />
                       <Button
                         style={{ width: 'fit-content' }}
                         leftSection={<IconDeviceFloppy size={ICON_SIZE} />}
                       >
-                        Save Changes
+                        Сохранить изменения
                       </Button>
                     </Stack>
                   </Grid.Col>
@@ -166,13 +166,13 @@ function Settings() {
                             variant="subtle"
                             leftSection={<IconCloudUpload size={ICON_SIZE} />}
                           >
-                            Upload image
+                            Загрузить изображение
                           </Button>
                         )}
                       </FileButton>
                       <Text ta="center" size="xs" c="dimmed">
-                        For best results, use an image at least 128px by 128px
-                        in .jpg format
+                        Для лучшего результата используйте изображение не менее
+                        128x128 пикселей в формате .jpg
                       </Text>
                     </Stack>
                   </Grid.Col>
@@ -183,17 +183,17 @@ function Settings() {
               <Surface {...PAPER_PROPS}>
                 <Stack>
                   <Text size="lg" fw={600}>
-                    Account information
+                    Данные аккаунта
                   </Text>
                   <Group grow>
                     <TextInput
-                      label="First name"
-                      placeholder="first name"
+                      label="Имя"
+                      placeholder="имя"
                       {...accountInfoForm.getInputProps('firstname')}
                     />
                     <TextInput
-                      label="Last name"
-                      placeholder="last name"
+                      label="Фамилия"
+                      placeholder="фамилия"
                       {...accountInfoForm.getInputProps('lastname')}
                     />
                   </Group>
@@ -203,29 +203,29 @@ function Settings() {
                     {...accountInfoForm.getInputProps('email')}
                   />
                   <TextInput
-                    label="Address"
-                    placeholder="address"
+                    label="Адрес"
+                    placeholder="адрес"
                     {...accountInfoForm.getInputProps('address')}
                   />
                   <TextInput
-                    label="Apartment/Studio/Floor"
-                    placeholder="apartment, studio, or floor"
+                    label="Квартира/Офис/Этаж"
+                    placeholder="квартира, офис или этаж"
                     {...accountInfoForm.getInputProps('apartment')}
                   />
                   <Group grow>
                     <TextInput
-                      label="City"
-                      placeholder="city"
+                      label="Город"
+                      placeholder="город"
                       {...accountInfoForm.getInputProps('city')}
                     />
                     <TextInput
-                      label="State"
-                      placeholder="state"
+                      label="Регион"
+                      placeholder="регион"
                       {...accountInfoForm.getInputProps('state')}
                     />
                     <TextInput
-                      label="Zip"
-                      placeholder="zip"
+                      label="Индекс"
+                      placeholder="индекс"
                       {...accountInfoForm.getInputProps('zip')}
                     />
                   </Group>
@@ -235,7 +235,7 @@ function Settings() {
                       onClick={handleSaveAccountInfo}
                       loading={profileLoading}
                     >
-                      Save changes
+                      Сохранить изменения
                     </Button>
                   </Box>
                 </Stack>
