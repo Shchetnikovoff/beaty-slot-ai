@@ -34,20 +34,7 @@ export const SIDEBAR_LINKS = [
     links: [
       { label: 'Все клиенты', icon: IconUsers, link: PATH_APPS.customers },
       { label: 'Подписки', icon: IconCreditCard, link: PATH_APPS.orders },
-      {
-        label: 'Платежи',
-        icon: IconFileInvoice,
-        links: [
-          {
-            label: 'Список',
-            link: PATH_APPS.invoices.root,
-          },
-          {
-            label: 'Детали',
-            link: PATH_APPS.invoices.sample,
-          },
-        ],
-      },
+      { label: 'Платежи', icon: IconFileInvoice, link: PATH_APPS.invoices.root },
     ],
   },
   {
