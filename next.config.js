@@ -6,8 +6,12 @@ const nextConfig = {
   // Enable React Compiler (stable in Next.js 16)
   reactCompiler: true,
 
-  // Отключить индикатор разработки Next.js (красный кружок с "N")
-  devIndicators: false,
+  // Отключить все индикаторы разработки Next.js
+  devIndicators: {
+    appIsrStatus: false,
+    buildActivity: false,
+    buildActivityPosition: 'bottom-right',
+  },
 };
 
 module.exports = nextConfig;
