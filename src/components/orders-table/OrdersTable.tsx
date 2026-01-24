@@ -21,7 +21,7 @@ import {
 } from 'mantine-datatable';
 
 import { ErrorAlert } from '@/components';
-import type { OrderDto, OrderStatus, PaymentMethod } from '@/types';
+import type { OrderDto, OrderStatus, OrderPaymentMethod } from '@/types';
 
 type StatusBadgeProps = {
   status?: OrderStatus;
@@ -115,7 +115,7 @@ const OrdersTable = ({
     });
   };
 
-  const getPaymentMethodLabel = (method?: PaymentMethod): string => {
+  const getOrderPaymentMethodLabel = (method?: OrderPaymentMethod): string => {
     if (!method) return 'Н/Д';
     const methodMap: Record<number, string> = {
       1: 'Кредитная карта',
@@ -195,7 +195,7 @@ const OrdersTable = ({
       accessor: 'payment_method',
       title: 'Способ оплаты',
       sortable: true,
-      render: (item: OrderDto) => getPaymentMethodLabel(item.payment_method),
+      render: (item: OrderDto) => getOrderPaymentMethodLabel(item.payment_method),
     },
     {
       accessor: 'actions',

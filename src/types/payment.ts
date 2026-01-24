@@ -33,6 +33,7 @@ export interface PaymentCreate {
 }
 
 export interface PaymentsListParams {
+  [key: string]: string | number | boolean | undefined;
   skip?: number;
   limit?: number;
   client_id?: string;

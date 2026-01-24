@@ -71,6 +71,7 @@ export interface SubscriptionUpdate {
 }
 
 export interface SubscriptionsListParams {
+  [key: string]: string | number | boolean | undefined;
   skip?: number;
   limit?: number;
   client_id?: string;

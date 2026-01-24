@@ -1,12 +1,13 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 type RequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+type QueryParams = Record<string, string | number | boolean | undefined>;
 
 interface RequestOptions {
   method?: RequestMethod;
   body?: unknown;
   headers?: Record<string, string>;
-  params?: Record<string, string | number | boolean | undefined>;
+  params?: QueryParams;
 }
 
 interface ApiError {
@@ -104,8 +105,8 @@ class ApiClient {
     return response.json();
   }
 
-  async get<T>(endpoint: string, params?: Record<string, string | number | boolean | undefined>): Promise<T> {
-    return this.request<T>(endpoint, { method: 'GET', params });
+  async get<T, P extends QueryParams = QueryParams>(endpoint: string, params?: P): Promise<T> {
+    return this.request<T>(endpoint, { method: 'GET', params: params as QueryParams });
   }
 
   async post<T>(endpoint: string, body?: unknown): Promise<T> {

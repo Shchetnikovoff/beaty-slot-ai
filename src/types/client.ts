@@ -54,6 +54,7 @@ export interface ClientUpdate {
 }
 
 export interface ClientsListParams {
+  [key: string]: string | number | boolean | undefined;
   skip?: number;
   limit?: number;
   search?: string;

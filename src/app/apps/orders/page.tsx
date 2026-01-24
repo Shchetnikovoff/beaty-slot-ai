@@ -26,7 +26,7 @@ import {
   IconLayoutGrid,
   IconList,
   IconMoodEmpty,
-  IconPause,
+  IconPlayerPause,
   IconPlayerPlay,
   IconPlus,
   IconRefresh,
@@ -109,7 +109,7 @@ function SubscriptionCard({
             </Menu.Item>
             {subscription.status === 'ACTIVE' && (
               <Menu.Item
-                leftSection={<IconPause size={14} />}
+                leftSection={<IconPlayerPause size={14} />}
                 onClick={() => onPause(subscription)}
               >
                 Приостановить
@@ -274,7 +274,7 @@ function SubscriptionsTableView({
                         color="orange"
                         onClick={() => onPause(subscription)}
                       >
-                        <IconPause size={16} />
+                        <IconPlayerPause size={16} />
                       </ActionIcon>
                     )}
                     {subscription.status === 'PAUSED' && (
