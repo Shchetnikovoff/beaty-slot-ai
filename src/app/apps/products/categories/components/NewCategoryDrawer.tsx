@@ -33,7 +33,7 @@ export const NewCategoryDrawer = ({
       description: '',
     },
     validate: {
-      title: isNotEmpty('Category title cannot be empty'),
+      title: isNotEmpty('Название категории обязательно'),
     },
   });
 
@@ -56,12 +56,12 @@ export const NewCategoryDrawer = ({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create category');
+        throw new Error(data.error || 'Не удалось создать категорию');
       }
 
       notifications.show({
-        title: 'Success',
-        message: 'Category created successfully',
+        title: 'Успешно',
+        message: 'Категория успешно создана',
         color: 'green',
       });
 
@@ -76,9 +76,9 @@ export const NewCategoryDrawer = ({
       }
     } catch (error) {
       notifications.show({
-        title: 'Error',
+        title: 'Ошибка',
         message:
-          error instanceof Error ? error.message : 'Failed to create category',
+          error instanceof Error ? error.message : 'Не удалось создать категорию',
         color: 'red',
       });
     } finally {
@@ -87,25 +87,25 @@ export const NewCategoryDrawer = ({
   };
 
   return (
-    <Drawer {...drawerProps} title="Create a new product category">
+    <Drawer {...drawerProps} title="Создать категорию тарифов">
       <LoadingOverlay visible={loading} />
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack>
           <TextInput
-            label="Title"
-            placeholder="Category title"
+            label="Название"
+            placeholder="Название категории"
             key={form.key('title')}
             {...form.getInputProps('title')}
             required
           />
           <Textarea
-            label="Description"
-            placeholder="Category description"
+            label="Описание"
+            placeholder="Описание категории"
             key={form.key('description')}
             {...form.getInputProps('description')}
           />
           <Button type="submit" mt="md" loading={loading}>
-            Create Category
+            Создать категорию
           </Button>
         </Stack>
       </form>

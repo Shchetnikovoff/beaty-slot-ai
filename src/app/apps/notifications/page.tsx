@@ -35,9 +35,9 @@ import { NotificationItem } from './components/NotificationItem';
 type FilterType = 'all' | 'unread' | 'mentions' | 'comments' | 'updates';
 
 const items = [
-  { title: 'Dashboard', href: PATH_DASHBOARD.default },
-  { title: 'Apps', href: '#' },
-  { title: 'Notifications', href: '#' },
+  { title: 'Дашборд', href: PATH_DASHBOARD.default },
+  { title: 'Приложения', href: '#' },
+  { title: 'Уведомления', href: '#' },
 ].map((item, index) => (
   <Anchor href={item.href} key={index}>
     {item.title}
@@ -87,13 +87,13 @@ function Notifications() {
 
     let groupKey: string;
     if (date.toDateString() === today.toDateString()) {
-      groupKey = 'Today';
+      groupKey = 'Сегодня';
     } else if (date.toDateString() === yesterday.toDateString()) {
-      groupKey = 'Yesterday';
+      groupKey = 'Вчера';
     } else if (date > new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)) {
-      groupKey = 'This Week';
+      groupKey = 'На этой неделе';
     } else {
-      groupKey = 'Older';
+      groupKey = 'Ранее';
     }
 
     if (!groups[groupKey]) {
@@ -118,8 +118,8 @@ function Notifications() {
       return (
         <Box p="xl">
           <ErrorAlert
-            title="Error loading notifications"
-            message={notificationsError?.message || 'Failed to load notifications'}
+            title="Ошибка загрузки уведомлений"
+            message={notificationsError?.message || 'Не удалось загрузить уведомления'}
           />
         </Box>
       );
@@ -132,12 +132,12 @@ function Notifications() {
             <IconBellOff size={64} color="gray" opacity={0.3} />
             <div style={{ textAlign: 'center' }}>
               <Title order={4} c="dimmed">
-                No notifications
+                Нет уведомлений
               </Title>
               <Text size="sm" c="dimmed">
                 {filter === 'unread'
-                  ? "You're all caught up!"
-                  : 'Check back later for updates'}
+                  ? 'Всё прочитано!'
+                  : 'Загляните позже'}
               </Text>
             </div>
           </Stack>
@@ -169,20 +169,20 @@ function Notifications() {
 
   return (
     <>
-      <title>Notifications | DesignSparx</title>
-      <meta name="description" content="View and manage your notifications" />
+      <title>Уведомления | Beauty Slot</title>
+      <meta name="description" content="Просмотр и управление уведомлениями" />
 
       <PageHeader
-        title="Notifications"
+        title="Уведомления"
         breadcrumbItems={items}
         actionButton={
           <Group gap="sm">
-            <Tooltip label="Refresh">
+            <Tooltip label="Обновить">
               <ActionIcon variant="subtle" onClick={() => refetchNotifications()}>
                 <IconRefresh size={18} />
               </ActionIcon>
             </Tooltip>
-            <Tooltip label="Settings">
+            <Tooltip label="Настройки">
               <ActionIcon variant="subtle">
                 <IconSettings size={18} />
               </ActionIcon>
@@ -199,7 +199,7 @@ function Notifications() {
                 <Tabs.List>
                   <Tabs.Tab value="all">
                     <Group gap={6}>
-                      All
+                      Все
                       {notificationsData?.data && notificationsData?.data?.length > 0 && (
                         <Badge size="sm">
                           {notificationsData.data.length}
@@ -209,7 +209,7 @@ function Notifications() {
                   </Tabs.Tab>
                   <Tabs.Tab value="unread">
                     <Group gap={6}>
-                      Unread
+                      Непрочитанные
                       {unreadCount > 0 && (
                         <Badge size="sm">
                           {unreadCount}
@@ -217,20 +217,20 @@ function Notifications() {
                       )}
                     </Group>
                   </Tabs.Tab>
-                  <Tabs.Tab value="mentions">Mentions</Tabs.Tab>
-                  <Tabs.Tab value="comments">Comments</Tabs.Tab>
-                  <Tabs.Tab value="updates">Updates</Tabs.Tab>
+                  <Tabs.Tab value="mentions">Упоминания</Tabs.Tab>
+                  <Tabs.Tab value="comments">Комментарии</Tabs.Tab>
+                  <Tabs.Tab value="updates">Обновления</Tabs.Tab>
                 </Tabs.List>
 
                 {unreadCount > 0 && (
-                  <Tooltip label="Mark all as read">
+                  <Tooltip label="Прочитать все">
                     <Button
                       size="xs"
                       variant="light"
                       leftSection={<IconChecks size={14} />}
                       onClick={handleMarkAllAsRead}
                     >
-                      Mark all as read
+                      Прочитать все
                     </Button>
                   </Tooltip>
                 )}

@@ -7,10 +7,10 @@ import { InvoiceDetailsCard, PageHeader } from '@/components';
 import { PATH_DASHBOARD, PATH_INVOICES } from '@/routes';
 
 const items = [
-  { title: 'Dashboard', href: PATH_DASHBOARD.default },
-  { title: 'Apps', href: '#' },
-  { title: 'Invoices', href: PATH_INVOICES.invoices.all },
-  { title: 'Details', href: '#' },
+  { title: 'Дашборд', href: PATH_DASHBOARD.default },
+  { title: 'Приложения', href: '#' },
+  { title: 'Платежи', href: PATH_INVOICES.invoices.all },
+  { title: 'Детали', href: '#' },
 ].map((item, index) => (
   <Anchor href={item.href} key={index}>
     {item.title}
@@ -42,25 +42,25 @@ const PAPER_PROPS: PaperProps = {
 };
 
 const metadata: Metadata = {
-  title: 'Sample Invoice | DesignSparx',
+  title: 'Детали платежа | Beauty Slot',
   description:
-    'Explore our versatile dashboard website template featuring a stunning array of themes and meticulously crafted components. Elevate your web project with seamless integration, customizable themes, and a rich variety of components for a dynamic user experience. Effortlessly bring your data to life with our intuitive dashboard template, designed to streamline development and captivate users. Discover endless possibilities in design and functionality today!',
+    'Детали платежа в системе Beauty Slot',
 };
 
 function SampleInvoiceDetails() {
   return (
     <>
       <>
-        <title>Sample Invoice Details | DesignSparx</title>
+        <title>Детали платежа | Beauty Slot</title>
         <meta
           name="description"
-          content="Explore our versatile dashboard website template featuring a stunning array of themes and meticulously crafted components. Elevate your web project with seamless integration, customizable themes, and a rich variety of components for a dynamic user experience. Effortlessly bring your data to life with our intuitive dashboard template, designed to streamline development and captivate users. Discover endless possibilities in design and functionality today!"
+          content="Детали платежа в системе Beauty Slot"
         />
       </>
       <Container fluid>
         <Stack gap="lg">
           <PageHeader
-            title={`Invoice #${sampleData.id.slice(0, 7)}`}
+            title={`Платёж #${sampleData.id.slice(0, 7)}`}
             breadcrumbItems={items}
           />
           <InvoiceDetailsCard data={sampleData} {...PAPER_PROPS} />

@@ -58,11 +58,11 @@ export const EditProductDrawer = ({
       categoryId: '',
     },
     validate: {
-      title: isNotEmpty('Product title cannot be empty'),
-      description: isNotEmpty('Product description cannot be empty'),
-      price: isNotEmpty('Price cannot be empty'),
-      quantityInStock: isNotEmpty('Quantity in stock cannot be empty'),
-      categoryId: isNotEmpty('Category cannot be empty'),
+      title: isNotEmpty('Название тарифа обязательно'),
+      description: isNotEmpty('Описание тарифа обязательно'),
+      price: isNotEmpty('Цена обязательна'),
+      quantityInStock: isNotEmpty('Количество обязательно'),
+      categoryId: isNotEmpty('Категория обязательна'),
     },
   });
 
@@ -142,13 +142,13 @@ export const EditProductDrawer = ({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to update product');
+        throw new Error(data.error || 'Не удалось обновить тариф');
       }
 
       // Show success notification
       notifications.show({
-        title: 'Success',
-        message: 'Product updated successfully',
+        title: 'Успешно',
+        message: 'Тариф успешно обновлён',
         color: 'green',
       });
 
@@ -164,9 +164,9 @@ export const EditProductDrawer = ({
     } catch (error) {
       // Show error notification
       notifications.show({
-        title: 'Error',
+        title: 'Ошибка',
         message:
-          error instanceof Error ? error.message : 'Failed to update product',
+          error instanceof Error ? error.message : 'Не удалось обновить тариф',
         color: 'red',
       });
     } finally {
@@ -177,7 +177,7 @@ export const EditProductDrawer = ({
   const handleDelete = async () => {
     if (!product || !isCreator) return;
 
-    if (!window.confirm('Are you sure you want to delete this product?')) {
+    if (!window.confirm('Вы уверены, что хотите удалить этот тариф?')) {
       return;
     }
 
@@ -192,13 +192,13 @@ export const EditProductDrawer = ({
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to delete product');
+        throw new Error(data.error || 'Не удалось удалить тариф');
       }
 
       // Show success notification
       notifications.show({
-        title: 'Success',
-        message: 'Product deleted successfully',
+        title: 'Успешно',
+        message: 'Тариф успешно удалён',
         color: 'green',
       });
 
@@ -214,9 +214,9 @@ export const EditProductDrawer = ({
     } catch (error) {
       // Show error notification
       notifications.show({
-        title: 'Error',
+        title: 'Ошибка',
         message:
-          error instanceof Error ? error.message : 'Failed to delete product',
+          error instanceof Error ? error.message : 'Не удалось удалить тариф',
         color: 'red',
       });
     } finally {
@@ -225,71 +225,71 @@ export const EditProductDrawer = ({
   };
 
   return (
-    <Drawer {...drawerProps} title="Edit product">
+    <Drawer {...drawerProps} title="Редактировать тариф">
       <LoadingOverlay visible={loading} />
       {!isCreator && (
         <Text color="red" mb="md">
-          You can only edit products that you created.
+          Вы можете редактировать только созданные вами тарифы.
         </Text>
       )}
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack>
           <TextInput
-            label="Title"
-            placeholder="title"
+            label="Название"
+            placeholder="название тарифа"
             key={form.key('title')}
             {...form.getInputProps('title')}
             required
             disabled={!isCreator}
           />
           <Textarea
-            label="Description"
-            placeholder="description"
+            label="Описание"
+            placeholder="описание тарифа"
             key={form.key('description')}
             {...form.getInputProps('description')}
             required
             disabled={!isCreator}
           />
           <NumberInput
-            label="Price"
-            placeholder="price"
+            label="Цена"
+            placeholder="цена"
             {...form.getInputProps('price')}
             required
             disabled={!isCreator}
           />
           <NumberInput
-            label="Quantity in stock"
-            placeholder="quantity in stock"
+            label="Количество"
+            placeholder="количество"
             {...form.getInputProps('quantityInStock')}
             required
             disabled={!isCreator}
           />
           <TextInput
-            label="SKU"
-            placeholder="Stock Keeping Unit"
+            label="Артикул"
+            placeholder="артикул"
             {...form.getInputProps('sku')}
             disabled={!isCreator}
           />
           <Select
-            label="Category"
-            placeholder="Select category"
+            label="Категория"
+            placeholder="Выберите категорию"
             data={categories}
             disabled={categoriesLoading || !isCreator}
             {...form.getInputProps('categoryId')}
             required
           />
           <Switch
-            label="Active"
+            label="Активный"
             {...form.getInputProps('isActive', { type: 'checkbox' })}
             disabled={!isCreator}
           />
 
           <Group justify="space-between" mt="xl">
             <Button color="red" onClick={handleDelete} disabled={!isCreator}>
-              Delete Product
+              Удалить тариф
             </Button>
             <Button type="submit" disabled={!isCreator}>
-              Update Product
+              Обновить тариф
             </Button>
           </Group>
         </Stack>

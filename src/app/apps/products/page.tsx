@@ -25,9 +25,9 @@ import { IApiResponse } from '@/types/api-response';
 import { IProduct } from '@/types/products';
 
 const items = [
-  { title: 'Dashboard', href: PATH_DASHBOARD.default },
-  { title: 'Apps', href: '#' },
-  { title: 'Products', href: '#' },
+  { title: 'Дашборд', href: PATH_DASHBOARD.default },
+  { title: 'Приложения', href: '#' },
+  { title: 'Тарифы', href: '#' },
 ].map((item, index) => (
   <Anchor href={item.href} key={index}>
     {item.title}
@@ -100,7 +100,7 @@ function Products() {
     if (productsError || !productsData?.succeeded) {
       return (
         <ErrorAlert
-          title="Error loading products"
+          title="Ошибка загрузки тарифов"
           message={productsData?.errors?.join(',')}
         />
       );
@@ -111,15 +111,15 @@ function Products() {
         <Surface p="md">
           <Stack align="center">
             <IconMoodEmpty size={24} />
-            <Title order={4}>No products found</Title>
+            <Title order={4}>Тарифы не найдены</Title>
             <Text>
-              You don&apos;t have any products yet. Create one to get started.
+              У вас пока нет тарифов. Создайте первый.
             </Text>
             <Button
               leftSection={<IconPlus size={18} />}
               onClick={newProductOpen}
             >
-              New Product
+              Новый тариф
             </Button>
           </Stack>
         </Surface>
@@ -140,14 +140,14 @@ function Products() {
   return (
     <>
       <>
-        <title>Products | DesignSparx</title>
+        <title>Тарифы | Beauty Slot</title>
         <meta
           name="description"
-          content="Explore our versatile dashboard website template featuring a stunning array of themes and meticulously crafted components."
+          content="Управление тарифами салона красоты Beauty Slot"
         />
       </>
       <PageHeader
-        title="Products"
+        title="Тарифы"
         breadcrumbItems={items}
         actionButton={
           productsData?.data?.length && (
@@ -155,7 +155,7 @@ function Products() {
               leftSection={<IconPlus size={18} />}
               onClick={newProductOpen}
             >
-              New Product
+              Новый тариф
             </Button>
           )
         }

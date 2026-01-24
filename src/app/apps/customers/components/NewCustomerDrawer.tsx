@@ -49,14 +49,14 @@ export const NewCustomerDrawer = ({
       street: '',
       city: '',
       state: '',
-      country: 'USA',
+      country: 'Россия',
       zipCode: '',
       status: 1, // Active
     },
     validate: {
-      name: isNotEmpty('Name cannot be empty'),
-      email: isEmail('Invalid email'),
-      phone: isNotEmpty('Phone cannot be empty'),
+      name: isNotEmpty('Имя обязательно'),
+      email: isEmail('Некорректный email'),
+      phone: isNotEmpty('Телефон обязателен'),
     },
   });
 
@@ -66,8 +66,8 @@ export const NewCustomerDrawer = ({
       // Note: In this mock template, customers are read-only from JSON files
       // For a real implementation, you would send a POST request here
       notifications.show({
-        title: 'Mock Data System',
-        message: 'This template uses mock data. Customer creation is simulated.',
+        title: 'Демо-режим',
+        message: 'Это демо-версия. Создание клиента симулируется.',
         color: 'blue',
       });
 
@@ -82,9 +82,9 @@ export const NewCustomerDrawer = ({
       }
     } catch (error) {
       notifications.show({
-        title: 'Error',
+        title: 'Ошибка',
         message:
-          error instanceof Error ? error.message : 'Failed to create customer',
+          error instanceof Error ? error.message : 'Не удалось создать клиента',
         color: 'red',
       });
     } finally {
@@ -93,67 +93,67 @@ export const NewCustomerDrawer = ({
   };
 
   const statusOptions = [
-    { value: '1', label: 'Active' },
-    { value: '2', label: 'Inactive' },
-    { value: '3', label: 'Blocked' },
+    { value: '1', label: 'Активный' },
+    { value: '2', label: 'Неактивный' },
+    { value: '3', label: 'Заблокирован' },
   ];
 
   return (
-    <Drawer {...drawerProps} title="Create a new customer" size="lg">
+    <Drawer {...drawerProps} title="Создать клиента" size="lg">
       <LoadingOverlay visible={loading} />
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack>
-          <Title order={4}>Customer Information</Title>
+          <Title order={4}>Информация о клиенте</Title>
           <TextInput
-            label="Name"
-            placeholder="Enter customer name"
+            label="Имя"
+            placeholder="Введите имя клиента"
             key={form.key('name')}
             {...form.getInputProps('name')}
             required
           />
           <TextInput
             label="Email"
-            placeholder="customer@email.com"
+            placeholder="client@email.com"
             key={form.key('email')}
             {...form.getInputProps('email')}
             required
           />
           <TextInput
-            label="Phone"
-            placeholder="+1 (555) 000-0000"
+            label="Телефон"
+            placeholder="+7 (999) 000-0000"
             key={form.key('phone')}
             {...form.getInputProps('phone')}
             required
           />
           <TextInput
-            label="Company"
-            placeholder="Enter company name (optional)"
+            label="Компания"
+            placeholder="Название компании (необязательно)"
             key={form.key('company')}
             {...form.getInputProps('company')}
           />
 
           <Title order={4} mt="md">
-            Address
+            Адрес
           </Title>
           <TextInput
-            label="Street"
-            placeholder="123 Main St"
+            label="Улица"
+            placeholder="ул. Примерная, д. 1"
             key={form.key('street')}
             {...form.getInputProps('street')}
           />
           <Grid>
             <Grid.Col span={6}>
               <TextInput
-                label="City"
-                placeholder="City"
+                label="Город"
+                placeholder="Город"
                 key={form.key('city')}
                 {...form.getInputProps('city')}
               />
             </Grid.Col>
             <Grid.Col span={6}>
               <TextInput
-                label="State"
-                placeholder="State"
+                label="Регион"
+                placeholder="Регион"
                 key={form.key('state')}
                 {...form.getInputProps('state')}
               />
@@ -162,16 +162,16 @@ export const NewCustomerDrawer = ({
           <Grid>
             <Grid.Col span={6}>
               <TextInput
-                label="Country"
-                placeholder="Country"
+                label="Страна"
+                placeholder="Страна"
                 key={form.key('country')}
                 {...form.getInputProps('country')}
               />
             </Grid.Col>
             <Grid.Col span={6}>
               <TextInput
-                label="Zip Code"
-                placeholder="00000"
+                label="Индекс"
+                placeholder="000000"
                 key={form.key('zipCode')}
                 {...form.getInputProps('zipCode')}
               />
@@ -179,7 +179,7 @@ export const NewCustomerDrawer = ({
           </Grid>
 
           <Select
-            label="Status"
+            label="Статус"
             data={statusOptions}
             key={form.key('status')}
             {...form.getInputProps('status')}
@@ -187,7 +187,7 @@ export const NewCustomerDrawer = ({
           />
 
           <Button type="submit" mt="md" loading={loading}>
-            Create Customer
+            Создать клиента
           </Button>
         </Stack>
       </form>

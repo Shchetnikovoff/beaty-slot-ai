@@ -81,11 +81,11 @@ export const NewProductDrawer = ({
       categoryId: '',
     },
     validate: {
-      title: isNotEmpty('Product title cannot be empty'),
-      description: isNotEmpty('Product description cannot be empty'),
-      price: isNotEmpty('Price cannot be empty'),
-      quantityInStock: isNotEmpty('Quantity in stock cannot be empty'),
-      categoryId: isNotEmpty('Category cannot be empty'),
+      title: isNotEmpty('Название тарифа обязательно'),
+      description: isNotEmpty('Описание тарифа обязательно'),
+      price: isNotEmpty('Цена обязательна'),
+      quantityInStock: isNotEmpty('Количество обязательно'),
+      categoryId: isNotEmpty('Категория обязательна'),
     },
   });
 
@@ -108,13 +108,13 @@ export const NewProductDrawer = ({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create product');
+        throw new Error(data.error || 'Не удалось создать тариф');
       }
 
       // Show success notification
       notifications.show({
-        title: 'Success',
-        message: 'Product created successfully',
+        title: 'Успешно',
+        message: 'Тариф успешно создан',
         color: 'green',
       });
 
@@ -133,9 +133,9 @@ export const NewProductDrawer = ({
     } catch (error) {
       // Show error notification
       notifications.show({
-        title: 'Error',
+        title: 'Ошибка',
         message:
-          error instanceof Error ? error.message : 'Failed to create product',
+          error instanceof Error ? error.message : 'Не удалось создать тариф',
         color: 'red',
       });
     } finally {
@@ -144,51 +144,51 @@ export const NewProductDrawer = ({
   };
 
   return (
-    <Drawer {...drawerProps} title="Create a new product">
+    <Drawer {...drawerProps} title="Создать новый тариф">
       <LoadingOverlay visible={loading} />
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack>
           <TextInput
-            label="Title"
-            placeholder="title"
+            label="Название"
+            placeholder="название тарифа"
             key={form.key('title')}
             {...form.getInputProps('title')}
             required
           />
           <Textarea
-            label="Description"
-            placeholder="description"
+            label="Описание"
+            placeholder="описание тарифа"
             key={form.key('description')}
             {...form.getInputProps('description')}
             required
           />
           <NumberInput
-            label="Price"
-            placeholder="price"
+            label="Цена"
+            placeholder="цена"
             {...form.getInputProps('price')}
             required
           />
           <NumberInput
-            label="Quantity in stock"
-            placeholder="quantity in stock"
+            label="Количество"
+            placeholder="количество"
             {...form.getInputProps('quantityInStock')}
             required
           />
           <TextInput
-            label="SKU"
-            placeholder="Stock Keeping Unit"
+            label="Артикул"
+            placeholder="артикул"
             {...form.getInputProps('sku')}
           />
           <Select
-            label="Category"
-            placeholder="Select category"
+            label="Категория"
+            placeholder="Выберите категорию"
             data={categories}
             disabled={categoriesLoading}
             {...form.getInputProps('categoryId')}
             required
           />
           <Button type="submit" mt="md" loading={loading}>
-            Create Product
+            Создать тариф
           </Button>
         </Stack>
       </form>

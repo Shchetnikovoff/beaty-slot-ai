@@ -41,7 +41,7 @@ export const EditCategoryDrawer = ({
       description: '',
     },
     validate: {
-      title: isNotEmpty('Category title cannot be empty'),
+      title: isNotEmpty('Название категории обязательно'),
     },
   });
 
@@ -69,12 +69,12 @@ export const EditCategoryDrawer = ({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create category');
+        throw new Error(data.error || 'Не удалось обновить категорию');
       }
 
       notifications.show({
-        title: 'Success',
-        message: 'Category created successfully',
+        title: 'Успешно',
+        message: 'Категория успешно обновлена',
         color: 'green',
       });
 
@@ -89,9 +89,9 @@ export const EditCategoryDrawer = ({
       }
     } catch (error) {
       notifications.show({
-        title: 'Error',
+        title: 'Ошибка',
         message:
-          error instanceof Error ? error.message : 'Failed to create category',
+          error instanceof Error ? error.message : 'Не удалось обновить категорию',
         color: 'red',
       });
     } finally {
@@ -103,7 +103,7 @@ export const EditCategoryDrawer = ({
     if (!productCategory || !isCreator) return;
 
     if (
-      !window.confirm('Are you sure you want to delete this product category?')
+      !window.confirm('Вы уверены, что хотите удалить эту категорию?')
     ) {
       return;
     }
@@ -122,13 +122,13 @@ export const EditCategoryDrawer = ({
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to delete product category');
+        throw new Error(data.error || 'Не удалось удалить категорию');
       }
 
       // Show success notification
       notifications.show({
-        title: 'Success',
-        message: 'Product deleted successfully',
+        title: 'Успешно',
+        message: 'Категория успешно удалена',
         color: 'green',
       });
 
@@ -144,9 +144,9 @@ export const EditCategoryDrawer = ({
     } catch (error) {
       // Show error notification
       notifications.show({
-        title: 'Error',
+        title: 'Ошибка',
         message:
-          error instanceof Error ? error.message : 'Failed to delete product',
+          error instanceof Error ? error.message : 'Не удалось удалить категорию',
         color: 'red',
       });
     } finally {
@@ -168,29 +168,29 @@ export const EditCategoryDrawer = ({
   }, [productCategory]);
 
   return (
-    <Drawer {...drawerProps} title="Edit product category">
+    <Drawer {...drawerProps} title="Редактировать категорию">
       <LoadingOverlay visible={loading} />
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <Stack>
           <TextInput
-            label="Title"
-            placeholder="Category title"
+            label="Название"
+            placeholder="Название категории"
             key={form.key('title')}
             {...form.getInputProps('title')}
             required
           />
           <Textarea
-            label="Description"
-            placeholder="Category description"
+            label="Описание"
+            placeholder="Описание категории"
             key={form.key('description')}
             {...form.getInputProps('description')}
           />
           <Group justify="space-between" mt="xl">
             <Button color="red" onClick={handleDelete} disabled={!isCreator}>
-              Delete Product
+              Удалить категорию
             </Button>
             <Button type="submit" disabled={!isCreator}>
-              Update Product
+              Обновить категорию
             </Button>
           </Group>
         </Stack>

@@ -15,9 +15,9 @@ import { INITIAL_EVENTS, createEventId } from '@/utils';
 import './page.css';
 
 const items = [
-  { title: 'Dashboard', href: PATH_DASHBOARD.default },
-  { title: 'Apps', href: '#' },
-  { title: 'Calendar', href: '#' },
+  { title: 'Дашборд', href: PATH_DASHBOARD.default },
+  { title: 'Приложения', href: '#' },
+  { title: 'Календарь', href: '#' },
 ].map((item, index) => (
   <Anchor href={item.href} key={index}>
     {item.title}
@@ -57,7 +57,7 @@ function Calendar() {
   };
 
   const handleDateSelect = (selectInfo: any) => {
-    let title = prompt('Please enter a new title for your event');
+    let title = prompt('Введите название события');
     let calendarApi = selectInfo.view.calendar;
 
     calendarApi.unselect(); // clear date selection
@@ -76,7 +76,7 @@ function Calendar() {
   const handleEventClick = (clickInfo: any) => {
     if (
       confirm(
-        `Are you sure you want to delete the event '${clickInfo.event.title}'`,
+        `Вы уверены, что хотите удалить событие '${clickInfo.event.title}'?`,
       )
     ) {
       clickInfo.event.remove();
@@ -91,11 +91,11 @@ function Calendar() {
     return (
       <div className="demo-app-sidebar">
         <div className="demo-app-sidebar-section">
-          <h2>Instructions</h2>
+          <h2>Инструкции</h2>
           <ul>
-            <li>Select dates and you will be prompted to create a new event</li>
-            <li>Drag, drop, and resize events</li>
-            <li>Click an event to delete it</li>
+            <li>Выберите даты для создания нового события</li>
+            <li>Перетаскивайте и изменяйте размер событий</li>
+            <li>Нажмите на событие, чтобы удалить</li>
           </ul>
         </div>
         <div className="demo-app-sidebar-section">
@@ -105,11 +105,11 @@ function Calendar() {
               checked={weekendsVisible}
               onChange={handleWeekendsToggle}
             ></input>
-            toggle weekends
+            показать выходные
           </label>
         </div>
         <div className="demo-app-sidebar-section">
-          <h2>All Events ({currentEvents.length})</h2>
+          <h2>Все события ({currentEvents.length})</h2>
           <ul>{currentEvents.map(renderSidebarEvent)}</ul>
         </div>
       </div>
@@ -119,15 +119,15 @@ function Calendar() {
   return (
     <>
       <>
-        <title>CalendarView | DesignSparx</title>
+        <title>Календарь | Beauty Slot</title>
         <meta
           name="description"
-          content="Explore our versatile dashboard website template featuring a stunning array of themes and meticulously crafted components. Elevate your web project with seamless integration, customizable themes, and a rich variety of components for a dynamic user experience. Effortlessly bring your data to life with our intuitive dashboard template, designed to streamline development and captivate users. Discover endless possibilities in design and functionality today!"
+          content="Календарь записей салона красоты Beauty Slot"
         />
       </>
       <Container fluid>
         <Stack gap="lg">
-          <PageHeader title="CalendarView" breadcrumbItems={items} />
+          <PageHeader title="Календарь" breadcrumbItems={items} />
           <Surface p="md">
             <FullCalendar
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}

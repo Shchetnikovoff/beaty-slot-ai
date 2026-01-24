@@ -25,10 +25,10 @@ import { CategoryCard } from './components/CategoryCard';
 import EditCategoryDrawer from './components/EditCategoryDrawer';
 
 const items = [
-  { title: 'Dashboard', href: PATH_DASHBOARD.default },
-  { title: 'Apps', href: '#' },
-  { title: 'Products', href: '#' },
-  { title: 'Categories', href: '#' },
+  { title: 'Дашборд', href: PATH_DASHBOARD.default },
+  { title: 'Приложения', href: '#' },
+  { title: 'Тарифы', href: '#' },
+  { title: 'Категории', href: '#' },
 ].map((item, index) => (
   <Anchor href={item.href} key={index}>
     {item.title}
@@ -105,7 +105,7 @@ function Categories() {
     if (categoriesError || !categoriesData?.succeeded) {
       return (
         <ErrorAlert
-          title="Error loading categories"
+          title="Ошибка загрузки категорий"
           message={categoriesData?.errors?.join(',')}
         />
       );
@@ -116,17 +116,16 @@ function Categories() {
         <Surface p="md">
           <Stack align="center">
             <IconMoodEmpty size={24} />
-            <Title order={4}>No categories found</Title>
+            <Title order={4}>Категории не найдены</Title>
             <Text>
-              You don&apos;t have any product categories yet. Create one to get
-              started.
+              У вас пока нет категорий. Создайте первую.
             </Text>
             {canAddCategory && (
               <Button
                 leftSection={<IconPlus size={18} />}
                 onClick={newCategoryOpen}
               >
-                New Category
+                Новая категория
               </Button>
             )}
           </Stack>
@@ -148,14 +147,14 @@ function Categories() {
   return (
     <>
       <>
-        <title>Product Categories | DesignSparx</title>
+        <title>Категории тарифов | Beauty Slot</title>
         <meta
           name="description"
-          content="Manage product categories in your dashboard"
+          content="Управление категориями тарифов салона красоты Beauty Slot"
         />
       </>
       <PageHeader
-        title="Product Categories"
+        title="Категории тарифов"
         breadcrumbItems={items}
         actionButton={
           canAddCategory &&
@@ -164,7 +163,7 @@ function Categories() {
               leftSection={<IconPlus size={18} />}
               onClick={newCategoryOpen}
             >
-              New Category
+              Новая категория
             </Button>
           )
         }
