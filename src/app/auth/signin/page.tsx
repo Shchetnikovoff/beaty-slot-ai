@@ -5,7 +5,6 @@ import { useState } from 'react';
 import {
   Alert,
   Button,
-  Center,
   Checkbox,
   Group,
   Paper,
@@ -14,14 +13,15 @@ import {
   TextInput,
   TextProps,
   Title,
+  Stack,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { notifications } from '@mantine/notifications';
-import { IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle, IconScissors } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { Surface } from '@/components';
+import { authService } from '@/services';
 import { PATH_AUTH, PATH_DASHBOARD } from '@/routes';
 
 import classes from './page.module.css';
@@ -38,13 +38,13 @@ function Page() {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm({
-    initialValues: { email: 'demo@example.com', password: 'demo123' },
+    initialValues: { username: '', password: '' },
     validate: {
-      email: (value: string) =>
-        /^\S+@\S+$/.test(value) ? null : 'Некорректный email',
+      username: (value: string) =>
+        value.length < 3 ? 'Логин должен содержать минимум 3 символа' : null,
       password: (value: string | undefined) =>
-        value && value?.length < 6
-          ? 'Пароль должен содержать минимум 6 символов'
+        value && value?.length < 4
+          ? 'Пароль должен содержать минимум 4 символа'
           : null,
     },
   });
@@ -54,18 +54,25 @@ function Page() {
       setIsLoading(true);
       setError(null);
 
-      // Simple demo login - just redirect to dashboard
-      // In a real application, implement your auth logic here with Clerk or Auth0
+      await authService.login({
+        username: values.username,
+        password: values.password,
+      });
 
-      // Simulate a brief loading state
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Redirect to dashboard
-      router.push(PATH_DASHBOARD.default);
-
-    } catch (error) {
-      setError('Произошла непредвиденная ошибка');
-      console.error('Sign in error:', error);
+      router.push(callbackUrl);
+    } catch (err) {
+      if (err instanceof Error) {
+        if (err.message.includes('401') || err.message.toLowerCase().includes('invalid')) {
+          setError('Неверный логин или пароль');
+        } else if (err.message.includes('fetch') || err.message.includes('network')) {
+          setError('Ошибка подключения к серверу');
+        } else {
+          setError(err.message || 'Произошла ошибка при входе');
+        }
+      } else {
+        setError('Произошла непредвиденная ошибка');
+      }
+      console.error('Sign in error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -73,14 +80,17 @@ function Page() {
 
   return (
     <>
-      <title>Вход | Панель аналитики</title>
+      <title>Вход | Beauty Slot Admin</title>
       <meta
         name="description"
-        content="Войдите в свой аккаунт для доступа к панели управления."
+        content="Войдите в панель управления салоном Beauty Slot"
       />
 
-      <Title ta="center">С возвращением!</Title>
-      <Text ta="center">Войдите в аккаунт для продолжения</Text>
+      <Stack align="center" gap="xs" mb="lg">
+        <IconScissors size={48} stroke={1.5} color="var(--mantine-color-blue-6)" />
+        <Title ta="center">Beauty Slot</Title>
+        <Text ta="center" c="dimmed">Панель администратора</Text>
+      </Stack>
 
       <Surface component={Paper} className={classes.card}>
         {error && (
@@ -96,15 +106,15 @@ function Page() {
 
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <TextInput
-            label="Email"
-            placeholder="demo@example.com"
+            label="Логин"
+            placeholder="admin"
             required
             classNames={{ label: classes.label }}
-            {...form.getInputProps('email')}
+            {...form.getInputProps('username')}
           />
           <PasswordInput
             label="Пароль"
-            placeholder="demo123"
+            placeholder="Введите пароль"
             required
             mt="md"
             classNames={{ label: classes.label }}
@@ -128,17 +138,10 @@ function Page() {
             Войти
           </Button>
         </form>
-        <Center mt="md">
-          <Text
-            fz="sm"
-            ta="center"
-            component={Link}
-            href={PATH_AUTH.signup}
-            {...LINK_PROPS}
-          >
-            Нет аккаунта? Зарегистрироваться
-          </Text>
-        </Center>
+
+        <Text size="xs" c="dimmed" ta="center" mt="xl">
+          Доступ только для администраторов салона
+        </Text>
       </Surface>
     </>
   );
