@@ -12,7 +12,6 @@ import {
 import {
   ErrorAlert,
   LanguageTable,
-  MapChart,
   MobileDesktopChart,
   PageHeader,
   SalesChart,
@@ -86,9 +85,6 @@ function Page() {
           </SimpleGrid>
           <Grid>
             <Grid.Col span={{ base: 12, md: 6, lg: 8 }}>
-              <MapChart {...PAPER_PROPS} />
-            </Grid.Col>
-            <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
               <SalesChart {...PAPER_PROPS} />
             </Grid.Col>
             <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
