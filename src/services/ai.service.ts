@@ -30,31 +30,33 @@ const createOpenAIClient = () => {
 // - Для chat mode можно использовать thinking модели
 
 // Модели с поддержкой tools (для agent mode)
+// Проверено 24.01.2026 - эти модели работают с function calling
 export const AGENT_MODELS = [
   {
-    id: 'openai/gpt-oss-120b:free',
-    name: 'GPT-OSS 120B 🔧',
-    description: 'OpenAI, tool use + reasoning',
+    id: 'mistralai/devstral-2512:free',
+    name: 'Mistral Devstral 🔧',
+    description: 'Быстрый, кодинг + tools',
+    speed: 'fast',
+    supportsTools: true,
+  },
+  {
+    id: 'z-ai/glm-4.5-air:free',
+    name: 'GLM 4.5 Air 🔧',
+    description: 'Reasoning + tools',
+    speed: 'fast',
+    supportsTools: true,
+  },
+  {
+    id: 'qwen/qwen3-coder:free',
+    name: 'Qwen3 Coder 🔧',
+    description: 'Кодинг + tools (480B)',
     speed: 'slow',
-    supportsTools: true,
-  },
-  {
-    id: 'qwen/qwen3-next-80b-a3b-instruct:free',
-    name: 'Qwen3 Next 🔧',
-    description: 'Быстрый, tool use + RAG',
-    speed: 'fast',
-    supportsTools: true,
-  },
-  {
-    id: 'mistralai/mistral-small-3.1-24b-instruct:free',
-    name: 'Mistral Small 🔧',
-    description: 'Компактный с tools',
-    speed: 'fast',
     supportsTools: true,
   },
 ] as const;
 
 // Модели для простого чата (thinking models)
+// Проверено 24.01.2026 - эти модели работают для чата
 export const CHAT_MODELS = [
   {
     id: 'deepseek/deepseek-r1-0528:free',
@@ -64,10 +66,17 @@ export const CHAT_MODELS = [
     supportsTools: false,
   },
   {
-    id: 'xiaomi/mimo-v2-flash:free',
-    name: 'Xiaomi MiMo 🧠',
-    description: 'Гибридное мышление',
+    id: 'tngtech/deepseek-r1t2-chimera:free',
+    name: 'DeepSeek R1T2 🧠',
+    description: 'Thinking Chimera',
     speed: 'slow',
+    supportsTools: false,
+  },
+  {
+    id: 'nvidia/nemotron-3-nano-30b-a3b:free',
+    name: 'NVIDIA Nemotron 🧠',
+    description: 'Быстрая reasoning',
+    speed: 'fast',
     supportsTools: false,
   },
 ] as const;
@@ -83,7 +92,7 @@ export type AgentModelId = (typeof AGENT_MODELS)[number]['id'];
 export type ChatModelId = (typeof CHAT_MODELS)[number]['id'];
 
 const DEFAULT_CHAT_MODEL: ChatModelId = 'deepseek/deepseek-r1-0528:free';
-const DEFAULT_AGENT_MODEL: AgentModelId = 'openai/gpt-oss-120b:free';
+const DEFAULT_AGENT_MODEL: AgentModelId = 'mistralai/devstral-2512:free';
 
 // Проверка поддержки tools моделью
 const modelSupportsTools = (modelId: string): boolean => {
@@ -106,22 +115,24 @@ const getSystemPrompt = (context?: AIAppContext) => {
 ${context.selectedClientId ? `- Выбранный клиент: ${context.selectedClientId}` : ''}`
     : '';
 
-  return `Ты — AI-агент салона красоты Beauty Slot с полным доступом к системе. Сегодня ${today}.
+  return `Ты — AI-агент салона красоты Beauty Slot. Сегодня ${today}.
 
-🔧 ТВОИ ВОЗМОЖНОСТИ:
-- Навигация по страницам приложения
-- Получение и анализ данных клиентов
-- Отправка рассылок через Telegram
-- Просмотр статистики и аналитики
-- Управление уведомлениями
-- Поиск информации в интернете
+ВАЖНО: У тебя есть ИНСТРУМЕНТЫ (tools) для выполнения действий. ВСЕГДА используй их!
 
-📋 ПРАВИЛА:
-1. Если пользователь просит что-то сделать — ДЕЛАЙ через инструменты
-2. Если нужны данные — ПОЛУЧИ их через инструменты
-3. Отвечай кратко на русском, используй эмодзи
-4. При анализе данных давай конкретные рекомендации
-5. Всегда подтверждай выполнение действий${contextInfo}`;
+Доступные инструменты:
+- navigate: переход на страницу (page: /dashboard, /apps/customers, /apps/settings и др.)
+- getClients: получение списка клиентов (status: all/active/expired, limit: число)
+- getClientDetails: детали клиента (clientId)
+- analyzeClients: анализ клиентов (analysisType: activity/spending/churn_risk/growth)
+- sendBroadcast: рассылка (audience: all/active/expired, message: текст)
+- getStatistics: статистика (period: today/week/month/year, metric: revenue/clients/subscriptions/visits)
+- showNotification: показать уведомление (type: success/error/warning/info, title, message)
+- openModal: открыть модальное окно (modal: addClient/editClient/broadcast/settings)
+
+Правила:
+1. ВСЕГДА вызывай инструменты для действий, не пиши текст вместо действия
+2. Отвечай кратко на русском
+3. После вызова инструмента дай краткое подтверждение${contextInfo}`;
 };
 
 /**
@@ -222,9 +233,10 @@ export const aiService = {
       tool_choice: 'auto',
     };
 
-    if (WEB_SEARCH_ENABLED) {
-      requestParams.plugins = [{ id: 'web', max_results: 3 }];
-    }
+    // НЕ включаем web search для agent mode - чтобы модель использовала наши tools
+    // if (WEB_SEARCH_ENABLED) {
+    //   requestParams.plugins = [{ id: 'web', max_results: 3 }];
+    // }
 
     const completion = await openai.chat.completions.create(requestParams);
 
