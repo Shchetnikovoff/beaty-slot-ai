@@ -68,3 +68,6 @@ export { default as ErrorAlert } from './error-alert';
 export { default as Faqs } from './faqs';
 export { default as LanguagePicker } from './language-picker';
 export { default as SystemNotificationBanner } from './system-notification-banner';
+
+// AI Assistant
+export { AIAssistant } from './ai-assistant';

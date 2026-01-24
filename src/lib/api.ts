@@ -1,3 +1,5 @@
+import { mockData } from './mock-data';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 type RequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
@@ -29,11 +31,9 @@ class ApiClient {
     if (typeof window !== 'undefined') {
       if (token) {
         localStorage.setItem('auth_token', token);
-        // Set cookie for middleware (7 days expiry)
         document.cookie = `auth_token=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
       } else {
         localStorage.removeItem('auth_token');
-        // Remove cookie
         document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
         document.cookie = 'user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       }
@@ -58,7 +58,13 @@ class ApiClient {
     return this.token;
   }
 
-  private buildUrl(endpoint: string, params?: Record<string, string | number | boolean | undefined>): string {
+  // Проверка демо-режима
+  isDemoMode(): boolean {
+    const token = this.getToken();
+    return !!token && token.startsWith('demo-');
+  }
+
+  private buildUrl(endpoint: string, params?: QueryParams): string {
     const url = new URL(`${this.baseUrl}${endpoint}`);
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -70,8 +76,64 @@ class ApiClient {
     return url.toString();
   }
 
+  // Получение моковых данных по endpoint
+  private getMockData<T>(endpoint: string, params?: QueryParams): T | null {
+    // /v1/clients или /v1/admin/clients
+    if (endpoint === '/v1/clients' || endpoint === '/v1/admin/clients') {
+      return mockData.clients as T;
+    }
+    // /v1/clients/:id или /v1/admin/clients/:id
+    if (endpoint.match(/^\/v1\/(admin\/)?clients\/[^/]+$/)) {
+      const id = endpoint.split('/').pop();
+      const client = mockData.clients.items.find(c => c.yclients_id === id);
+      return (client || mockData.clients.items[0]) as T;
+    }
+    // /v1/payments или /v1/admin/payments
+    if (endpoint === '/v1/payments' || endpoint === '/v1/admin/payments') {
+      return mockData.payments as T;
+    }
+    // /v1/subscriptions или /v1/admin/subscriptions
+    if (endpoint === '/v1/subscriptions' || endpoint === '/v1/admin/subscriptions') {
+      return mockData.subscriptions as T;
+    }
+    // /v1/subscriptions/plans или /v1/admin/subscriptions/plans
+    if (endpoint === '/v1/subscriptions/plans' || endpoint === '/v1/admin/subscriptions/plans') {
+      return mockData.subscriptionPlans as T;
+    }
+    // /v1/documents или /v1/admin/documents
+    if (endpoint === '/v1/documents' || endpoint === '/v1/admin/documents') {
+      return mockData.documents as T;
+    }
+    // /v1/salons или /v1/admin/salons или /v1/superadmin/salons
+    if (endpoint === '/v1/salons' || endpoint === '/v1/admin/salons' || endpoint === '/v1/superadmin/salons') {
+      return mockData.salons as T;
+    }
+    // /v1/salons/stats или /v1/admin/salons/stats или /v1/superadmin/stats
+    if (endpoint === '/v1/salons/stats' || endpoint === '/v1/admin/salons/stats' || endpoint === '/v1/superadmin/stats') {
+      return mockData.superadminStats as T;
+    }
+    // /v1/auth/me
+    if (endpoint === '/v1/auth/me') {
+      return null; // Handled by auth service
+    }
+    return null;
+  }
+
   private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const { method = 'GET', body, headers = {}, params } = options;
+
+    // В демо-режиме возвращаем моковые данные для GET запросов
+    if (this.isDemoMode() && method === 'GET') {
+      const mockResult = this.getMockData<T>(endpoint, params);
+      if (mockResult !== null) {
+        // Имитация задержки сети
+        await new Promise(resolve => setTimeout(resolve, 300));
+        console.log('[Demo Mode] Returning mock data for:', endpoint);
+        return mockResult;
+      }
+      console.warn('[Demo Mode] No mock data for endpoint:', endpoint);
+    }
+
     const token = this.getToken();
 
     const requestHeaders: Record<string, string> = {
@@ -79,45 +141,56 @@ class ApiClient {
       ...headers,
     };
 
-    if (token) {
+    if (token && !token.startsWith('demo-')) {
       requestHeaders['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(this.buildUrl(endpoint, params), {
-      method,
-      headers: requestHeaders,
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    try {
+      const response = await fetch(this.buildUrl(endpoint, params), {
+        method,
+        headers: requestHeaders,
+        body: body ? JSON.stringify(body) : undefined,
+      });
 
-    if (!response.ok) {
-      const error: ApiError = {
-        message: 'Request failed',
-        status: response.status,
-      };
+      if (!response.ok) {
+        const error: ApiError = {
+          message: 'Request failed',
+          status: response.status,
+        };
 
-      try {
-        const errorData = await response.json();
-        error.message = errorData.detail || errorData.message || 'Request failed';
-        error.detail = errorData.detail;
-      } catch {
-        error.message = response.statusText || 'Request failed';
+        try {
+          const errorData = await response.json();
+          error.message = errorData.detail || errorData.message || 'Request failed';
+          error.detail = errorData.detail;
+        } catch {
+          error.message = response.statusText || 'Request failed';
+        }
+
+        if (response.status === 401) {
+          this.setToken(null);
+          if (typeof window !== 'undefined') {
+            window.location.href = '/auth/signin';
+          }
+        }
+
+        throw error;
       }
 
-      if (response.status === 401) {
-        this.setToken(null);
-        if (typeof window !== 'undefined') {
-          window.location.href = '/auth/signin';
+      if (response.status === 204) {
+        return {} as T;
+      }
+
+      return response.json();
+    } catch (error) {
+      // Если API недоступен и мы в демо-режиме, возвращаем моковые данные
+      if (this.isDemoMode() && error instanceof TypeError) {
+        const mockResult = this.getMockData<T>(endpoint, params);
+        if (mockResult !== null) {
+          return mockResult;
         }
       }
-
       throw error;
     }
-
-    if (response.status === 204) {
-      return {} as T;
-    }
-
-    return response.json();
   }
 
   async get<T, P extends QueryParams = QueryParams>(endpoint: string, params?: P): Promise<T> {

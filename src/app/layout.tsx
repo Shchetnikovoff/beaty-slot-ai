@@ -22,7 +22,7 @@ export default function RootLayout({
     <html lang="ru">
       {/* className={openSans.className} */}
       <head>
-        <title>Панель аналитики - Mantine Admin Dashboard</title>
+        <title>Beauty Slot - Панель администратора</title>
         <link
           rel="apple-touch-icon"
           sizes="180x180"

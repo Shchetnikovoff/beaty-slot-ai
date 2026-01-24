@@ -1,30 +1,57 @@
 import { api } from '@/lib/api';
-import type { AuthResponse, LoginCredentials, AdminAuth } from '@/types';
+import type { AuthResponse, LoginCredentials, AdminAuth, Client } from '@/types';
 
 // Демо-пользователи для тестирования
-const DEMO_USERS: Record<string, { password: string; user: AdminAuth }> = {
+interface DemoUser {
+  password: string;
+  adminAuth: AdminAuth;
+  client: Client;
+}
+
+const DEMO_USERS: Record<string, DemoUser> = {
   admin: {
     password: 'admin123',
-    user: {
-      id: 'demo-admin-1',
+    adminAuth: {
+      id: 1,
       username: 'admin',
-      email: 'admin@beautyslot.ru',
-      role: 'admin',
-      salon_id: 'salon-1',
+      role: 'ADMIN',
+      salon_id: 1,
       is_active: true,
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    client: {
+      id: 1,
+      name: 'Администратор',
+      phone: '+7 (999) 000-00-01',
+      email: 'admin@beautyslot.ru',
+      is_blocked: false,
+      has_uploaded_photo: false,
+      role: 'ADMIN',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     },
   },
   superadmin: {
     password: 'super123',
-    user: {
-      id: 'demo-superadmin-1',
+    adminAuth: {
+      id: 2,
       username: 'superadmin',
-      email: 'superadmin@beautyslot.ru',
-      role: 'superadmin',
-      salon_id: null,
+      role: 'SUPERADMIN',
       is_active: true,
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    client: {
+      id: 2,
+      name: 'Суперадмин',
+      phone: '+7 (999) 000-00-02',
+      email: 'superadmin@beautyslot.ru',
+      is_blocked: false,
+      has_uploaded_photo: false,
+      role: 'SUPERADMIN',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     },
   },
 };
@@ -39,10 +66,11 @@ export const authService = {
     if (demoUser && demoUser.password === credentials.password) {
       const demoToken = `demo-token-${Date.now()}`;
       api.setToken(demoToken);
-      currentDemoUser = demoUser.user;
+      currentDemoUser = demoUser.adminAuth;
       return {
         access_token: demoToken,
         token_type: 'bearer',
+        user: demoUser.client,
       };
     }
 

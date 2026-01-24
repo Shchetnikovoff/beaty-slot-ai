@@ -86,9 +86,8 @@ export default function Home() {
                   панель управления или приложение.
                 </Title>
                 <Text fz="lg">
-                  Шаблон Mantine admin включает сотни UI элементов, форм,
-                  таблиц, графиков, страниц и иконок для быстрого создания
-                  веб-приложений.
+                  Beauty Slot Admin — панель управления салоном красоты
+                  с полным контролем клиентов, подписок и платежей.
                 </Text>
                 <Group my="lg">
                   <Button
@@ -229,8 +228,8 @@ export default function Home() {
         </Container>
         <Container fluid {...BOX_PROPS}>
           <Title order={2} ta="center" mb="xl">
-            Mantine admin поможет создать красивые сайты, которые автоматически
-            адаптируются под ваш стиль.
+            Beauty Slot Admin — удобное управление салоном красоты
+            с современным интерфейсом.
           </Title>
           <SimpleGrid
             cols={{ base: 1, sm: 1, md: 2, lg: 3, xl: 4 }}

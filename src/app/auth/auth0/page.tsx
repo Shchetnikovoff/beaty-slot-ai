@@ -15,7 +15,7 @@ import { IconBrandAuth0, IconInfoCircle } from '@tabler/icons-react';
 export default function Page() {
   return (
     <>
-      <title>Auth0 | DesignSparx</title>
+      <title>Auth0 | Beauty Slot</title>
       <meta
         name="description"
         content="Auth0 authentication integration page"

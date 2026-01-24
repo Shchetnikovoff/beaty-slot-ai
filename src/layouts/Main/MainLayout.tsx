@@ -13,7 +13,7 @@ import {
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { IconPalette } from '@tabler/icons-react';
 
-import { ThemeCustomizer } from '@/components';
+import { AIAssistant, ThemeCustomizer } from '@/components';
 import {
   generateContentStyles,
   generateHeaderStyles,
@@ -223,6 +223,9 @@ export function MainLayout({ children }: Props) {
           </ActionIcon>
         </Affix>
       )}
+
+      {/* AI Assistant */}
+      <AIAssistant />
     </Box>
   );
 }

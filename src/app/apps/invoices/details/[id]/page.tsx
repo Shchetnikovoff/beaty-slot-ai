@@ -113,7 +113,7 @@ function InvoiceDetails({ params }: InvoiceDetailsProps) {
       <title>
         Invoice -{' '}
         {invoice.invoiceNumber || invoice.id?.slice(-6)?.toUpperCase()} |
-        DesignSparx
+        Beauty Slot
       </title>
       <meta
         name="description"

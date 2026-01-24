@@ -1,239 +1,202 @@
 [
   {
     "id": "cust-001",
-    "name": "Sarah Johnson",
-    "email": "sarah.johnson@email.com",
-    "phone": "+1 (555) 123-4567",
-    "company": "Tech Solutions Inc",
-    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
+    "name": "Анна Петрова",
+    "email": "anna.petrova@email.com",
+    "phone": "+7 (999) 123-45-67",
+    "company": null,
+    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Anna",
     "address": {
-      "street": "123 Main Street",
-      "city": "New York",
-      "state": "NY",
-      "country": "USA",
-      "zipCode": "10001"
-    },
-    "status": 1,
-    "totalOrders": 24,
-    "totalSpent": 12450.50,
-    "joinedDate": "2023-01-15",
-    "lastOrderDate": "2024-12-20"
-  },
-  {
-    "id": "cust-002",
-    "name": "Michael Chen",
-    "email": "michael.chen@company.com",
-    "phone": "+1 (555) 234-5678",
-    "company": "Digital Dynamics",
-    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Michael",
-    "address": {
-      "street": "456 Oak Avenue",
-      "city": "San Francisco",
-      "state": "CA",
-      "country": "USA",
-      "zipCode": "94102"
-    },
-    "status": 1,
-    "totalOrders": 18,
-    "totalSpent": 8920.75,
-    "joinedDate": "2023-03-22",
-    "lastOrderDate": "2024-12-18"
-  },
-  {
-    "id": "cust-003",
-    "name": "Emily Rodriguez",
-    "email": "emily.r@business.net",
-    "phone": "+1 (555) 345-6789",
-    "company": "Creative Studios",
-    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Emily",
-    "address": {
-      "street": "789 Pine Road",
-      "city": "Austin",
-      "state": "TX",
-      "country": "USA",
-      "zipCode": "78701"
-    },
-    "status": 1,
-    "totalOrders": 32,
-    "totalSpent": 15680.20,
-    "joinedDate": "2022-11-10",
-    "lastOrderDate": "2024-12-22"
-  },
-  {
-    "id": "cust-004",
-    "name": "David Kim",
-    "email": "david.kim@mail.com",
-    "phone": "+1 (555) 456-7890",
-    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=David",
-    "address": {
-      "street": "321 Elm Street",
-      "city": "Seattle",
-      "state": "WA",
-      "country": "USA",
-      "zipCode": "98101"
+      "street": "ул. Тверская, д. 15",
+      "city": "Москва",
+      "state": "Москва",
+      "country": "Россия",
+      "zipCode": "125009"
     },
     "status": 1,
     "totalOrders": 12,
-    "totalSpent": 5420.00,
-    "joinedDate": "2023-06-05",
-    "lastOrderDate": "2024-11-15"
+    "totalSpent": 45600,
+    "joinedDate": "2024-06-15",
+    "lastOrderDate": "2025-01-20"
+  },
+  {
+    "id": "cust-002",
+    "name": "Мария Сидорова",
+    "email": "maria.sidorova@email.com",
+    "phone": "+7 (999) 234-56-78",
+    "company": null,
+    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Maria",
+    "address": {
+      "street": "ул. Арбат, д. 42",
+      "city": "Москва",
+      "state": "Москва",
+      "country": "Россия",
+      "zipCode": "119019"
+    },
+    "status": 1,
+    "totalOrders": 24,
+    "totalSpent": 89200,
+    "joinedDate": "2024-07-20",
+    "lastOrderDate": "2025-01-18"
+  },
+  {
+    "id": "cust-003",
+    "name": "Елена Козлова",
+    "email": "elena.kozlova@email.com",
+    "phone": "+7 (999) 345-67-89",
+    "company": null,
+    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Elena",
+    "address": {
+      "street": "Ленинградский пр., д. 78",
+      "city": "Москва",
+      "state": "Москва",
+      "country": "Россия",
+      "zipCode": "125040"
+    },
+    "status": 1,
+    "totalOrders": 8,
+    "totalSpent": 32400,
+    "joinedDate": "2024-03-10",
+    "lastOrderDate": "2025-01-22"
+  },
+  {
+    "id": "cust-004",
+    "name": "Ольга Новикова",
+    "email": "olga.novikova@email.com",
+    "phone": "+7 (999) 456-78-90",
+    "company": null,
+    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Olga",
+    "address": {
+      "street": "ул. Южная, д. 5",
+      "city": "Москва",
+      "state": "Москва",
+      "country": "Россия",
+      "zipCode": "115432"
+    },
+    "status": 0,
+    "totalOrders": 3,
+    "totalSpent": 12800,
+    "joinedDate": "2024-12-01",
+    "lastOrderDate": "2025-01-10"
   },
   {
     "id": "cust-005",
-    "name": "Jessica Martinez",
-    "email": "jessica.m@enterprise.com",
-    "phone": "+1 (555) 567-8901",
-    "company": "Global Commerce",
-    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Jessica",
+    "name": "Татьяна Морозова",
+    "email": "tatiana.morozova@email.com",
+    "phone": "+7 (999) 567-89-01",
+    "company": null,
+    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Tatiana",
     "address": {
-      "street": "654 Maple Drive",
-      "city": "Chicago",
-      "state": "IL",
-      "country": "USA",
-      "zipCode": "60601"
+      "street": "пр. Мира, д. 101",
+      "city": "Москва",
+      "state": "Москва",
+      "country": "Россия",
+      "zipCode": "129090"
     },
     "status": 1,
-    "totalOrders": 45,
-    "totalSpent": 28340.90,
-    "joinedDate": "2022-08-18",
-    "lastOrderDate": "2024-12-21"
+    "totalOrders": 18,
+    "totalSpent": 67500,
+    "joinedDate": "2024-08-05",
+    "lastOrderDate": "2025-01-21"
   },
   {
     "id": "cust-006",
-    "name": "Robert Taylor",
-    "email": "robert.taylor@company.org",
-    "phone": "+1 (555) 678-9012",
-    "company": "Innovate Corp",
-    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Robert",
+    "name": "Наталья Соколова",
+    "email": "natalia.sokolova@email.com",
+    "phone": "+7 (999) 678-90-12",
+    "company": null,
+    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Natalia",
     "address": {
-      "street": "987 Cedar Lane",
-      "city": "Boston",
-      "state": "MA",
-      "country": "USA",
-      "zipCode": "02101"
-    },
-    "status": 2,
-    "totalOrders": 8,
-    "totalSpent": 3250.40,
-    "joinedDate": "2023-09-12",
-    "lastOrderDate": "2024-08-10"
-  },
-  {
-    "id": "cust-007",
-    "name": "Amanda White",
-    "email": "amanda.white@tech.io",
-    "phone": "+1 (555) 789-0123",
-    "company": "NextGen Technologies",
-    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Amanda",
-    "address": {
-      "street": "147 Birch Boulevard",
-      "city": "Denver",
-      "state": "CO",
-      "country": "USA",
-      "zipCode": "80201"
-    },
-    "status": 1,
-    "totalOrders": 21,
-    "totalSpent": 11230.60,
-    "joinedDate": "2023-04-28",
-    "lastOrderDate": "2024-12-19"
-  },
-  {
-    "id": "cust-008",
-    "name": "Christopher Lee",
-    "email": "chris.lee@email.com",
-    "phone": "+1 (555) 890-1234",
-    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Christopher",
-    "address": {
-      "street": "258 Willow Way",
-      "city": "Portland",
-      "state": "OR",
-      "country": "USA",
-      "zipCode": "97201"
+      "street": "ул. Пушкина, д. 33",
+      "city": "Санкт-Петербург",
+      "state": "Санкт-Петербург",
+      "country": "Россия",
+      "zipCode": "191025"
     },
     "status": 1,
     "totalOrders": 15,
-    "totalSpent": 7890.25,
-    "joinedDate": "2023-07-14",
-    "lastOrderDate": "2024-12-05"
+    "totalSpent": 54200,
+    "joinedDate": "2024-05-12",
+    "lastOrderDate": "2025-01-19"
+  },
+  {
+    "id": "cust-007",
+    "name": "Екатерина Белова",
+    "email": "ekaterina.belova@email.com",
+    "phone": "+7 (999) 789-01-23",
+    "company": null,
+    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Ekaterina",
+    "address": {
+      "street": "Невский пр., д. 88",
+      "city": "Санкт-Петербург",
+      "state": "Санкт-Петербург",
+      "country": "Россия",
+      "zipCode": "191186"
+    },
+    "status": 1,
+    "totalOrders": 21,
+    "totalSpent": 78900,
+    "joinedDate": "2024-04-18",
+    "lastOrderDate": "2025-01-23"
+  },
+  {
+    "id": "cust-008",
+    "name": "Ирина Волкова",
+    "email": "irina.volkova@email.com",
+    "phone": "+7 (999) 890-12-34",
+    "company": null,
+    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Irina",
+    "address": {
+      "street": "ул. Красная, д. 12",
+      "city": "Краснодар",
+      "state": "Краснодарский край",
+      "country": "Россия",
+      "zipCode": "350000"
+    },
+    "status": 1,
+    "totalOrders": 9,
+    "totalSpent": 34500,
+    "joinedDate": "2024-09-28",
+    "lastOrderDate": "2025-01-15"
   },
   {
     "id": "cust-009",
-    "name": "Nicole Brown",
-    "email": "nicole.brown@business.com",
-    "phone": "+1 (555) 901-2345",
-    "company": "Design Collective",
-    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Nicole",
+    "name": "Светлана Кузнецова",
+    "email": "svetlana.kuznetsova@email.com",
+    "phone": "+7 (999) 901-23-45",
+    "company": null,
+    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Svetlana",
     "address": {
-      "street": "369 Spruce Circle",
-      "city": "Miami",
-      "state": "FL",
-      "country": "USA",
-      "zipCode": "33101"
+      "street": "ул. Ленина, д. 56",
+      "city": "Новосибирск",
+      "state": "Новосибирская область",
+      "country": "Россия",
+      "zipCode": "630099"
     },
     "status": 1,
-    "totalOrders": 28,
-    "totalSpent": 14560.80,
-    "joinedDate": "2023-02-08",
-    "lastOrderDate": "2024-12-16"
+    "totalOrders": 14,
+    "totalSpent": 52100,
+    "joinedDate": "2024-07-08",
+    "lastOrderDate": "2025-01-17"
   },
   {
     "id": "cust-010",
-    "name": "James Wilson",
-    "email": "james.wilson@corp.net",
-    "phone": "+1 (555) 012-3456",
-    "company": "Strategic Solutions",
-    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=James",
+    "name": "Виктория Смирнова",
+    "email": "victoria.smirnova@email.com",
+    "phone": "+7 (999) 012-34-56",
+    "company": null,
+    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Victoria",
     "address": {
-      "street": "741 Ash Avenue",
-      "city": "Atlanta",
-      "state": "GA",
-      "country": "USA",
-      "zipCode": "30301"
-    },
-    "status": 3,
-    "totalOrders": 5,
-    "totalSpent": 1240.50,
-    "joinedDate": "2023-10-20",
-    "lastOrderDate": "2024-05-12"
-  },
-  {
-    "id": "cust-011",
-    "name": "Sophia Anderson",
-    "email": "sophia.anderson@mail.com",
-    "phone": "+1 (555) 112-3456",
-    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Sophia",
-    "address": {
-      "street": "852 Poplar Street",
-      "city": "Phoenix",
-      "state": "AZ",
-      "country": "USA",
-      "zipCode": "85001"
+      "street": "пр. Победы, д. 22",
+      "city": "Екатеринбург",
+      "state": "Свердловская область",
+      "country": "Россия",
+      "zipCode": "620000"
     },
     "status": 1,
-    "totalOrders": 19,
-    "totalSpent": 9870.35,
-    "joinedDate": "2023-05-17",
-    "lastOrderDate": "2024-12-14"
-  },
-  {
-    "id": "cust-012",
-    "name": "Daniel Garcia",
-    "email": "daniel.garcia@enterprise.io",
-    "phone": "+1 (555) 223-4567",
-    "company": "Prime Ventures",
-    "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Daniel",
-    "address": {
-      "street": "963 Walnut Place",
-      "city": "Philadelphia",
-      "state": "PA",
-      "country": "USA",
-      "zipCode": "19101"
-    },
-    "status": 1,
-    "totalOrders": 36,
-    "totalSpent": 19450.70,
-    "joinedDate": "2022-12-03",
-    "lastOrderDate": "2024-12-23"
+    "totalOrders": 27,
+    "totalSpent": 98700,
+    "joinedDate": "2024-02-14",
+    "lastOrderDate": "2025-01-24"
   }
 ]

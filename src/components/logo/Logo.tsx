@@ -27,9 +27,9 @@ const Logo = ({ href, showText = true, ...others }: LogoProps) => {
           src="/logo-no-background.png"
           height={showText ? 32 : 24}
           width={showText ? 32 : 24}
-          alt="design sparx logo"
+          alt="Beauty Slot logo"
         />
-        {showText && <Text fw={700}>Mantine admin</Text>}
+        {showText && <Text fw={700}>Beauty Slot</Text>}
       </Group>
     </UnstyledButton>
   );

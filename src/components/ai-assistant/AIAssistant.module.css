@@ -1,0 +1,114 @@
+.floatingButton {
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.floatingButton:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 25px rgba(139, 92, 246, 0.5);
+}
+
+.chatPanel {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 420px;
+  max-width: calc(100vw - 40px);
+  height: 600px;
+  max-height: calc(100vh - 100px);
+  display: flex;
+  flex-direction: column;
+  z-index: 201;
+  overflow: hidden;
+  background: light-dark(
+    var(--mantine-color-white),
+    var(--mantine-color-dark-7)
+  );
+}
+
+@media (max-width: 480px) {
+  .chatPanel {
+    width: calc(100vw - 20px);
+    height: calc(100vh - 80px);
+    bottom: 10px;
+    right: 10px;
+  }
+}
+
+.header {
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+  background: light-dark(
+    var(--mantine-color-gray-0),
+    var(--mantine-color-dark-8)
+  );
+}
+
+.messages {
+  flex: 1;
+  min-height: 0;
+}
+
+.userMessage {
+  margin-left: auto;
+  max-width: 85%;
+}
+
+.assistantMessage {
+  margin-right: auto;
+  max-width: 90%;
+}
+
+/* Пузырь сообщения пользователя */
+.userBubble {
+  background: linear-gradient(135deg, var(--mantine-color-violet-6), var(--mantine-color-indigo-6)) !important;
+  color: white;
+}
+
+/* Пузырь сообщения ассистента */
+.assistantBubble {
+  background: light-dark(
+    var(--mantine-color-gray-1),
+    var(--mantine-color-dark-6)
+  ) !important;
+  color: light-dark(
+    var(--mantine-color-dark-9),
+    var(--mantine-color-gray-0)
+  );
+}
+
+/* Контент сообщения */
+.messageContent {
+  font-size: var(--mantine-font-size-sm);
+  line-height: 1.55;
+  color: inherit;
+  word-wrap: break-word;
+}
+
+.messageContent strong {
+  font-weight: 600;
+  color: light-dark(
+    var(--mantine-color-dark-9),
+    var(--mantine-color-white)
+  );
+}
+
+.messageContent em {
+  font-style: italic;
+}
+
+/* Блок с размышлениями */
+.reasoningBox {
+  background: light-dark(
+    var(--mantine-color-gray-2),
+    var(--mantine-color-dark-7)
+  );
+  border-radius: var(--mantine-radius-sm);
+}
+
+.inputArea {
+  padding: var(--mantine-spacing-sm);
+  background: light-dark(
+    var(--mantine-color-gray-0),
+    var(--mantine-color-dark-8)
+  );
+}
