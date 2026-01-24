@@ -50,3 +50,30 @@ export interface SalonUpdate {
   enabled_features?: string[];
   limits?: SalonLimits;
 }
+
+export interface SalonsListParams {
+  [key: string]: string | number | boolean | undefined;
+  skip?: number;
+  limit?: number;
+  search?: string;
+  status?: SalonSubscriptionStatus;
+  is_active?: boolean;
+}
+
+export interface SalonsListResponse {
+  items: Salon[];
+  total: number;
+  skip: number;
+  limit: number;
+}
+
+export interface SuperadminStats {
+  total_salons: number;
+  active_salons: number;
+  trial_salons: number;
+  total_clients: number;
+  total_subscriptions: number;
+  total_revenue: number;
+  revenue_this_month: number;
+  new_salons_this_month: number;
+}

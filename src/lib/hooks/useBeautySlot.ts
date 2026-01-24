@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { clientsService, subscriptionsService, paymentsService, documentsService } from '@/services';
+import { clientsService, subscriptionsService, paymentsService, documentsService, salonsService } from '@/services';
 import type {
   Client,
   ClientsListParams,
@@ -16,6 +16,10 @@ import type {
   Document,
   DocumentsListParams,
   DocumentsListResponse,
+  Salon,
+  SalonsListParams,
+  SalonsListResponse,
+  SuperadminStats,
 } from '@/types';
 
 interface UseQueryResult<T> {
@@ -250,6 +254,85 @@ export function useDocument(id: number | null): UseQueryResult<Document> {
       setLoading(false);
     }
   }, [id]);
+
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  return { data, loading, error, refetch: fetch };
+}
+
+// Hook for salons list (superadmin)
+export function useSalons(params?: SalonsListParams): UseQueryResult<SalonsListResponse> {
+  const [data, setData] = useState<SalonsListResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetch = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await salonsService.getSalons(params);
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch salons'));
+    } finally {
+      setLoading(false);
+    }
+  }, [params?.skip, params?.limit, params?.search, params?.status, params?.is_active]);
+
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  return { data, loading, error, refetch: fetch };
+}
+
+// Hook for single salon
+export function useSalon(id: number | null): UseQueryResult<Salon> {
+  const [data, setData] = useState<Salon | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetch = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await salonsService.getSalon(id);
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch salon'));
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  return { data, loading, error, refetch: fetch };
+}
+
+// Hook for superadmin stats
+export function useSuperadminStats(): UseQueryResult<SuperadminStats> {
+  const [data, setData] = useState<SuperadminStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetch = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await salonsService.getStats();
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch stats'));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetch();
