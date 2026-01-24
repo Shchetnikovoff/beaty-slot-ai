@@ -24,29 +24,71 @@ const createOpenAIClient = () => {
   });
 };
 
-// Thinking модели + веб-поиск (plugin) OpenRouter (24.01.2026)
-// Модель бесплатная, веб-поиск ~$0.02/запрос через plugin
-export const AI_MODELS = [
+// Модели OpenRouter (24.01.2026)
+// Разные модели для разных режимов:
+// - Для agent mode (tools) нужны модели с поддержкой function calling
+// - Для chat mode можно использовать thinking модели
+
+// Модели с поддержкой tools (для agent mode)
+export const AGENT_MODELS = [
+  {
+    id: 'openai/gpt-oss-120b:free',
+    name: 'GPT-OSS 120B 🔧',
+    description: 'OpenAI, tool use + reasoning',
+    speed: 'slow',
+    supportsTools: true,
+  },
+  {
+    id: 'qwen/qwen3-next-80b-a3b-instruct:free',
+    name: 'Qwen3 Next 🔧',
+    description: 'Быстрый, tool use + RAG',
+    speed: 'fast',
+    supportsTools: true,
+  },
+  {
+    id: 'mistralai/mistral-small-3.1-24b-instruct:free',
+    name: 'Mistral Small 🔧',
+    description: 'Компактный с tools',
+    speed: 'fast',
+    supportsTools: true,
+  },
+] as const;
+
+// Модели для простого чата (thinking models)
+export const CHAT_MODELS = [
   {
     id: 'deepseek/deepseek-r1-0528:free',
-    name: 'DeepSeek R1 🧠🌐',
-    description: 'Thinking + веб-поиск',
+    name: 'DeepSeek R1 🧠',
+    description: 'Thinking модель',
     speed: 'slow',
+    supportsTools: false,
   },
   {
     id: 'xiaomi/mimo-v2-flash:free',
-    name: 'Xiaomi MiMo 🌐',
-    description: 'Гибридное мышление + интернет',
+    name: 'Xiaomi MiMo 🧠',
+    description: 'Гибридное мышление',
     speed: 'slow',
+    supportsTools: false,
   },
 ] as const;
+
+// Все модели для выбора в UI
+export const AI_MODELS = [...AGENT_MODELS, ...CHAT_MODELS] as const;
 
 // Включить веб-поиск для всех моделей
 export const WEB_SEARCH_ENABLED = true;
 
 export type AIModelId = (typeof AI_MODELS)[number]['id'];
+export type AgentModelId = (typeof AGENT_MODELS)[number]['id'];
+export type ChatModelId = (typeof CHAT_MODELS)[number]['id'];
 
-const DEFAULT_MODEL: AIModelId = 'deepseek/deepseek-r1-0528:free';
+const DEFAULT_CHAT_MODEL: ChatModelId = 'deepseek/deepseek-r1-0528:free';
+const DEFAULT_AGENT_MODEL: AgentModelId = 'openai/gpt-oss-120b:free';
+
+// Проверка поддержки tools моделью
+const modelSupportsTools = (modelId: string): boolean => {
+  return AGENT_MODELS.some(m => m.id === modelId);
+};
 
 // Динамический системный промпт с текущей датой
 const getSystemPrompt = (context?: AIAppContext) => {
@@ -97,11 +139,11 @@ const parseReasoningFromContent = (
 
 export const aiService = {
   /**
-   * Основной метод чата с AI (простой режим)
+   * Основной метод чата с AI (простой режим без tools)
    */
   async chat(
     messages: AIMessage[],
-    modelId: AIModelId = DEFAULT_MODEL
+    modelId: AIModelId = DEFAULT_CHAT_MODEL
   ): Promise<AIResponse> {
     const openai = createOpenAIClient();
 
@@ -144,13 +186,17 @@ export const aiService = {
 
   /**
    * Agent Mode - чат с поддержкой инструментов (function calling)
+   * ВАЖНО: Требует модель с поддержкой tools!
    */
   async agentChat(
     messages: AIMessage[],
     context: AIAppContext,
-    modelId: AIModelId = DEFAULT_MODEL
+    modelId: AIModelId = DEFAULT_AGENT_MODEL
   ): Promise<AIAgentResponse> {
     const openai = createOpenAIClient();
+
+    // Если переданная модель не поддерживает tools - используем дефолтную agent-модель
+    const effectiveModelId = modelSupportsTools(modelId) ? modelId : DEFAULT_AGENT_MODEL;
 
     // Приводим сообщения к формату OpenAI
     const formattedMessages = messages.map((m) => ({
@@ -161,7 +207,7 @@ export const aiService = {
     // OpenRouter поддерживает tools и plugins (не все в типах OpenAI SDK)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const requestParams: any = {
-      model: modelId,
+      model: effectiveModelId,
       messages: [
         {
           role: 'system' as const,
@@ -207,14 +253,18 @@ export const aiService = {
 
   /**
    * Продолжение диалога после выполнения инструментов
+   * ВАЖНО: Требует модель с поддержкой tools!
    */
   async continueAfterTools(
     messages: AIMessage[],
     toolResults: Array<{ tool_call_id: string; content: string }>,
     context: AIAppContext,
-    modelId: AIModelId = DEFAULT_MODEL
+    modelId: AIModelId = DEFAULT_AGENT_MODEL
   ): Promise<AIAgentResponse> {
     const openai = createOpenAIClient();
+
+    // Если переданная модель не поддерживает tools - используем дефолтную agent-модель
+    const effectiveModelId = modelSupportsTools(modelId) ? modelId : DEFAULT_AGENT_MODEL;
 
     // Приводим базовые сообщения к формату OpenAI
     const formattedMessages = messages.map((m) => ({
@@ -232,7 +282,7 @@ export const aiService = {
 
     // @ts-ignore - OpenRouter tools не в типах OpenAI SDK
     const completion = await openai.chat.completions.create({
-      model: modelId,
+      model: effectiveModelId,
       messages: [
         {
           role: 'system' as const,

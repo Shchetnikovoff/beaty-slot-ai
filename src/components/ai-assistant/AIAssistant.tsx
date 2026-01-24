@@ -42,7 +42,7 @@ import {
 } from '@tabler/icons-react';
 
 import { useAIToolExecutor } from '@/hooks/useAIToolExecutor';
-import { AI_MODELS, type AIModelId } from '@/services/ai.service';
+import { AI_MODELS, AGENT_MODELS, CHAT_MODELS, type AIModelId } from '@/services/ai.service';
 import type { AIMessage, AIAgentResponse } from '@/types/ai';
 import type { AIAppContext, AIToolCall } from '@/types/ai-tools';
 
@@ -107,7 +107,8 @@ export function AIAssistant() {
     null
   );
   const [expandedTools, setExpandedTools] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState<AIModelId>(AI_MODELS[0].id);
+  // По умолчанию выбираем первую модель с поддержкой tools для agent mode
+  const [selectedModel, setSelectedModel] = useState<AIModelId>(AGENT_MODELS[0].id);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -353,21 +354,42 @@ export function AIAssistant() {
                     <Text fw={600} size="sm">
                       AI Ассистент
                     </Text>
-                    <Menu shadow="md" width={240}>
+                    <Menu shadow="md" width={260}>
                       <Menu.Target>
                         <Button
                           variant="subtle"
                           size="compact-xs"
                           color="gray"
                           rightSection={<IconChevronDown size={12} />}
-                          leftSection={<IconBrain size={12} />}
+                          leftSection={<IconTool size={12} />}
                         >
                           {AI_MODELS.find((m) => m.id === selectedModel)?.name || 'Выбрать модель'}
                         </Button>
                       </Menu.Target>
                       <Menu.Dropdown>
-                        <Menu.Label>Thinking + Веб-поиск</Menu.Label>
-                        {AI_MODELS.map((model) => (
+                        <Menu.Label>🔧 Agent Mode (с actions)</Menu.Label>
+                        {AGENT_MODELS.map((model) => (
+                          <Menu.Item
+                            key={model.id}
+                            leftSection={<IconTool size={14} />}
+                            rightSection={
+                              selectedModel === model.id ? (
+                                <IconCheck size={14} color="var(--mantine-color-green-6)" />
+                              ) : null
+                            }
+                            onClick={() => setSelectedModel(model.id)}
+                          >
+                            <Box>
+                              <Text size="sm">{model.name}</Text>
+                              <Text size="xs" c="dimmed">
+                                {model.description}
+                              </Text>
+                            </Box>
+                          </Menu.Item>
+                        ))}
+                        <Menu.Divider />
+                        <Menu.Label>🧠 Thinking (без actions)</Menu.Label>
+                        {CHAT_MODELS.map((model) => (
                           <Menu.Item
                             key={model.id}
                             leftSection={<IconBrain size={14} />}
