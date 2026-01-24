@@ -13,7 +13,7 @@ import {
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { IconPalette } from '@tabler/icons-react';
 
-import { SystemNotificationBanner, ThemeCustomizer } from '@/components';
+import { ThemeCustomizer } from '@/components';
 import {
   generateContentStyles,
   generateHeaderStyles,
@@ -192,8 +192,6 @@ export function MainLayout({ children }: Props) {
           data-padding={config.layout.content.padding}
           style={contentStyles}
         >
-          {/* System Notification Banner */}
-          <SystemNotificationBanner layout="main" mb="md" />
           {children}
         </Box>
       </Box>
