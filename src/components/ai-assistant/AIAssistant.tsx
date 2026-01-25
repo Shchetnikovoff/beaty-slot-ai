@@ -201,6 +201,8 @@ export function AIAssistant() {
         };
 
         // Первый запрос к AI
+        const initialContext = getAppContext();
+        console.log(`[AI Assistant] Initial request, page: ${initialContext.currentPage}, pageData stats:`, initialContext.pageData?.stats?.slice(0, 2));
         let response = await fetchWithTimeout('/api/ai/agent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -229,6 +231,7 @@ export function AIAssistant() {
 
           // Тихо выполняем инструменты с контекстом приложения
           const appContext = getAppContext();
+          console.log(`[AI Assistant] PageData for iteration ${iterations}:`, appContext.pageData?.stats?.slice(0, 2));
           const toolResults = await executeTools(data.toolCalls, appContext);
           console.log(`[AI Assistant] Tool results:`, toolResults.map(r => ({ id: r.tool_call_id, success: r.success })));
 

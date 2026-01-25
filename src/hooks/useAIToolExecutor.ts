@@ -57,11 +57,11 @@ export function useAIToolExecutor() {
           switch (func.name) {
             case 'navigate': {
               router.push(args.page);
-              // Даём время на навигацию и загрузку данных
-              await delay(500);
+              // Даём время на навигацию и загрузку API данных страницы
+              await delay(1500);
               result = {
                 tool_call_id: id,
-                content: `✅ Выполнен переход на страницу: ${args.page}. Страница загружена.`,
+                content: `✅ Выполнен переход на страницу: ${args.page}. Данные страницы загружены и доступны в контексте pageData. Используй эти данные для ответа.`,
                 success: true,
               };
               break;
