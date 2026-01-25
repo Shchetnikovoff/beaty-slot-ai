@@ -583,11 +583,27 @@ export function useAIToolExecutor() {
             }
           }
         } catch (error) {
-          result = {
-            tool_call_id: id,
-            content: `❌ Ошибка выполнения ${func.name}: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`,
-            success: false,
-          };
+          // Проверяем на CORS/сетевые ошибки
+          const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+          const isCorsOrNetworkError =
+            errorMessage.includes('Failed to fetch') ||
+            errorMessage.includes('NetworkError') ||
+            errorMessage.includes('CORS') ||
+            errorMessage.includes('net::ERR');
+
+          if (isCorsOrNetworkError) {
+            result = {
+              tool_call_id: id,
+              content: `⚠️ Не удалось получить данные. Для работы с данными войдите в демо-режим:\n- Логин: admin\n- Пароль: admin123\n\nИли проверьте подключение к серверу.`,
+              success: false,
+            };
+          } else {
+            result = {
+              tool_call_id: id,
+              content: `❌ Ошибка выполнения ${func.name}: ${errorMessage}`,
+              success: false,
+            };
+          }
         }
 
         results.push(result);
