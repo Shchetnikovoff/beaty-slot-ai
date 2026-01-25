@@ -179,8 +179,29 @@ export function AIAssistant() {
           tool_calls: m.toolCalls,
         }));
 
+        // Функция запроса с таймаутом (30 секунд)
+        const fetchWithTimeout = async (url: string, options: RequestInit, timeoutMs = 30000) => {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+          try {
+            const response = await fetch(url, {
+              ...options,
+              signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
+            return response;
+          } catch (error) {
+            clearTimeout(timeoutId);
+            if (error instanceof Error && error.name === 'AbortError') {
+              throw new Error('Превышено время ожидания ответа от AI. Попробуйте ещё раз.');
+            }
+            throw error;
+          }
+        };
+
         // Первый запрос к AI
-        let response = await fetch('/api/ai/agent', {
+        let response = await fetchWithTimeout('/api/ai/agent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -204,12 +225,16 @@ export function AIAssistant() {
 
         while (data.requiresAction && data.toolCalls && data.toolCalls.length > 0 && iterations < MAX_TOOL_ITERATIONS) {
           iterations++;
+          console.log(`[AI Assistant] Tool iteration ${iterations}, tools:`, data.toolCalls.map(t => t.function.name));
 
           // Тихо выполняем инструменты с контекстом приложения
           const appContext = getAppContext();
           const toolResults = await executeTools(data.toolCalls, appContext);
+          console.log(`[AI Assistant] Tool results:`, toolResults.map(r => ({ id: r.tool_call_id, success: r.success })));
 
-          // Добавляем результаты во внутреннюю историю
+          // ВАЖНО: Добавляем assistant message С tool_calls И результаты инструментов во внутреннюю историю
+          // Это необходимо для корректного порядка сообщений OpenAI API:
+          // [user] -> [assistant с tool_calls] -> [tool результаты] -> [assistant ответ]
           internalMessages = [
             ...internalMessages,
             {
@@ -217,18 +242,20 @@ export function AIAssistant() {
               content: data.content || '',
               tool_calls: data.toolCalls,
             },
+            // Добавляем tool results как отдельные сообщения с role: 'tool'
+            ...toolResults.map((r) => ({
+              role: 'tool' as const,
+              tool_call_id: r.tool_call_id,
+              content: r.content,
+            })),
           ];
 
-          // Продолжаем разговор с результатами инструментов
-          response = await fetch('/api/ai/agent', {
+          // Продолжаем разговор БЕЗ отдельных toolResults - они уже в internalMessages
+          response = await fetchWithTimeout('/api/ai/agent', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               messages: internalMessages,
-              toolResults: toolResults.map((r) => ({
-                tool_call_id: r.tool_call_id,
-                content: r.content,
-              })),
               context: getAppContext(),
               model: selectedModel,
             }),

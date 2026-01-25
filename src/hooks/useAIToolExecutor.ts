@@ -24,6 +24,22 @@ export interface ToolExecutionResult {
   success: boolean;
 }
 
+// Таймаут для выполнения инструмента (10 секунд)
+const TOOL_TIMEOUT_MS = 10000;
+
+// Обёртка для выполнения с таймаутом
+const withTimeout = <T>(promise: Promise<T>, ms: number, toolName: string): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Таймаут выполнения инструмента ${toolName}`)), ms)
+    ),
+  ]);
+};
+
+// Задержка для ожидания
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export function useAIToolExecutor() {
   const router = useRouter();
 
@@ -41,21 +57,27 @@ export function useAIToolExecutor() {
           switch (func.name) {
             case 'navigate': {
               router.push(args.page);
+              // Даём время на навигацию и загрузку данных
+              await delay(500);
               result = {
                 tool_call_id: id,
-                content: `✅ Выполнен переход на страницу: ${args.page}`,
+                content: `✅ Выполнен переход на страницу: ${args.page}. Страница загружена.`,
                 success: true,
               };
               break;
             }
 
             case 'getClients': {
-              // Реальный вызов сервиса вместо mock-данных
-              const response = await clientsService.getClients({
-                limit: args.limit || 20,
-                has_subscription: args.status === 'active' ? true :
-                                  args.status === 'expired' ? false : undefined,
-              });
+              // Реальный вызов сервиса с таймаутом
+              const response = await withTimeout(
+                clientsService.getClients({
+                  limit: args.limit || 20,
+                  has_subscription: args.status === 'active' ? true :
+                                    args.status === 'expired' ? false : undefined,
+                }),
+                TOOL_TIMEOUT_MS,
+                'getClients'
+              );
 
               const clientsSummary = response.items.map(c => ({
                 id: c.id,
@@ -74,7 +96,11 @@ export function useAIToolExecutor() {
             }
 
             case 'getClientDetails': {
-              const client = await clientsService.getClient(args.clientId);
+              const client = await withTimeout(
+                clientsService.getClient(args.clientId),
+                TOOL_TIMEOUT_MS,
+                'getClientDetails'
+              );
               if (client) {
                 result = {
                   tool_call_id: id,
@@ -101,9 +127,15 @@ export function useAIToolExecutor() {
             }
 
             case 'analyzeClients': {
-              // Получаем реальные данные для анализа
-              const clientsData = await clientsService.getClients({ limit: 100 });
-              const subscriptionsData = await subscriptionsService.getSubscriptions({ limit: 100 });
+              // Получаем реальные данные для анализа с таймаутом
+              const [clientsData, subscriptionsData] = await withTimeout(
+                Promise.all([
+                  clientsService.getClients({ limit: 100 }),
+                  subscriptionsService.getSubscriptions({ limit: 100 }),
+                ]),
+                TOOL_TIMEOUT_MS,
+                'analyzeClients'
+              );
 
               const activeClients = clientsData.items.filter(c => c.has_active_subscription).length;
               const expiredClients = clientsData.items.filter(c => !c.has_active_subscription && c.last_visit_at).length;
@@ -150,12 +182,16 @@ export function useAIToolExecutor() {
             }
 
             case 'getStatistics': {
-              // Получаем реальную статистику
-              const [clients, subscriptions, payments] = await Promise.all([
-                clientsService.getClients({ limit: 1 }),
-                subscriptionsService.getSubscriptions({ limit: 100 }),
-                paymentsService.getPayments({ status: 'SUCCEEDED', limit: 100 }),
-              ]);
+              // Получаем реальную статистику с таймаутом
+              const [clients, subscriptions, payments] = await withTimeout(
+                Promise.all([
+                  clientsService.getClients({ limit: 1 }),
+                  subscriptionsService.getSubscriptions({ limit: 100 }),
+                  paymentsService.getPayments({ status: 'SUCCEEDED', limit: 100 }),
+                ]),
+                TOOL_TIMEOUT_MS,
+                'getStatistics'
+              );
 
               const totalRevenue = payments.items.reduce((sum, p) => sum + (p.amount || 0), 0);
               const activeSubscriptions = subscriptions.items.filter(s => s.status === 'ACTIVE').length;
@@ -240,7 +276,11 @@ export function useAIToolExecutor() {
                 params.client_id = args.client_id;
               }
 
-              const response = await subscriptionsService.getSubscriptions(params);
+              const response = await withTimeout(
+                subscriptionsService.getSubscriptions(params),
+                TOOL_TIMEOUT_MS,
+                'getSubscriptions'
+              );
 
               const summary = {
                 total: response.total,
@@ -273,7 +313,11 @@ export function useAIToolExecutor() {
 
             case 'getSubscriptionPlans': {
               const activeOnly = args.activeOnly !== false;
-              const plans = await subscriptionsService.getPlans(activeOnly);
+              const plans = await withTimeout(
+                subscriptionsService.getPlans(activeOnly),
+                TOOL_TIMEOUT_MS,
+                'getSubscriptionPlans'
+              );
 
               const formattedPlans = plans.map(p => ({
                 id: p.id,
@@ -304,7 +348,11 @@ export function useAIToolExecutor() {
                 params.client_id = args.client_id;
               }
 
-              const response = await paymentsService.getPayments(params);
+              const response = await withTimeout(
+                paymentsService.getPayments(params),
+                TOOL_TIMEOUT_MS,
+                'getPayments'
+              );
 
               const totalAmount = response.items
                 .filter(p => p.status === 'SUCCEEDED')
@@ -350,7 +398,11 @@ export function useAIToolExecutor() {
                 params.status = args.status as DocumentStatus;
               }
 
-              const response = await documentsService.getList(params);
+              const response = await withTimeout(
+                documentsService.getList(params),
+                TOOL_TIMEOUT_MS,
+                'getDocuments'
+              );
 
               const summary = {
                 total: response.total,
@@ -399,7 +451,11 @@ export function useAIToolExecutor() {
                 params.search = args.search;
               }
 
-              const response = await salonsService.getSalons(params);
+              const response = await withTimeout(
+                salonsService.getSalons(params),
+                TOOL_TIMEOUT_MS,
+                'getSalons'
+              );
 
               const summary = {
                 total: response.total,
@@ -430,19 +486,23 @@ export function useAIToolExecutor() {
             }
 
             case 'getFullDashboard': {
-              // Получаем все данные параллельно
-              const [clients, subscriptions, payments, plans] = await Promise.all([
-                args.includeClients !== false
-                  ? clientsService.getClients({ limit: 100 })
-                  : null,
-                args.includeSubscriptions !== false
-                  ? subscriptionsService.getSubscriptions({ limit: 100 })
-                  : null,
-                args.includePayments !== false
-                  ? paymentsService.getPayments({ limit: 100 })
-                  : null,
-                subscriptionsService.getPlans(true),
-              ]);
+              // Получаем все данные параллельно с таймаутом
+              const [clients, subscriptions, payments, plans] = await withTimeout(
+                Promise.all([
+                  args.includeClients !== false
+                    ? clientsService.getClients({ limit: 100 })
+                    : null,
+                  args.includeSubscriptions !== false
+                    ? subscriptionsService.getSubscriptions({ limit: 100 })
+                    : null,
+                  args.includePayments !== false
+                    ? paymentsService.getPayments({ limit: 100 })
+                    : null,
+                  subscriptionsService.getPlans(true),
+                ]),
+                TOOL_TIMEOUT_MS,
+                'getFullDashboard'
+              );
 
               const dashboard: Record<string, unknown> = {};
 

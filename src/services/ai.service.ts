@@ -275,11 +275,37 @@ export const aiService = {
     // Если переданная модель не поддерживает tools - используем дефолтную agent-модель
     const effectiveModelId = modelSupportsTools(modelId) ? modelId : DEFAULT_AGENT_MODEL;
 
-    // Приводим сообщения к формату OpenAI
-    const formattedMessages = messages.map((m) => ({
-      role: m.role as 'system' | 'user' | 'assistant',
-      content: m.content,
-    }));
+    // Приводим сообщения к формату OpenAI (поддерживаем role: 'tool')
+    const formattedMessages = messages.map((m) => {
+      // Сообщения с результатами инструментов
+      if (m.role === 'tool') {
+        return {
+          role: 'tool' as const,
+          tool_call_id: (m as unknown as { tool_call_id: string }).tool_call_id,
+          content: m.content || '',
+        };
+      }
+
+      // Обычные сообщения (user/assistant)
+      const baseMessage: { role: string; content: string; tool_calls?: unknown[] } = {
+        role: m.role as 'system' | 'user' | 'assistant',
+        content: m.content || '',
+      };
+
+      // Добавляем tool_calls для assistant сообщений
+      if (m.tool_calls && Array.isArray(m.tool_calls) && m.tool_calls.length > 0) {
+        baseMessage.tool_calls = m.tool_calls.map((tc) => ({
+          id: tc.id,
+          type: 'function',
+          function: {
+            name: tc.function.name,
+            arguments: tc.function.arguments,
+          },
+        }));
+      }
+
+      return baseMessage;
+    });
 
     // OpenRouter поддерживает tools и plugins (не все в типах OpenAI SDK)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
