@@ -25,3 +25,10 @@ export * from './payment';
 export * from './auth';
 export * from './salon';
 export * from './document';
+export * from './appointment';
+export * from './staff';
+
+// AI Types
+export * from './ai';
+export * from './ai-tools';
+export * from './broadcast';

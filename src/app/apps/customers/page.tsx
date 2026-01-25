@@ -20,9 +20,13 @@ import {
 } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 import {
+  IconAlertCircle,
+  IconAlertTriangle,
+  IconCrown,
   IconDotsVertical,
   IconEdit,
   IconEye,
+  IconGhost,
   IconLayoutGrid,
   IconList,
   IconMoodEmpty,
@@ -30,16 +34,52 @@ import {
   IconRefresh,
   IconSearch,
   IconUserCheck,
+  IconUsers,
   IconUserX,
 } from '@tabler/icons-react';
 
 import { ErrorAlert, PageHeader, Surface } from '@/components';
 import { useClients } from '@/lib/hooks/useBeautySlot';
 import { clientsService } from '@/services';
-import type { Client } from '@/types';
+import type { Client, ClientFilterStatus, ClientsListParams } from '@/types';
 import { PATH_DASHBOARD } from '@/routes';
 
 type ViewMode = 'grid' | 'table';
+
+const CLIENT_FILTERS: Array<{
+  value: ClientFilterStatus;
+  label: string;
+  icon: React.ComponentType<{ size?: number }>;
+  color: string;
+}> = [
+  { value: 'ALL', label: 'Все', icon: IconUsers, color: 'blue' },
+  { value: 'VIP', label: 'VIP', icon: IconCrown, color: 'yellow' },
+  { value: 'RISK', label: 'Риск', icon: IconAlertTriangle, color: 'orange' },
+  { value: 'PROBLEM', label: 'Проблемные', icon: IconAlertCircle, color: 'red' },
+  { value: 'NO_SHOW', label: 'Неявки', icon: IconUserX, color: 'pink' },
+  { value: 'LOST', label: 'Потерянные', icon: IconGhost, color: 'gray' },
+];
+
+const STATUS_COLORS: Record<string, string> = {
+  REGULAR: 'blue',
+  VIP: 'yellow',
+  PROBLEM: 'red',
+  LOST: 'gray',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  REGULAR: 'Обычный',
+  VIP: 'VIP',
+  PROBLEM: 'Проблемный',
+  LOST: 'Потерянный',
+};
+
+const RISK_COLORS: Record<string, string> = {
+  LOW: 'green',
+  MEDIUM: 'yellow',
+  HIGH: 'orange',
+  CRITICAL: 'red',
+};
 
 const items = [
   { title: 'Дашборд', href: PATH_DASHBOARD.default },
@@ -116,22 +156,65 @@ function ClientCard({
             {client.email}
           </Text>
         )}
-        <Group gap="xs">
+
+        {/* Score (ИВК) */}
+        {client.score !== undefined && (
+          <Group gap="xs">
+            <Text size="xs" c="dimmed">ИВК:</Text>
+            <Badge
+              color={client.score >= 70 ? 'green' : client.score >= 40 ? 'yellow' : 'red'}
+              variant="filled"
+              size="sm"
+            >
+              {client.score}
+            </Badge>
+          </Group>
+        )}
+
+        <Group gap="xs" wrap="wrap">
+          {/* Client Status Badge */}
+          {client.client_status && client.client_status !== 'REGULAR' && (
+            <Badge color={STATUS_COLORS[client.client_status] || 'gray'} variant="light" size="sm">
+              {STATUS_LABELS[client.client_status] || client.client_status}
+            </Badge>
+          )}
+
+          {/* Risk Level Badge */}
+          {client.risk_level && client.risk_level !== 'LOW' && (
+            <Badge color={RISK_COLORS[client.risk_level] || 'gray'} variant="outline" size="sm">
+              Риск: {client.risk_level}
+            </Badge>
+          )}
+
           {client.has_active_subscription ? (
-            <Badge color="green" variant="light">
-              Активная подписка
+            <Badge color="green" variant="light" size="sm">
+              Подписка
             </Badge>
           ) : (
-            <Badge color="gray" variant="light">
+            <Badge color="gray" variant="light" size="sm">
               Без подписки
             </Badge>
           )}
           {client.is_blocked && (
-            <Badge color="red" variant="light">
+            <Badge color="red" variant="light" size="sm">
               Заблокирован
             </Badge>
           )}
         </Group>
+
+        <Group gap="md">
+          {client.visits_count !== undefined && (
+            <Text size="xs" c="dimmed">
+              Визиты: {client.visits_count}
+            </Text>
+          )}
+          {client.no_show_count !== undefined && client.no_show_count > 0 && (
+            <Text size="xs" c="red">
+              Неявки: {client.no_show_count}
+            </Text>
+          )}
+        </Group>
+
         {client.last_visit_at && (
           <Text size="xs" c="dimmed">
             Последний визит: {new Date(client.last_visit_at).toLocaleDateString('ru-RU')}
@@ -158,7 +241,10 @@ function ClientsTableView({
           <tr style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}>
             <th style={{ padding: '12px', textAlign: 'left' }}>Клиент</th>
             <th style={{ padding: '12px', textAlign: 'left' }}>Телефон</th>
-            <th style={{ padding: '12px', textAlign: 'left' }}>Email</th>
+            <th style={{ padding: '12px', textAlign: 'center' }}>ИВК</th>
+            <th style={{ padding: '12px', textAlign: 'left' }}>Статус</th>
+            <th style={{ padding: '12px', textAlign: 'center' }}>Визиты</th>
+            <th style={{ padding: '12px', textAlign: 'center' }}>Неявки</th>
             <th style={{ padding: '12px', textAlign: 'left' }}>Подписка</th>
             <th style={{ padding: '12px', textAlign: 'left' }}>Последний визит</th>
             <th style={{ padding: '12px', textAlign: 'right' }}>Действия</th>
@@ -173,7 +259,7 @@ function ClientsTableView({
                     src={client.photo_url}
                     size="sm"
                     radius="xl"
-                    color={client.has_active_subscription ? 'green' : 'gray'}
+                    color={client.client_status === 'VIP' ? 'yellow' : client.has_active_subscription ? 'green' : 'gray'}
                   >
                     {client.name?.charAt(0).toUpperCase()}
                   </Avatar>
@@ -188,9 +274,39 @@ function ClientsTableView({
                   <Text size="sm">{client.phone}</Text>
                 </Group>
               </td>
+              <td style={{ padding: '12px', textAlign: 'center' }}>
+                {client.score !== undefined ? (
+                  <Badge
+                    color={client.score >= 70 ? 'green' : client.score >= 40 ? 'yellow' : 'red'}
+                    variant="filled"
+                    size="sm"
+                  >
+                    {client.score}
+                  </Badge>
+                ) : (
+                  <Text size="sm" c="dimmed">—</Text>
+                )}
+              </td>
               <td style={{ padding: '12px' }}>
-                <Text size="sm" c={client.email ? undefined : 'dimmed'}>
-                  {client.email || '—'}
+                <Group gap="xs">
+                  {client.client_status && (
+                    <Badge color={STATUS_COLORS[client.client_status] || 'gray'} variant="light" size="sm">
+                      {STATUS_LABELS[client.client_status] || client.client_status}
+                    </Badge>
+                  )}
+                  {client.risk_level && client.risk_level !== 'LOW' && (
+                    <Badge color={RISK_COLORS[client.risk_level] || 'gray'} variant="outline" size="xs">
+                      {client.risk_level}
+                    </Badge>
+                  )}
+                </Group>
+              </td>
+              <td style={{ padding: '12px', textAlign: 'center' }}>
+                <Text size="sm">{client.visits_count ?? '—'}</Text>
+              </td>
+              <td style={{ padding: '12px', textAlign: 'center' }}>
+                <Text size="sm" c={client.no_show_count && client.no_show_count > 0 ? 'red' : undefined}>
+                  {client.no_show_count ?? '—'}
                 </Text>
               </td>
               <td style={{ padding: '12px' }}>
@@ -242,16 +358,47 @@ function Customers() {
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebouncedValue(search, 300);
   const [importing, setImporting] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<ClientFilterStatus>('ALL');
+
+  // Преобразование UI фильтров в параметры API
+  const getFilterParams = (): ClientsListParams => {
+    const params: ClientsListParams = {
+      search: debouncedSearch || undefined,
+      limit: 100,
+    };
+
+    switch (statusFilter) {
+      case 'VIP':
+        params.client_status = 'VIP';
+        break;
+      case 'PROBLEM':
+        params.client_status = 'PROBLEM';
+        break;
+      case 'LOST':
+        params.client_status = 'LOST';
+        break;
+      case 'RISK':
+        // Фильтр по уровню риска (MEDIUM, HIGH, CRITICAL)
+        params.risk_level = 'HIGH';
+        break;
+      case 'NO_SHOW':
+        // Фильтр по клиентам с неявками
+        params.max_no_shows = 999; // Показать всех с неявками
+        params.min_visits = 0;
+        break;
+      default:
+        break;
+    }
+
+    return params;
+  };
 
   const {
     data: clientsData,
     loading: clientsLoading,
     error: clientsError,
     refetch: refetchClients,
-  } = useClients({
-    search: debouncedSearch || undefined,
-    limit: 100,
-  });
+  } = useClients(getFilterParams());
 
   const handleToggleSubscription = async (client: Client) => {
     try {
@@ -399,6 +546,26 @@ function Customers() {
           </Group>
         }
       />
+
+      {/* Filter Buttons */}
+      <Group mb="md" gap="xs">
+        {CLIENT_FILTERS.map((filter) => {
+          const Icon = filter.icon;
+          const isActive = statusFilter === filter.value;
+          return (
+            <Button
+              key={filter.value}
+              variant={isActive ? 'filled' : 'light'}
+              color={isActive ? filter.color : 'gray'}
+              size="sm"
+              leftSection={<Icon size={16} />}
+              onClick={() => setStatusFilter(filter.value)}
+            >
+              {filter.label}
+            </Button>
+          );
+        })}
+      </Group>
 
       {clientsData && (
         <Group mb="md" gap="xs">

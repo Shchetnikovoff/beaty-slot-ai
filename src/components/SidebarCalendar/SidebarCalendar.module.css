@@ -1,0 +1,59 @@
+.root {
+  padding: var(--mantine-spacing-md);
+  border-bottom: 1px solid light-dark(
+    var(--mantine-color-gray-2),
+    var(--mantine-color-dark-4)
+  );
+}
+
+.calendar {
+  width: 100%;
+}
+
+.calendar :global(.mantine-Calendar-calendarHeader) {
+  max-width: 100%;
+}
+
+.calendar :global(.mantine-Calendar-month) {
+  width: 100%;
+}
+
+.calendar :global(.mantine-Calendar-monthCell) {
+  text-align: center;
+}
+
+/* Для colored/gradient sidebar */
+:global([data-variant="colored"]) .root,
+:global([data-variant="gradient"]) .root {
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+:global([data-variant="colored"]) .root :global(.mantine-Calendar-day),
+:global([data-variant="gradient"]) .root :global(.mantine-Calendar-day) {
+  color: white;
+}
+
+:global([data-variant="colored"]) .root :global(.mantine-Calendar-weekday),
+:global([data-variant="gradient"]) .root :global(.mantine-Calendar-weekday) {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+:global([data-variant="colored"]) .root :global(.mantine-Calendar-calendarHeaderLevel),
+:global([data-variant="gradient"]) .root :global(.mantine-Calendar-calendarHeaderLevel) {
+  color: white;
+}
+
+:global([data-variant="colored"]) .root :global(.mantine-Calendar-calendarHeaderControl),
+:global([data-variant="gradient"]) .root :global(.mantine-Calendar-calendarHeaderControl) {
+  color: white;
+}
+
+:global([data-variant="colored"]) .root :global(.mantine-Calendar-day[data-selected]),
+:global([data-variant="gradient"]) .root :global(.mantine-Calendar-day[data-selected]) {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+:global([data-variant="colored"]) .root :global(.mantine-Calendar-day:hover),
+:global([data-variant="gradient"]) .root :global(.mantine-Calendar-day:hover) {
+  background-color: rgba(255, 255, 255, 0.1);
+}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { clientsService, subscriptionsService, paymentsService, documentsService, salonsService } from '@/services';
+import { clientsService, subscriptionsService, paymentsService, documentsService, salonsService, appointmentsService, staffService, broadcastsService } from '@/services';
 import type {
   Client,
   ClientsListParams,
@@ -20,6 +20,18 @@ import type {
   SalonsListParams,
   SalonsListResponse,
   SuperadminStats,
+  Appointment,
+  AppointmentsListParams,
+  AppointmentsListResponse,
+  AppointmentsTodayStats,
+  Staff,
+  StaffListParams,
+  StaffListResponse,
+  StaffTodayStats,
+  Broadcast,
+  BroadcastsListParams,
+  BroadcastsListResponse,
+  BroadcastStats,
 } from '@/types';
 
 interface UseQueryResult<T> {
@@ -329,6 +341,269 @@ export function useSuperadminStats(): UseQueryResult<SuperadminStats> {
       setData(result);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch stats'));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  return { data, loading, error, refetch: fetch };
+}
+
+// Hook for appointments list
+export function useAppointments(params?: AppointmentsListParams): UseQueryResult<AppointmentsListResponse> {
+  const [data, setData] = useState<AppointmentsListResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetch = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await appointmentsService.getAppointments(params);
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch appointments'));
+    } finally {
+      setLoading(false);
+    }
+  }, [params?.skip, params?.limit, params?.status, params?.staff_id, params?.client_id, params?.date_from, params?.date_to]);
+
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  return { data, loading, error, refetch: fetch };
+}
+
+// Hook for single appointment
+export function useAppointment(id: number | null): UseQueryResult<Appointment> {
+  const [data, setData] = useState<Appointment | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetch = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await appointmentsService.getAppointment(id);
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch appointment'));
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  return { data, loading, error, refetch: fetch };
+}
+
+// Hook for today's appointments stats
+export function useAppointmentsTodayStats(): UseQueryResult<AppointmentsTodayStats> {
+  const [data, setData] = useState<AppointmentsTodayStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetch = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await appointmentsService.getTodayStats();
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch appointments stats'));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  return { data, loading, error, refetch: fetch };
+}
+
+// Hook for appointments stats by date
+export function useAppointmentsStats(date: string): UseQueryResult<AppointmentsTodayStats> {
+  const [data, setData] = useState<AppointmentsTodayStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetch = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await appointmentsService.getStats(date);
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch appointments stats'));
+    } finally {
+      setLoading(false);
+    }
+  }, [date]);
+
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  return { data, loading, error, refetch: fetch };
+}
+
+// Hook for staff list
+export function useStaff(params?: StaffListParams): UseQueryResult<StaffListResponse> {
+  const [data, setData] = useState<StaffListResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetch = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await staffService.getStaff(params);
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch staff'));
+    } finally {
+      setLoading(false);
+    }
+  }, [params?.skip, params?.limit, params?.role, params?.is_active, params?.search]);
+
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  return { data, loading, error, refetch: fetch };
+}
+
+// Hook for single staff member
+export function useStaffMember(id: number | null): UseQueryResult<Staff> {
+  const [data, setData] = useState<Staff | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetch = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await staffService.getStaffMember(id);
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch staff member'));
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  return { data, loading, error, refetch: fetch };
+}
+
+// Hook for today's staff stats
+export function useStaffTodayStats(): UseQueryResult<StaffTodayStats> {
+  const [data, setData] = useState<StaffTodayStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetch = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await staffService.getTodayStats();
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch staff stats'));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  return { data, loading, error, refetch: fetch };
+}
+
+// Hook for broadcasts list
+export function useBroadcasts(params?: BroadcastsListParams): UseQueryResult<BroadcastsListResponse> {
+  const [data, setData] = useState<BroadcastsListResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetch = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await broadcastsService.getList(params);
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch broadcasts'));
+    } finally {
+      setLoading(false);
+    }
+  }, [params?.skip, params?.limit, params?.status]);
+
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  return { data, loading, error, refetch: fetch };
+}
+
+// Hook for single broadcast
+export function useBroadcast(id: number | null): UseQueryResult<Broadcast> {
+  const [data, setData] = useState<Broadcast | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetch = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await broadcastsService.getById(id);
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch broadcast'));
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  return { data, loading, error, refetch: fetch };
+}
+
+// Hook for broadcasts stats
+export function useBroadcastsStats(): UseQueryResult<BroadcastStats> {
+  const [data, setData] = useState<BroadcastStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetch = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await broadcastsService.getStats();
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch broadcasts stats'));
     } finally {
       setLoading(false);
     }

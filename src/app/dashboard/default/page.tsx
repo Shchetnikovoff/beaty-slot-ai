@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+
 import {
   Badge,
   Button,
@@ -19,16 +21,24 @@ import {
 } from '@mantine/core';
 import {
   IconArrowUpRight,
+  IconCalendar,
+  IconCalendarEvent,
+  IconCheck,
   IconChevronRight,
+  IconClock,
   IconCoin,
   IconCreditCard,
   IconUserCheck,
   IconUsers,
+  IconUsersGroup,
+  IconX,
 } from '@tabler/icons-react';
 import Link from 'next/link';
 
 import { PageHeader, Surface } from '@/components';
-import { useClients, useSubscriptions, usePayments } from '@/lib/hooks/useBeautySlot';
+import { useDashboardDate } from '@/contexts/dashboard-date';
+import { usePageData } from '@/contexts/page-data';
+import { useClients, useSubscriptions, usePayments, useAppointmentsStats, useStaffTodayStats } from '@/lib/hooks/useBeautySlot';
 import { PATH_APPS } from '@/routes';
 
 const PAPER_PROPS: PaperProps = {
@@ -248,7 +258,149 @@ function RevenueProgress({ payments, loading }: { payments: any[]; loading: bool
   );
 }
 
+function AppointmentsWidget({
+  stats,
+  loading,
+  dateLabel,
+}: {
+  stats: { total: number; confirmed: number; pending: number; cancelled: number; no_show: number; completed: number } | null;
+  loading: boolean;
+  dateLabel?: string;
+}) {
+  if (loading) {
+    return <Skeleton height={180} />;
+  }
+
+  const data = stats || { total: 0, confirmed: 0, pending: 0, cancelled: 0, no_show: 0, completed: 0 };
+
+  return (
+    <Stack gap="md">
+      <Group justify="space-between">
+        <Group gap="xs">
+          <ThemeIcon size="lg" radius="md" variant="light" color="blue">
+            <IconCalendarEvent size={20} />
+          </ThemeIcon>
+          <div>
+            <Text size="xl" fw={700}>{data.total}</Text>
+            <Text size="xs" c="dimmed">{dateLabel || 'записей'}</Text>
+          </div>
+        </Group>
+      </Group>
+
+      <SimpleGrid cols={2} spacing="sm">
+        <Paper p="xs" radius="md" withBorder>
+          <Group gap="xs">
+            <ThemeIcon size="sm" radius="xl" variant="light" color="green">
+              <IconCheck size={12} />
+            </ThemeIcon>
+            <div>
+              <Text size="lg" fw={600}>{data.confirmed}</Text>
+              <Text size="xs" c="dimmed">Подтверждённые</Text>
+            </div>
+          </Group>
+        </Paper>
+        <Paper p="xs" radius="md" withBorder>
+          <Group gap="xs">
+            <ThemeIcon size="sm" radius="xl" variant="light" color="yellow">
+              <IconClock size={12} />
+            </ThemeIcon>
+            <div>
+              <Text size="lg" fw={600}>{data.pending}</Text>
+              <Text size="xs" c="dimmed">Ожидают</Text>
+            </div>
+          </Group>
+        </Paper>
+        <Paper p="xs" radius="md" withBorder>
+          <Group gap="xs">
+            <ThemeIcon size="sm" radius="xl" variant="light" color="red">
+              <IconX size={12} />
+            </ThemeIcon>
+            <div>
+              <Text size="lg" fw={600}>{data.cancelled}</Text>
+              <Text size="xs" c="dimmed">Отменены</Text>
+            </div>
+          </Group>
+        </Paper>
+        <Paper p="xs" radius="md" withBorder>
+          <Group gap="xs">
+            <ThemeIcon size="sm" radius="xl" variant="light" color="gray">
+              <IconUsers size={12} />
+            </ThemeIcon>
+            <div>
+              <Text size="lg" fw={600}>{data.no_show}</Text>
+              <Text size="xs" c="dimmed">Неявки</Text>
+            </div>
+          </Group>
+        </Paper>
+      </SimpleGrid>
+
+      <Button
+        variant="light"
+        fullWidth
+        component={Link}
+        href={PATH_APPS.calendar}
+        rightSection={<IconChevronRight size={16} />}
+      >
+        Открыть расписание
+      </Button>
+    </Stack>
+  );
+}
+
+function StaffWidget({
+  stats,
+  loading,
+}: {
+  stats: { total: number; active_today: number; appointments_today: number } | null;
+  loading: boolean;
+}) {
+  if (loading) {
+    return <Skeleton height={120} />;
+  }
+
+  const data = stats || { total: 0, active_today: 0, appointments_today: 0 };
+
+  return (
+    <Stack gap="md">
+      <Group justify="space-between">
+        <Group gap="xs">
+          <ThemeIcon size="lg" radius="md" variant="light" color="violet">
+            <IconUsersGroup size={20} />
+          </ThemeIcon>
+          <div>
+            <Text size="xl" fw={700}>{data.total}</Text>
+            <Text size="xs" c="dimmed">всего мастеров</Text>
+          </div>
+        </Group>
+      </Group>
+
+      <Group grow>
+        <Paper p="sm" radius="md" withBorder>
+          <Text size="lg" fw={600} ta="center">{data.active_today}</Text>
+          <Text size="xs" c="dimmed" ta="center">Работают сегодня</Text>
+        </Paper>
+        <Paper p="sm" radius="md" withBorder>
+          <Text size="lg" fw={600} ta="center">{data.appointments_today}</Text>
+          <Text size="xs" c="dimmed" ta="center">Записей</Text>
+        </Paper>
+      </Group>
+
+      <Button
+        variant="light"
+        fullWidth
+        component={Link}
+        href={PATH_APPS.team}
+        rightSection={<IconChevronRight size={16} />}
+      >
+        Команда
+      </Button>
+    </Stack>
+  );
+}
+
 function Page() {
+  const { setPageData, clearPageData } = usePageData();
+  const { dateParam, selectedDate, isToday } = useDashboardDate();
   const { data: clientsData, loading: clientsLoading } = useClients({ limit: 10 });
   const { data: subscriptionsData, loading: subscriptionsLoading } = useSubscriptions({
     status: 'ACTIVE',
@@ -259,12 +411,71 @@ function Page() {
     status: 'SUCCEEDED',
     limit: 100,
   });
+  const { data: appointmentsStats, loading: appointmentsLoading } = useAppointmentsStats(dateParam);
+  const { data: staffStats, loading: staffLoading } = useStaffTodayStats();
 
   const totalClients = clientsData?.total || 0;
   const activeSubscriptions = subscriptionsData?.total || 0;
   const totalSubscriptions = allSubscriptions?.total || 0;
   const totalRevenue =
     paymentsData?.items?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+  const paymentsCount = paymentsData?.items?.length || 0;
+
+  // Передаём данные страницы в AI контекст
+  useEffect(() => {
+    const isLoading = clientsLoading || subscriptionsLoading || allSubsLoading || paymentsLoading;
+
+    if (!isLoading) {
+      setPageData({
+        pageType: 'dashboard',
+        stats: [
+          {
+            title: 'Всего клиентов',
+            value: totalClients,
+          },
+          {
+            title: 'Активные подписки',
+            value: activeSubscriptions,
+          },
+          {
+            title: 'Выручка',
+            value: `${totalRevenue.toLocaleString('ru-RU')} ₽`,
+          },
+          {
+            title: 'Платежей',
+            value: paymentsCount,
+          },
+        ],
+        tableData: {
+          rows: clientsData?.items || [],
+          total: totalClients,
+        },
+        metadata: {
+          subscriptionRate: totalSubscriptions > 0
+            ? Math.round((activeSubscriptions / totalSubscriptions) * 100)
+            : 0,
+          recentPayments: paymentsData?.items?.slice(0, 5) || [],
+        },
+      });
+    }
+
+    // Очищаем при размонтировании
+    return () => clearPageData();
+  }, [
+    clientsLoading,
+    subscriptionsLoading,
+    allSubsLoading,
+    paymentsLoading,
+    totalClients,
+    activeSubscriptions,
+    totalRevenue,
+    paymentsCount,
+    totalSubscriptions,
+    clientsData?.items,
+    paymentsData?.items,
+    setPageData,
+    clearPageData,
+  ]);
 
   return (
     <>
@@ -299,7 +510,7 @@ function Page() {
             />
             <StatCard
               title="Платежей"
-              value={paymentsData?.items?.length || 0}
+              value={paymentsCount}
               icon={<IconCreditCard size={24} />}
               color="violet"
               loading={paymentsLoading}
@@ -307,6 +518,34 @@ function Page() {
           </SimpleGrid>
 
           <Grid gutter={{ base: 5, xs: 'md', md: 'md', lg: 'lg', xl: 'xl' }}>
+            {/* Записи на выбранную дату */}
+            <Grid.Col span={{ base: 12, md: 6 }}>
+              <Surface {...PAPER_PROPS}>
+                <Title order={4} mb="md">
+                  Записи {isToday ? 'сегодня' : `на ${selectedDate.toLocaleDateString('ru-RU')}`}
+                </Title>
+                <AppointmentsWidget
+                  stats={appointmentsStats}
+                  loading={appointmentsLoading}
+                  dateLabel={isToday ? 'записей сегодня' : `записей на ${selectedDate.toLocaleDateString('ru-RU')}`}
+                />
+              </Surface>
+            </Grid.Col>
+
+            {/* Финансы */}
+            <Grid.Col span={{ base: 12, md: 6 }}>
+              <Surface {...PAPER_PROPS}>
+                <Title order={4} mb="md">
+                  Финансы
+                </Title>
+                <RevenueProgress
+                  payments={paymentsData?.items || []}
+                  loading={paymentsLoading}
+                />
+              </Surface>
+            </Grid.Col>
+
+            {/* Последние клиенты */}
             <Grid.Col span={{ base: 12, md: 8 }}>
               <Surface {...PAPER_PROPS}>
                 <Group justify="space-between" mb="md">
@@ -327,6 +566,7 @@ function Page() {
               </Surface>
             </Grid.Col>
 
+            {/* Подписки */}
             <Grid.Col span={{ base: 12, md: 4 }}>
               <Surface {...PAPER_PROPS}>
                 <Title order={4} mb="md">
@@ -334,24 +574,26 @@ function Page() {
                 </Title>
                 <SubscriptionStats
                   active={activeSubscriptions}
-                  total={totalSubscriptions || totalClients}
+                  total={totalSubscriptions ?? totalClients}
                   loading={subscriptionsLoading || allSubsLoading}
                 />
               </Surface>
             </Grid.Col>
 
+            {/* Мастера */}
             <Grid.Col span={{ base: 12, md: 6 }}>
               <Surface {...PAPER_PROPS}>
                 <Title order={4} mb="md">
-                  Финансы
+                  Команда
                 </Title>
-                <RevenueProgress
-                  payments={paymentsData?.items || []}
-                  loading={paymentsLoading}
+                <StaffWidget
+                  stats={staffStats}
+                  loading={staffLoading}
                 />
               </Surface>
             </Grid.Col>
 
+            {/* Быстрые действия */}
             <Grid.Col span={{ base: 12, md: 6 }}>
               <Surface {...PAPER_PROPS}>
                 <Title order={4} mb="md">
@@ -390,7 +632,7 @@ function Page() {
                     fullWidth
                     component={Link}
                     href={PATH_APPS.calendar}
-                    leftSection={<IconChevronRight size={18} />}
+                    leftSection={<IconCalendar size={18} />}
                   >
                     Календарь записей
                   </Button>

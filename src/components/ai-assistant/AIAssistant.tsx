@@ -33,29 +33,22 @@ import {
   IconChevronDown,
   IconChevronUp,
   IconMessageCircle,
-  IconPlayerPlay,
   IconSend,
   IconSparkles,
   IconTool,
+  IconTrash,
   IconUsers,
   IconX,
 } from '@tabler/icons-react';
 
+import { useChatHistory, type ChatMessage } from '@/contexts/chat-history';
+import { usePageData } from '@/contexts/page-data';
 import { useAIToolExecutor } from '@/hooks/useAIToolExecutor';
 import { AI_MODELS, AGENT_MODELS, CHAT_MODELS, type AIModelId } from '@/services/ai.service';
-import type { AIMessage, AIAgentResponse } from '@/types/ai';
-import type { AIAppContext, AIToolCall } from '@/types/ai-tools';
+import type { AIAgentResponse } from '@/types/ai';
+import type { AIAppContext } from '@/types/ai-tools';
 
 import classes from './AIAssistant.module.css';
-
-interface ChatMessage extends AIMessage {
-  id: string;
-  timestamp: Date;
-  reasoning?: string;
-  toolCalls?: AIToolCall[];
-  toolResults?: Array<{ tool_call_id: string; content: string; success: boolean }>;
-  isToolExecution?: boolean;
-}
 
 const QUICK_ACTIONS = [
   {
@@ -96,27 +89,45 @@ export function AIAssistant() {
   const isDark = colorScheme === 'dark';
   const pathname = usePathname();
   const { executeTools } = useAIToolExecutor();
+  const { pageData } = usePageData();
+
+  // Глобальное состояние истории чата (сохраняется между переходами и в localStorage)
+  const {
+    messages,
+    addMessage,
+    clearHistory,
+    isLoading,
+    setIsLoading,
+    error,
+    setError,
+  } = useChatHistory();
 
   const [isOpen, { toggle, close }] = useDisclosure(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isExecutingTools, setIsExecutingTools] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [expandedReasoning, setExpandedReasoning] = useState<string | null>(
     null
   );
-  const [expandedTools, setExpandedTools] = useState<string | null>(null);
   // По умолчанию выбираем первую модель с поддержкой tools для agent mode
   const [selectedModel, setSelectedModel] = useState<AIModelId>(AGENT_MODELS[0].id);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Контекст приложения для AI агента
+  // Контекст приложения для AI агента (теперь включает данные страницы)
   const getAppContext = useCallback((): AIAppContext => ({
     currentPage: pathname || '/dashboard/default',
     userRole: 'admin', // TODO: получать из реального контекста авторизации
-  }), [pathname]);
+    pageData: pageData ? {
+      pageType: pageData.pageType,
+      stats: pageData.stats,
+      tableData: pageData.tableData ? {
+        rows: pageData.tableData.rows,
+        total: pageData.tableData.total,
+        selectedIds: pageData.tableData.selectedIds,
+        filters: pageData.tableData.filters,
+      } : undefined,
+      metadata: pageData.metadata,
+    } : undefined,
+  }), [pathname, pageData]);
 
   // Горячие клавиши
   useHotkeys([
@@ -141,71 +152,39 @@ export function AIAssistant() {
     }
   }, [isOpen]);
 
-  // Функция для продолжения разговора после выполнения инструментов
-  const continueAfterToolExecution = useCallback(
-    async (
-      currentMessages: ChatMessage[],
-      toolResults: Array<{ tool_call_id: string; content: string }>
-    ) => {
-      try {
-        const response = await fetch('/api/ai/agent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: currentMessages.map((m) => ({
-              role: m.role,
-              content: m.content,
-              tool_calls: m.toolCalls,
-            })),
-            toolResults,
-            context: getAppContext(),
-            model: selectedModel,
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Ошибка сервера');
-        }
-
-        const data: AIAgentResponse = await response.json();
-        return data;
-      } catch (err) {
-        throw err;
-      }
-    },
-    [getAppContext, selectedModel]
-  );
-
+  /**
+   * Silent Mode: Отправка сообщения с тихим выполнением инструментов
+   * Пользователь видит только финальный ответ, без промежуточных шагов
+   * История сохраняется глобально и персистентно
+   */
   const sendMessage = useCallback(
     async (content: string) => {
-      if (!content.trim() || isLoading || isExecutingTools) return;
+      if (!content.trim() || isLoading) return;
 
-      const userMessage: ChatMessage = {
-        id: `user-${Date.now()}`,
+      // Добавляем сообщение пользователя через контекст
+      const userMessage = addMessage({
         role: 'user',
         content: content.trim(),
-        timestamp: new Date(),
-      };
+      });
 
-      setMessages((prev) => [...prev, userMessage]);
       setInput('');
       setIsLoading(true);
       setError(null);
 
       try {
-        // Используем agent endpoint вместо простого chat
-        const response = await fetch('/api/ai/agent', {
+        // Внутренняя история для multi-turn tool execution
+        let internalMessages = [...messages, userMessage].map((m) => ({
+          role: m.role,
+          content: m.content,
+          tool_calls: m.toolCalls,
+        }));
+
+        // Первый запрос к AI
+        let response = await fetch('/api/ai/agent', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            messages: [...messages, userMessage].map((m) => ({
-              role: m.role,
-              content: m.content,
-              tool_calls: m.toolCalls,
-            })),
+            messages: internalMessages,
             context: getAppContext(),
             model: selectedModel,
           }),
@@ -216,74 +195,67 @@ export function AIAssistant() {
           throw new Error(errorData.error || 'Ошибка сервера');
         }
 
-        const data: AIAgentResponse = await response.json();
+        let data: AIAgentResponse = await response.json();
 
-        // Создаём сообщение ассистента
-        const assistantMessage: ChatMessage = {
-          id: `assistant-${Date.now()}`,
+        // SILENT MODE: Выполняем инструменты в цикле, пока они есть
+        // Пользователь не видит промежуточные шаги
+        const MAX_TOOL_ITERATIONS = 5; // Защита от бесконечного цикла
+        let iterations = 0;
+
+        while (data.requiresAction && data.toolCalls && data.toolCalls.length > 0 && iterations < MAX_TOOL_ITERATIONS) {
+          iterations++;
+
+          // Тихо выполняем инструменты с контекстом приложения
+          const appContext = getAppContext();
+          const toolResults = await executeTools(data.toolCalls, appContext);
+
+          // Добавляем результаты во внутреннюю историю
+          internalMessages = [
+            ...internalMessages,
+            {
+              role: 'assistant' as const,
+              content: data.content || '',
+              tool_calls: data.toolCalls,
+            },
+          ];
+
+          // Продолжаем разговор с результатами инструментов
+          response = await fetch('/api/ai/agent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              messages: internalMessages,
+              toolResults: toolResults.map((r) => ({
+                tool_call_id: r.tool_call_id,
+                content: r.content,
+              })),
+              context: getAppContext(),
+              model: selectedModel,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Ошибка сервера');
+          }
+
+          data = await response.json();
+        }
+
+        // Показываем ТОЛЬКО финальный ответ пользователю через контекст
+        // БЕЗ промежуточных сообщений и tool calls
+        addMessage({
           role: 'assistant',
           content: data.content,
           reasoning: data.reasoning,
-          toolCalls: data.toolCalls,
-          timestamp: new Date(),
-        };
-
-        const updatedMessages = [...messages, userMessage, assistantMessage];
-        setMessages(updatedMessages);
-
-        // Если есть вызовы инструментов - выполняем их
-        if (data.requiresAction && data.toolCalls && data.toolCalls.length > 0) {
-          setIsExecutingTools(true);
-          setIsLoading(false);
-
-          // Выполняем все инструменты
-          const toolResults = await executeTools(data.toolCalls);
-
-          // Добавляем сообщение о выполнении инструментов
-          const toolExecutionMessage: ChatMessage = {
-            id: `tools-${Date.now()}`,
-            role: 'assistant',
-            content: '🔧 Выполняю действия...',
-            toolResults: toolResults,
-            isToolExecution: true,
-            timestamp: new Date(),
-          };
-
-          const messagesWithTools = [...updatedMessages, toolExecutionMessage];
-          setMessages(messagesWithTools);
-
-          // Продолжаем разговор с результатами инструментов
-          setIsLoading(true);
-          const continuationData = await continueAfterToolExecution(
-            messagesWithTools,
-            toolResults.map((r) => ({ tool_call_id: r.tool_call_id, content: r.content }))
-          );
-
-          // Добавляем финальный ответ
-          const finalMessage: ChatMessage = {
-            id: `assistant-final-${Date.now()}`,
-            role: 'assistant',
-            content: continuationData.content,
-            reasoning: continuationData.reasoning,
-            toolCalls: continuationData.toolCalls,
-            timestamp: new Date(),
-          };
-
-          setMessages((prev) => [...prev, finalMessage]);
-
-          // Если опять нужны инструменты - можно продолжить рекурсивно
-          // (для простоты пока ограничиваем одним уровнем)
-
-          setIsExecutingTools(false);
-        }
+        });
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Произошла ошибка');
       } finally {
         setIsLoading(false);
-        setIsExecutingTools(false);
       }
     },
-    [messages, isLoading, isExecutingTools, selectedModel, getAppContext, executeTools, continueAfterToolExecution]
+    [messages, isLoading, selectedModel, getAppContext, executeTools, addMessage, setIsLoading, setError]
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -295,10 +267,6 @@ export function AIAssistant() {
 
   const toggleReasoning = (messageId: string) => {
     setExpandedReasoning((prev) => (prev === messageId ? null : messageId));
-  };
-
-  const toggleTools = (messageId: string) => {
-    setExpandedTools((prev) => (prev === messageId ? null : messageId));
   };
 
   return (
@@ -412,14 +380,28 @@ export function AIAssistant() {
                     </Menu>
                   </Box>
                 </Group>
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  onClick={close}
-                  size="sm"
-                >
-                  <IconX size={16} />
-                </ActionIcon>
+                <Group gap={4}>
+                  {messages.length > 0 && (
+                    <Tooltip label="Очистить историю" position="bottom">
+                      <ActionIcon
+                        variant="subtle"
+                        color="gray"
+                        onClick={clearHistory}
+                        size="sm"
+                      >
+                        <IconTrash size={16} />
+                      </ActionIcon>
+                    </Tooltip>
+                  )}
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    onClick={close}
+                    size="sm"
+                  >
+                    <IconX size={16} />
+                  </ActionIcon>
+                </Group>
               </Group>
             </Box>
 
@@ -439,7 +421,7 @@ export function AIAssistant() {
                       size="xs"
                       leftSection={<action.icon size={14} />}
                       onClick={() => sendMessage(action.prompt)}
-                      disabled={isLoading || isExecutingTools}
+                      disabled={isLoading}
                     >
                       {action.label}
                     </Button>
@@ -508,76 +490,7 @@ export function AIAssistant() {
                         </TypographyStylesProvider>
                       )}
 
-                      {/* Tool calls display */}
-                      {message.toolCalls && message.toolCalls.length > 0 && (
-                        <>
-                          <Divider my="xs" />
-                          <Button
-                            variant="subtle"
-                            size="xs"
-                            color="violet"
-                            leftSection={<IconTool size={12} />}
-                            rightSection={
-                              expandedTools === message.id ? (
-                                <IconChevronUp size={12} />
-                              ) : (
-                                <IconChevronDown size={12} />
-                              )
-                            }
-                            onClick={() => toggleTools(message.id)}
-                          >
-                            Использовано инструментов: {message.toolCalls.length}
-                          </Button>
-                          <Collapse in={expandedTools === message.id}>
-                            <Stack gap="xs" mt="xs">
-                              {message.toolCalls.map((tc) => (
-                                <Box
-                                  key={tc.id}
-                                  p="xs"
-                                  className={classes.reasoningBox}
-                                >
-                                  <Group gap="xs">
-                                    <IconPlayerPlay size={12} />
-                                    <Text size="xs" fw={600}>
-                                      {tc.function.name}
-                                    </Text>
-                                  </Group>
-                                  <Text size="xs" c="dimmed" mt={4}>
-                                    {tc.function.arguments}
-                                  </Text>
-                                </Box>
-                              ))}
-                            </Stack>
-                          </Collapse>
-                        </>
-                      )}
-
-                      {/* Tool results display */}
-                      {message.isToolExecution && message.toolResults && (
-                        <Stack gap="xs">
-                          {message.toolResults.map((result, idx) => (
-                            <Box
-                              key={result.tool_call_id || idx}
-                              p="xs"
-                              style={{
-                                background: result.success
-                                  ? 'var(--mantine-color-green-light)'
-                                  : 'var(--mantine-color-red-light)',
-                                borderRadius: 'var(--mantine-radius-sm)',
-                              }}
-                            >
-                              <Text
-                                size="xs"
-                                style={{ whiteSpace: 'pre-wrap' }}
-                              >
-                                {result.content}
-                              </Text>
-                            </Box>
-                          ))}
-                        </Stack>
-                      )}
-
-                      {/* Reasoning toggle */}
+                      {/* Reasoning toggle - показываем только если есть */}
                       {message.reasoning && (
                         <>
                           <Divider my="xs" />
@@ -620,14 +533,12 @@ export function AIAssistant() {
                   </Box>
                 ))}
 
-                {(isLoading || isExecutingTools) && (
+                {isLoading && (
                   <Box className={classes.assistantMessage}>
                     <Paper p="sm" radius="md" className={classes.assistantBubble}>
                       <Group gap="xs">
-                        <Loader size="xs" color={isExecutingTools ? 'orange' : 'violet'} />
-                        <Text size="sm">
-                          {isExecutingTools ? '🔧 Выполняю действия...' : '🧠 Думаю...'}
-                        </Text>
+                        <Loader size="xs" color="violet" />
+                        <Text size="sm">🧠 Думаю...</Text>
                       </Group>
                     </Paper>
                   </Box>
@@ -658,14 +569,14 @@ export function AIAssistant() {
                   maxRows={4}
                   autosize
                   style={{ flex: 1 }}
-                  disabled={isLoading || isExecutingTools}
+                  disabled={isLoading}
                 />
                 <ActionIcon
                   size="lg"
                   variant="filled"
                   color="violet"
                   onClick={() => sendMessage(input)}
-                  disabled={!input.trim() || isLoading || isExecutingTools}
+                  disabled={!input.trim() || isLoading}
                 >
                   <IconSend size={18} />
                 </ActionIcon>

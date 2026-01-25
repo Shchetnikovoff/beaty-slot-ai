@@ -36,12 +36,38 @@ export interface AIToolCall {
   };
 }
 
+// Статистика страницы для AI-контекста
+export interface AIPageStat {
+  title: string;
+  value: string | number;
+  diff?: number;
+  period?: string;
+}
+
+// Данные таблицы для AI-контекста
+export interface AIPageTableData {
+  rows: unknown[];
+  total?: number;
+  selectedIds?: string[];
+  filters?: Record<string, unknown>;
+}
+
+// Данные страницы для AI-контекста
+export interface AIPageData {
+  pageType: string;
+  stats?: AIPageStat[];
+  tableData?: AIPageTableData;
+  metadata?: Record<string, unknown>;
+}
+
 // Контекст приложения для AI
 export interface AIAppContext {
   currentPage: string;
   selectedClientId?: string;
   selectedData?: unknown;
   userRole: 'admin' | 'superadmin';
+  // Данные текущей страницы (статистика, таблицы)
+  pageData?: AIPageData;
 }
 
 // Доступные инструменты
@@ -235,6 +261,140 @@ export const AI_TOOLS: AITool[] = [
           },
         },
         required: ['query'],
+      },
+    },
+  },
+  // === НОВЫЕ ИНСТРУМЕНТЫ ДЛЯ ДОСТУПА К БАЗЕ ДАННЫХ ===
+  {
+    type: 'function',
+    function: {
+      name: 'getSubscriptions',
+      description: 'Получить список подписок клиентов с фильтрацией',
+      parameters: {
+        type: 'object',
+        properties: {
+          status: {
+            type: 'string',
+            description: 'Фильтр по статусу подписки',
+            enum: ['all', 'ACTIVE', 'EXPIRED', 'PENDING', 'PAUSED', 'CANCELLED'],
+          },
+          client_id: {
+            type: 'string',
+            description: 'ID клиента для фильтрации',
+          },
+          limit: {
+            type: 'number',
+            description: 'Максимальное количество записей (по умолчанию 20)',
+          },
+        },
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'getSubscriptionPlans',
+      description: 'Получить список тарифных планов подписок',
+      parameters: {
+        type: 'object',
+        properties: {
+          activeOnly: {
+            type: 'boolean',
+            description: 'Только активные планы (по умолчанию true)',
+          },
+        },
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'getPayments',
+      description: 'Получить список платежей с фильтрацией',
+      parameters: {
+        type: 'object',
+        properties: {
+          status: {
+            type: 'string',
+            description: 'Фильтр по статусу платежа',
+            enum: ['all', 'PENDING', 'PROCESSING', 'SUCCEEDED', 'FAILED', 'CANCELLED', 'REFUNDED'],
+          },
+          client_id: {
+            type: 'string',
+            description: 'ID клиента',
+          },
+          limit: {
+            type: 'number',
+            description: 'Максимальное количество (по умолчанию 20)',
+          },
+        },
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'getDocuments',
+      description: 'Получить список документов (соглашения, политики)',
+      parameters: {
+        type: 'object',
+        properties: {
+          type: {
+            type: 'string',
+            description: 'Тип документа',
+            enum: ['all', 'AGREEMENT', 'POLICY', 'TERMS', 'OTHER'],
+          },
+          status: {
+            type: 'string',
+            description: 'Статус документа',
+            enum: ['all', 'DRAFT', 'ACTIVE', 'ARCHIVED'],
+          },
+        },
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'getSalons',
+      description: 'Получить список салонов (только для суперадмина)',
+      parameters: {
+        type: 'object',
+        properties: {
+          status: {
+            type: 'string',
+            description: 'Статус подписки салона',
+            enum: ['all', 'TRIAL', 'ACTIVE', 'EXPIRED', 'SUSPENDED', 'CANCELLED'],
+          },
+          search: {
+            type: 'string',
+            description: 'Поиск по названию или email',
+          },
+        },
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'getFullDashboard',
+      description: 'Получить полную сводку данных салона: клиенты, подписки, платежи, статистика',
+      parameters: {
+        type: 'object',
+        properties: {
+          includeClients: {
+            type: 'boolean',
+            description: 'Включить данные клиентов (по умолчанию true)',
+          },
+          includeSubscriptions: {
+            type: 'boolean',
+            description: 'Включить данные подписок (по умолчанию true)',
+          },
+          includePayments: {
+            type: 'boolean',
+            description: 'Включить данные платежей (по умолчанию true)',
+          },
+        },
       },
     },
   },

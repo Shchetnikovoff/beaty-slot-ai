@@ -99,7 +99,7 @@ const modelSupportsTools = (modelId: string): boolean => {
   return AGENT_MODELS.some(m => m.id === modelId);
 };
 
-// Динамический системный промпт с текущей датой
+// Динамический системный промпт с текущей датой и данными страницы
 const getSystemPrompt = (context?: AIAppContext) => {
   const today = new Date().toLocaleDateString('ru-RU', {
     weekday: 'long',
@@ -108,31 +108,97 @@ const getSystemPrompt = (context?: AIAppContext) => {
     day: 'numeric',
   });
 
-  const contextInfo = context
-    ? `\n\nКонтекст приложения:
+  // Базовый контекст приложения
+  let contextInfo = '';
+  if (context) {
+    contextInfo = `\n\nКонтекст приложения:
 - Текущая страница: ${context.currentPage}
-- Роль пользователя: ${context.userRole}
-${context.selectedClientId ? `- Выбранный клиент: ${context.selectedClientId}` : ''}`
-    : '';
+- Роль пользователя: ${context.userRole}`;
+
+    if (context.selectedClientId) {
+      contextInfo += `\n- Выбранный клиент: ${context.selectedClientId}`;
+    }
+  }
+
+  // НОВОЕ: Данные текущей страницы (то, что видит пользователь)
+  let pageDataInfo = '';
+  if (context?.pageData) {
+    const { pageType, stats, tableData, metadata } = context.pageData;
+
+    pageDataInfo = `\n\n📊 ДАННЫЕ НА ЭКРАНЕ ПОЛЬЗОВАТЕЛЯ:
+Тип страницы: ${pageType}`;
+
+    // Статистика (карточки с числами)
+    if (stats && stats.length > 0) {
+      pageDataInfo += `\n\nСтатистика на экране:`;
+      for (const stat of stats) {
+        let statLine = `\n- ${stat.title}: ${stat.value}`;
+        if (stat.diff !== undefined) {
+          const sign = stat.diff > 0 ? '+' : '';
+          statLine += ` (${sign}${stat.diff}%${stat.period ? ' ' + stat.period : ''})`;
+        }
+        pageDataInfo += statLine;
+      }
+    }
+
+    // Данные таблицы
+    if (tableData) {
+      pageDataInfo += `\n\nТаблица:`;
+      if (tableData.total !== undefined) {
+        pageDataInfo += `\n- Всего записей: ${tableData.total}`;
+      }
+      if (tableData.rows && tableData.rows.length > 0) {
+        pageDataInfo += `\n- Показано строк: ${tableData.rows.length}`;
+      }
+      if (tableData.selectedIds && tableData.selectedIds.length > 0) {
+        pageDataInfo += `\n- Выбрано записей: ${tableData.selectedIds.length}`;
+      }
+      if (tableData.filters && Object.keys(tableData.filters).length > 0) {
+        pageDataInfo += `\n- Активные фильтры: ${JSON.stringify(tableData.filters)}`;
+      }
+    }
+
+    // Дополнительные метаданные
+    if (metadata && Object.keys(metadata).length > 0) {
+      pageDataInfo += `\n\nДополнительно: ${JSON.stringify(metadata)}`;
+    }
+
+    pageDataInfo += `\n\nИспользуй эти данные для ответов на вопросы пользователя о том, что он видит на экране.`;
+  }
 
   return `Ты — AI-агент салона красоты Beauty Slot. Сегодня ${today}.
 
 ВАЖНО: У тебя есть ИНСТРУМЕНТЫ (tools) для выполнения действий. ВСЕГДА используй их!
 
-Доступные инструменты:
+=== ИНСТРУМЕНТЫ ДЛЯ НАВИГАЦИИ И UI ===
 - navigate: переход на страницу (page: /dashboard, /apps/customers, /apps/settings и др.)
-- getClients: получение списка клиентов (status: all/active/expired, limit: число)
-- getClientDetails: детали клиента (clientId)
-- analyzeClients: анализ клиентов (analysisType: activity/spending/churn_risk/growth)
-- sendBroadcast: рассылка (audience: all/active/expired, message: текст)
-- getStatistics: статистика (period: today/week/month/year, metric: revenue/clients/subscriptions/visits)
 - showNotification: показать уведомление (type: success/error/warning/info, title, message)
 - openModal: открыть модальное окно (modal: addClient/editClient/broadcast/settings)
 
+=== ИНСТРУМЕНТЫ ДЛЯ ДАННЫХ КЛИЕНТОВ ===
+- getClients: получение списка клиентов (status: all/active/expired, limit: число)
+- getClientDetails: детали клиента (clientId)
+- analyzeClients: анализ клиентов (analysisType: activity/spending/churn_risk/growth)
+
+=== ИНСТРУМЕНТЫ ДЛЯ ПОДПИСОК И ПЛАТЕЖЕЙ ===
+- getSubscriptions: подписки (status: all/ACTIVE/EXPIRED/PENDING, client_id, limit)
+- getSubscriptionPlans: тарифные планы (activeOnly: true/false)
+- getPayments: платежи (status: all/SUCCEEDED/PENDING/FAILED, client_id, limit)
+
+=== ИНСТРУМЕНТЫ ДЛЯ ДОКУМЕНТОВ И САЛОНОВ ===
+- getDocuments: документы/соглашения (type: all/AGREEMENT/POLICY, status: all/ACTIVE)
+- getSalons: список салонов [ТОЛЬКО ДЛЯ SUPERADMIN] (status, search)
+
+=== СВОДНЫЕ ИНСТРУМЕНТЫ ===
+- getStatistics: общая статистика (period: today/week/month, metric)
+- getFullDashboard: ПОЛНАЯ сводка всех данных (includeClients, includeSubscriptions, includePayments)
+- sendBroadcast: рассылка (audience: all/active/expired, message: текст)
+
 Правила:
-1. ВСЕГДА вызывай инструменты для действий, не пиши текст вместо действия
-2. Отвечай кратко на русском
-3. После вызова инструмента дай краткое подтверждение${contextInfo}`;
+1. Если пользователь спрашивает о данных — ИСПОЛЬЗУЙ ИНСТРУМЕНТЫ для получения реальных данных из базы
+2. Если на экране есть данные — можешь использовать их напрямую
+3. Отвечай кратко и по делу на русском
+4. НЕ описывай свои действия — просто делай и давай результат${contextInfo}${pageDataInfo}`;
 };
 
 /**
@@ -279,18 +345,36 @@ export const aiService = {
     const effectiveModelId = modelSupportsTools(modelId) ? modelId : DEFAULT_AGENT_MODEL;
 
     // Приводим базовые сообщения к формату OpenAI
-    const formattedMessages = messages.map((m) => ({
-      role: m.role as 'system' | 'user' | 'assistant',
-      content: m.content,
-      ...(m.tool_calls ? { tool_calls: m.tool_calls } : {}),
-    }));
+    // Фильтруем и форматируем сообщения правильно
+    const formattedMessages = messages.map((m) => {
+      const baseMessage: { role: string; content: string; tool_calls?: unknown[] } = {
+        role: m.role as 'system' | 'user' | 'assistant',
+        content: m.content || '',
+      };
 
-    // Добавляем результаты инструментов
-    const toolResultMessages = toolResults.map((result) => ({
-      role: 'tool' as const,
-      tool_call_id: result.tool_call_id,
-      content: result.content,
-    }));
+      // Добавляем tool_calls только если они есть и непустые
+      if (m.tool_calls && Array.isArray(m.tool_calls) && m.tool_calls.length > 0) {
+        baseMessage.tool_calls = m.tool_calls.map((tc) => ({
+          id: tc.id,
+          type: 'function',
+          function: {
+            name: tc.function.name,
+            arguments: tc.function.arguments,
+          },
+        }));
+      }
+
+      return baseMessage;
+    });
+
+    // Добавляем результаты инструментов (только с валидными id)
+    const toolResultMessages = toolResults
+      .filter((result) => result.tool_call_id && result.content)
+      .map((result) => ({
+        role: 'tool' as const,
+        tool_call_id: result.tool_call_id,
+        content: result.content,
+      }));
 
     // @ts-ignore - OpenRouter tools не в типах OpenAI SDK
     const completion = await openai.chat.completions.create({

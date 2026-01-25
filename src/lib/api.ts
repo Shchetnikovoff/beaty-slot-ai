@@ -116,6 +116,46 @@ class ApiClient {
     if (endpoint === '/v1/auth/me') {
       return null; // Handled by auth service
     }
+    // /v1/admin/staff
+    if (endpoint === '/v1/admin/staff' || endpoint === '/v1/staff') {
+      return mockData.staff as T;
+    }
+    // /v1/admin/staff/:id
+    if (endpoint.match(/^\/v1\/(admin\/)?staff\/\d+$/)) {
+      const id = Number(endpoint.split('/').pop());
+      const staff = mockData.staff.items.find(s => s.id === id);
+      return (staff || mockData.staff.items[0]) as T;
+    }
+    // /v1/admin/staff/today-stats
+    if (endpoint === '/v1/admin/staff/today-stats' || endpoint === '/v1/staff/today-stats') {
+      return mockData.staffTodayStats as T;
+    }
+    // /v1/admin/appointments
+    if (endpoint === '/v1/admin/appointments' || endpoint === '/v1/appointments') {
+      return mockData.appointments as T;
+    }
+    // /v1/admin/appointments/:id
+    if (endpoint.match(/^\/v1\/(admin\/)?appointments\/\d+$/)) {
+      const id = Number(endpoint.split('/').pop());
+      const appointment = mockData.appointments.items.find(a => a.id === id);
+      return (appointment || mockData.appointments.items[0]) as T;
+    }
+    // /v1/admin/appointments/today-stats
+    if (endpoint === '/v1/admin/appointments/today-stats' || endpoint === '/v1/appointments/today-stats') {
+      return mockData.appointmentsTodayStats as T;
+    }
+    // /v1/admin/appointments/stats (with date param)
+    if (endpoint === '/v1/admin/appointments/stats' || endpoint === '/v1/appointments/stats') {
+      return mockData.appointmentsTodayStats as T;
+    }
+    // /v1/admin/broadcasts
+    if (endpoint === '/v1/admin/broadcasts' || endpoint === '/v1/broadcasts') {
+      return mockData.broadcasts as T;
+    }
+    // /v1/admin/broadcasts/stats
+    if (endpoint === '/v1/admin/broadcasts/stats' || endpoint === '/v1/broadcasts/stats') {
+      return mockData.broadcastsStats as T;
+    }
     return null;
   }
 

@@ -3,17 +3,14 @@
 import { useState } from 'react';
 
 import {
-  ActionIcon,
   Anchor,
   Badge,
   Box,
   Button,
-  Card,
   Container,
   Drawer,
   Group,
   Paper,
-  SegmentedControl,
   Select,
   SimpleGrid,
   Skeleton,
@@ -29,9 +26,8 @@ import { notifications } from '@mantine/notifications';
 import {
   IconBrandTelegram,
   IconCheck,
+  IconChartLine,
   IconClock,
-  IconGridDots,
-  IconList,
   IconMoodEmpty,
   IconPlus,
   IconRefresh,
@@ -41,50 +37,10 @@ import {
 } from '@tabler/icons-react';
 
 import { ErrorAlert, PageHeader, Surface } from '@/components';
+import { useBroadcasts } from '@/lib/hooks/useBeautySlot';
+import { broadcastsService } from '@/services';
+import type { Broadcast, BroadcastTargetAudience } from '@/types';
 import { PATH_DASHBOARD } from '@/routes';
-
-// Mock broadcast type
-interface Broadcast {
-  id: number;
-  title: string;
-  message: string;
-  target_audience: 'ALL' | 'SUBSCRIBED' | 'NOT_SUBSCRIBED';
-  status: 'DRAFT' | 'SCHEDULED' | 'SENT' | 'FAILED';
-  recipients_count: number;
-  sent_count: number;
-  failed_count: number;
-  scheduled_at?: string;
-  sent_at?: string;
-  created_at: string;
-}
-
-// Mock data - in real app this would come from API
-const mockBroadcasts: Broadcast[] = [
-  {
-    id: 1,
-    title: 'Новогодняя акция',
-    message: 'Скидка 20% на все услуги до конца года!',
-    target_audience: 'ALL',
-    status: 'SENT',
-    recipients_count: 150,
-    sent_count: 148,
-    failed_count: 2,
-    sent_at: '2024-12-20T10:00:00Z',
-    created_at: '2024-12-19T15:00:00Z',
-  },
-  {
-    id: 2,
-    title: 'Напоминание о продлении',
-    message: 'Ваша подписка истекает через 3 дня. Продлите сейчас!',
-    target_audience: 'SUBSCRIBED',
-    status: 'SCHEDULED',
-    recipients_count: 45,
-    sent_count: 0,
-    failed_count: 0,
-    scheduled_at: '2024-12-25T09:00:00Z',
-    created_at: '2024-12-18T12:00:00Z',
-  },
-];
 
 const items = [
   { title: 'Дашборд', href: PATH_DASHBOARD.default },
@@ -208,6 +164,49 @@ function BroadcastCard({
   );
 }
 
+interface LocalBroadcastStats {
+  total: number;
+  thisMonth: number;
+  totalSent: number;
+  deliveryRate: number;
+}
+
+function StatsCard({
+  title,
+  value,
+  icon: Icon,
+  color,
+}: {
+  title: string;
+  value: string | number;
+  icon: React.ComponentType<{ size?: number }>;
+  color: string;
+}) {
+  return (
+    <Paper p="md" radius="md" withBorder>
+      <Group justify="space-between">
+        <div>
+          <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
+            {title}
+          </Text>
+          <Text fw={700} size="xl" mt={4}>
+            {value}
+          </Text>
+        </div>
+        <Box
+          style={{
+            backgroundColor: `var(--mantine-color-${color}-1)`,
+            borderRadius: 'var(--mantine-radius-md)',
+            padding: '12px',
+          }}
+        >
+          <Icon size={24} />
+        </Box>
+      </Group>
+    </Paper>
+  );
+}
+
 function NewBroadcastDrawer({
   opened,
   onClose,
@@ -234,8 +233,11 @@ function NewBroadcastDrawer({
   const handleSubmit = async (values: typeof form.values) => {
     setLoading(true);
     try {
-      // TODO: API call to create broadcast
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await broadcastsService.create({
+        title: values.title,
+        message: values.message,
+        target_audience: values.target_audience as BroadcastTargetAudience,
+      });
 
       notifications.show({
         title: 'Рассылка создана',
@@ -307,21 +309,47 @@ function NewBroadcastDrawer({
 }
 
 function Broadcasts() {
-  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
-  const [broadcasts] = useState<Broadcast[]>(mockBroadcasts);
-  const [loading] = useState(false);
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false);
+
+  const {
+    data: broadcastsData,
+    loading,
+    error,
+    refetch,
+  } = useBroadcasts({ limit: 100 });
+
+  const broadcasts = broadcastsData?.items ?? [];
+
+  // Calculate stats from broadcasts with safe division
+  const totalRecipients = broadcasts.reduce((acc, b) => acc + b.recipients_count, 0);
+  const totalSent = broadcasts.reduce((acc, b) => acc + b.sent_count, 0);
+
+  const stats: LocalBroadcastStats = {
+    total: broadcastsData?.total ?? 0,
+    thisMonth: broadcasts.filter((b) => {
+      const createdDate = new Date(b.created_at);
+      const now = new Date();
+      return (
+        createdDate.getMonth() === now.getMonth() &&
+        createdDate.getFullYear() === now.getFullYear()
+      );
+    }).length,
+    totalSent,
+    deliveryRate: totalRecipients > 0
+      ? Math.round((totalSent / totalRecipients) * 100)
+      : 0,
+  };
 
   const handleViewBroadcast = (broadcast: Broadcast) => {
     console.log('View broadcast:', broadcast);
   };
 
   const handleRefresh = () => {
-    // TODO: Refetch broadcasts from API
+    refetch();
   };
 
   const handleCreated = () => {
-    // TODO: Refetch broadcasts
+    refetch();
   };
 
   const renderContent = () => {
@@ -336,6 +364,15 @@ function Broadcasts() {
             <Skeleton key={`broadcast-loading-${i}`} visible={true} height={280} />
           ))}
         </SimpleGrid>
+      );
+    }
+
+    if (error) {
+      return (
+        <ErrorAlert
+          title="Ошибка загрузки рассылок"
+          message={error.message || 'Не удалось загрузить список рассылок'}
+        />
       );
     }
 
@@ -398,6 +435,34 @@ function Broadcasts() {
               </Group>
             }
           />
+
+          {/* Stats Cards */}
+          <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} mb="lg">
+            <StatsCard
+              title="Всего рассылок"
+              value={stats.total}
+              icon={IconSend}
+              color="blue"
+            />
+            <StatsCard
+              title="В этом месяце"
+              value={stats.thisMonth}
+              icon={IconClock}
+              color="violet"
+            />
+            <StatsCard
+              title="Отправлено"
+              value={stats.totalSent}
+              icon={IconCheck}
+              color="green"
+            />
+            <StatsCard
+              title="Доставка"
+              value={`${stats.deliveryRate}%`}
+              icon={IconChartLine}
+              color="yellow"
+            />
+          </SimpleGrid>
 
           <Box>
             <Group justify="space-between" mb="md">

@@ -3,6 +3,7 @@ import { useMediaQuery } from '@mantine/hooks';
 import { IconX } from '@tabler/icons-react';
 
 import { Logo } from '@/components';
+import { SidebarCalendar } from '@/components/SidebarCalendar';
 import { SIDEBAR_LINKS } from '@/constants/sidebar-links';
 import { useSidebarConfig } from '@/contexts/theme-customizer';
 
@@ -73,6 +74,8 @@ const SidebarNav = ({ onClose, showCloseButton = false }: NavigationProps) => {
           )}
         </Flex>
       </div>
+
+      <SidebarCalendar />
 
       <ScrollArea className={classes.links}>
         <div className={classes.linksInner}>{links}</div>

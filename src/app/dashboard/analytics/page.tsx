@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+
 import {
   Container,
   Grid,
@@ -18,6 +20,7 @@ import {
   StatsCard,
   TrafficTable,
 } from '@/components';
+import { usePageData } from '@/contexts/page-data';
 import { useStats, useLanguages, useTraffic } from '@/lib/hooks/useApi';
 
 const PAPER_PROPS: PaperProps = {
@@ -26,6 +29,7 @@ const PAPER_PROPS: PaperProps = {
 };
 
 function Page() {
+  const { setPageData, clearPageData } = usePageData();
   const {
     data: statsData,
     error: statsError,
@@ -41,6 +45,30 @@ function Page() {
     error: trafficError,
     loading: trafficLoading,
   } = useTraffic();
+
+  // Передаём данные страницы в AI контекст
+  useEffect(() => {
+    if (!statsLoading && statsData?.data) {
+      setPageData({
+        pageType: 'analytics',
+        stats: statsData.data.map((s: { title: string; value: string; diff?: number; period?: string }) => ({
+          title: s.title,
+          value: s.value,
+          diff: s.diff,
+          period: s.period,
+        })),
+        tableData: trafficData?.data ? {
+          rows: trafficData.data,
+          total: trafficData.data.length,
+        } : undefined,
+        metadata: {
+          languages: languagesData?.data?.slice(0, 6) || [],
+        },
+      });
+    }
+
+    return () => clearPageData();
+  }, [statsLoading, statsData, trafficData, languagesData, setPageData, clearPageData]);
 
   return (
     <>

@@ -1,7 +1,7 @@
 // Моковые данные для демо-режима
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 
-// Клиенты
+// Клиенты (с обязательными полями для фильтрации и аналитики)
 const mockClients = [
   {
     id: 1,
@@ -16,6 +16,14 @@ const mockClients = [
     updated_at: '2025-01-20T10:00:00Z',
     last_visit_at: '2025-01-20',
     has_active_subscription: true,
+    // Поля для фильтрации и аналитики
+    visits_count: 15,
+    no_show_count: 0,
+    total_spent: 45000,
+    score: 92,
+    risk_level: 'LOW',
+    client_status: 'VIP',
+    days_since_last_visit: 4,
   },
   {
     id: 2,
@@ -30,6 +38,13 @@ const mockClients = [
     updated_at: '2025-01-18T14:30:00Z',
     last_visit_at: '2025-01-18',
     has_active_subscription: true,
+    visits_count: 8,
+    no_show_count: 1,
+    total_spent: 24000,
+    score: 75,
+    risk_level: 'LOW',
+    client_status: 'REGULAR',
+    days_since_last_visit: 6,
   },
   {
     id: 3,
@@ -44,6 +59,13 @@ const mockClients = [
     updated_at: '2025-01-22T09:15:00Z',
     last_visit_at: '2025-01-22',
     has_active_subscription: false,
+    visits_count: 3,
+    no_show_count: 2,
+    total_spent: 9000,
+    score: 35,
+    risk_level: 'HIGH',
+    client_status: 'PROBLEM',
+    days_since_last_visit: 2,
   },
   {
     id: 4,
@@ -58,6 +80,13 @@ const mockClients = [
     updated_at: '2025-01-10T16:45:00Z',
     last_visit_at: '2025-01-10',
     has_active_subscription: false,
+    visits_count: 1,
+    no_show_count: 0,
+    total_spent: 3000,
+    score: 45,
+    risk_level: 'MEDIUM',
+    client_status: 'REGULAR',
+    days_since_last_visit: 14,
   },
   {
     id: 5,
@@ -72,6 +101,240 @@ const mockClients = [
     updated_at: '2025-01-21T11:20:00Z',
     last_visit_at: '2025-01-21',
     has_active_subscription: true,
+    visits_count: 12,
+    no_show_count: 0,
+    total_spent: 36000,
+    score: 88,
+    risk_level: 'LOW',
+    client_status: 'VIP',
+    days_since_last_visit: 3,
+  },
+  {
+    id: 6,
+    yclients_id: '123461',
+    phone: '+7 (999) 678-90-12',
+    name: 'Светлана Иванова',
+    email: 'svetlana@example.com',
+    is_blocked: false,
+    has_uploaded_photo: false,
+    role: 'USER',
+    created_at: '2024-05-10T09:00:00Z',
+    updated_at: '2024-11-15T12:00:00Z',
+    last_visit_at: '2024-11-15',
+    has_active_subscription: false,
+    visits_count: 5,
+    no_show_count: 3,
+    total_spent: 15000,
+    score: 25,
+    risk_level: 'CRITICAL',
+    client_status: 'LOST',
+    days_since_last_visit: 70,
+  },
+];
+
+// Сотрудники
+const mockStaff = [
+  {
+    id: 1,
+    yclients_id: 'staff_001',
+    name: 'Ирина Волкова',
+    phone: '+7 (999) 111-22-33',
+    email: 'irina@beautyslot.ru',
+    role: 'MASTER',
+    specialization: 'Маникюр, педикюр',
+    is_active: true,
+    appointments_count: 8,
+    rating: 4.9,
+    created_at: '2024-01-15T10:00:00Z',
+    updated_at: '2025-01-20T10:00:00Z',
+  },
+  {
+    id: 2,
+    yclients_id: 'staff_002',
+    name: 'Ксения Белова',
+    phone: '+7 (999) 222-33-44',
+    email: 'ksenia@beautyslot.ru',
+    role: 'MASTER',
+    specialization: 'Стрижки, окрашивание',
+    is_active: true,
+    appointments_count: 6,
+    rating: 4.8,
+    created_at: '2024-02-20T10:00:00Z',
+    updated_at: '2025-01-20T10:00:00Z',
+  },
+  {
+    id: 3,
+    yclients_id: 'staff_003',
+    name: 'Дарья Смирнова',
+    phone: '+7 (999) 333-44-55',
+    email: 'daria@beautyslot.ru',
+    role: 'MASTER',
+    specialization: 'Косметология',
+    is_active: true,
+    appointments_count: 4,
+    rating: 5.0,
+    created_at: '2024-03-10T10:00:00Z',
+    updated_at: '2025-01-20T10:00:00Z',
+  },
+  {
+    id: 4,
+    yclients_id: 'staff_004',
+    name: 'Алексей Козлов',
+    phone: '+7 (999) 444-55-66',
+    email: 'alexey@beautyslot.ru',
+    role: 'ADMIN',
+    specialization: 'Администратор',
+    is_active: true,
+    appointments_count: 0,
+    rating: 0,
+    created_at: '2024-01-01T10:00:00Z',
+    updated_at: '2025-01-20T10:00:00Z',
+  },
+  {
+    id: 5,
+    yclients_id: 'staff_005',
+    name: 'Наталья Орлова',
+    phone: '+7 (999) 555-66-77',
+    email: 'natalia@beautyslot.ru',
+    role: 'MANAGER',
+    specialization: 'Менеджер',
+    is_active: false,
+    appointments_count: 0,
+    rating: 0,
+    created_at: '2024-04-15T10:00:00Z',
+    updated_at: '2025-01-10T10:00:00Z',
+  },
+];
+
+// Записи (appointments)
+const today = new Date().toISOString().split('T')[0];
+const mockAppointments = [
+  {
+    id: 1,
+    client_id: '123456',
+    staff_id: 1,
+    service_name: 'Маникюр с покрытием',
+    status: 'CONFIRMED',
+    scheduled_at: `${today}T10:00:00Z`,
+    duration_minutes: 60,
+    price: 2500,
+    created_at: '2025-01-20T10:00:00Z',
+    updated_at: '2025-01-20T10:00:00Z',
+    client: { name: 'Анна Петрова', phone: '+7 (999) 123-45-67' },
+    staff: { name: 'Ирина Волкова' },
+  },
+  {
+    id: 2,
+    client_id: '123457',
+    staff_id: 2,
+    service_name: 'Стрижка женская',
+    status: 'PENDING',
+    scheduled_at: `${today}T11:00:00Z`,
+    duration_minutes: 45,
+    price: 3000,
+    created_at: '2025-01-20T11:00:00Z',
+    updated_at: '2025-01-20T11:00:00Z',
+    client: { name: 'Мария Сидорова', phone: '+7 (999) 234-56-78' },
+    staff: { name: 'Ксения Белова' },
+  },
+  {
+    id: 3,
+    client_id: '123458',
+    staff_id: 3,
+    service_name: 'Чистка лица',
+    status: 'COMPLETED',
+    scheduled_at: `${today}T09:00:00Z`,
+    duration_minutes: 90,
+    price: 4500,
+    created_at: '2025-01-20T09:00:00Z',
+    updated_at: '2025-01-20T10:30:00Z',
+    client: { name: 'Елена Козлова', phone: '+7 (999) 345-67-89' },
+    staff: { name: 'Дарья Смирнова' },
+  },
+  {
+    id: 4,
+    client_id: '123460',
+    staff_id: 1,
+    service_name: 'Педикюр',
+    status: 'CANCELLED',
+    scheduled_at: `${today}T14:00:00Z`,
+    duration_minutes: 75,
+    price: 3500,
+    comment: 'Клиент отменил по причине болезни',
+    created_at: '2025-01-19T14:00:00Z',
+    updated_at: '2025-01-20T08:00:00Z',
+    client: { name: 'Татьяна Морозова', phone: '+7 (999) 567-89-01' },
+    staff: { name: 'Ирина Волкова' },
+  },
+  {
+    id: 5,
+    client_id: '123459',
+    staff_id: 2,
+    service_name: 'Окрашивание',
+    status: 'NO_SHOW',
+    scheduled_at: `${today}T12:00:00Z`,
+    duration_minutes: 120,
+    price: 8000,
+    created_at: '2025-01-18T12:00:00Z',
+    updated_at: '2025-01-20T13:00:00Z',
+    client: { name: 'Ольга Новикова', phone: '+7 (999) 456-78-90' },
+    staff: { name: 'Ксения Белова' },
+  },
+];
+
+// Статистика записей на сегодня
+const mockAppointmentsTodayStats = {
+  total: 5,
+  confirmed: 1,
+  pending: 1,
+  cancelled: 1,
+  no_show: 1,
+  completed: 1,
+};
+
+// Статистика сотрудников на сегодня
+const mockStaffTodayStats = {
+  total: 5,
+  active_today: 3,
+  appointments_today: 18,
+};
+
+// Рассылки
+const mockBroadcasts = [
+  {
+    id: 1,
+    title: 'Новогодняя акция',
+    message: 'Скидка 20% на все услуги до конца года!',
+    target_audience: 'ALL',
+    status: 'SENT',
+    recipients_count: 150,
+    sent_count: 148,
+    failed_count: 2,
+    sent_at: '2024-12-20T10:00:00Z',
+    created_at: '2024-12-19T15:00:00Z',
+  },
+  {
+    id: 2,
+    title: 'Напоминание о продлении',
+    message: 'Ваша подписка истекает через 3 дня. Продлите сейчас!',
+    target_audience: 'SUBSCRIBED',
+    status: 'SCHEDULED',
+    recipients_count: 45,
+    sent_count: 0,
+    failed_count: 0,
+    scheduled_at: '2024-12-25T09:00:00Z',
+    created_at: '2024-12-18T12:00:00Z',
+  },
+  {
+    id: 3,
+    title: 'Специальное предложение',
+    message: 'Только для вас - бесплатная консультация при записи на этой неделе!',
+    target_audience: 'NOT_SUBSCRIBED',
+    status: 'DRAFT',
+    recipients_count: 0,
+    sent_count: 0,
+    failed_count: 0,
+    created_at: '2025-01-20T10:00:00Z',
   },
 ];
 
@@ -426,4 +689,40 @@ export const mockData = {
   },
 
   superadminStats: mockSuperadminStats,
+
+  // Новые mock-данные
+  staff: {
+    items: mockStaff,
+    total: mockStaff.length,
+    skip: 0,
+    limit: 50,
+  },
+
+  appointments: {
+    items: mockAppointments,
+    total: mockAppointments.length,
+    skip: 0,
+    limit: 50,
+  },
+
+  appointmentsTodayStats: mockAppointmentsTodayStats,
+  staffTodayStats: mockStaffTodayStats,
+
+  broadcasts: {
+    items: mockBroadcasts,
+    total: mockBroadcasts.length,
+    skip: 0,
+    limit: 50,
+  },
+
+  broadcastsStats: {
+    total: mockBroadcasts.length,
+    this_month: mockBroadcasts.filter(b => {
+      const date = new Date(b.created_at);
+      const now = new Date();
+      return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+    }).length,
+    total_sent: mockBroadcasts.reduce((acc, b) => acc + b.sent_count, 0),
+    delivery_rate: 98,
+  },
 };

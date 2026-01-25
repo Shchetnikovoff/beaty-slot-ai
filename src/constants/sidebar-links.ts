@@ -6,6 +6,7 @@ import {
   IconPackages,
   IconUserCircle,
   IconUsers,
+  IconUsersGroup,
   IconBell,
   IconCreditCard,
   IconSettings,
@@ -41,6 +42,7 @@ export const SIDEBAR_LINKS = [
     title: 'Услуги',
     links: [
       { label: 'Календарь записей', icon: IconCalendar, link: PATH_APPS.calendar },
+      { label: 'Команда', icon: IconUsersGroup, link: PATH_APPS.team },
       {
         label: 'Тарифы',
         icon: IconPackages,
@@ -55,7 +57,7 @@ export const SIDEBAR_LINKS = [
     title: 'Коммуникации',
     links: [
       { label: 'Уведомления', icon: IconBell, link: PATH_APPS.notifications },
-      { label: 'Рассылки', icon: IconSend, link: '/apps/broadcasts', badge: 'НОВОЕ' },
+      { label: 'Рассылки', icon: IconSend, link: PATH_APPS.broadcasts },
     ],
   },
   {
@@ -63,14 +65,14 @@ export const SIDEBAR_LINKS = [
     links: [
       { label: 'Профиль', icon: IconUserCircle, link: PATH_APPS.profile },
       { label: 'Настройки', icon: IconSettings, link: PATH_APPS.settings },
-      { label: 'Документы', icon: IconFileText, link: '/apps/documents', badge: 'НОВОЕ' },
+      { label: 'Документы', icon: IconFileText, link: PATH_APPS.documents },
     ],
   },
   {
     title: 'Суперадмин',
     links: [
-      { label: 'Салоны', icon: IconBuilding, link: '/apps/superadmin/salons', badge: 'СА' },
-      { label: 'Статистика', icon: IconChartPie, link: '/apps/superadmin/stats', badge: 'СА' },
+      { label: 'Салоны', icon: IconBuilding, link: PATH_APPS.superadmin.salons, badge: 'СА' },
+      { label: 'Статистика', icon: IconChartPie, link: PATH_APPS.superadmin.stats, badge: 'СА' },
     ],
   },
 ];

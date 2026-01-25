@@ -62,6 +62,7 @@ export * from './dates';
 
 // Calendar
 export { default as CalendarView } from './calendar-view';
+export { SidebarCalendar } from './SidebarCalendar';
 
 // Misc
 export { default as ErrorAlert } from './error-alert';

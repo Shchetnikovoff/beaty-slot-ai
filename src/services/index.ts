@@ -4,3 +4,8 @@ export { subscriptionsService } from './subscriptions.service';
 export { paymentsService } from './payments.service';
 export { documentsService } from './documents.service';
 export { salonsService } from './salons.service';
+export { appointmentsService } from './appointments.service';
+export { staffService } from './staff.service';
+export { aiService, AI_MODELS, AGENT_MODELS, CHAT_MODELS } from './ai.service';
+export type { AIModelId, AgentModelId, ChatModelId } from './ai.service';
+export { broadcastsService } from './broadcasts.service';

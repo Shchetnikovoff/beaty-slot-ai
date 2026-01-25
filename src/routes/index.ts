@@ -60,6 +60,15 @@ export const PATH_APPS = {
     root: path(ROOT_APPS, ROOTS_PRODUCTS),
     categories: path(ROOT_APPS, ROOTS_PRODUCTS + '/categories'),
   },
+  // Beauty Slot routes
+  team: path(ROOT_APPS, '/team'),
+  broadcasts: path(ROOT_APPS, '/broadcasts'),
+  documents: path(ROOT_APPS, '/documents'),
+  superadmin: {
+    root: path(ROOT_APPS, '/superadmin'),
+    salons: path(ROOT_APPS, '/superadmin/salons'),
+    stats: path(ROOT_APPS, '/superadmin/stats'),
+  },
 };
 
 export const PATH_PAGES = {
