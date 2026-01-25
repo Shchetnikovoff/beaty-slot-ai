@@ -231,7 +231,13 @@ export function AIAssistant() {
 
           // Тихо выполняем инструменты с контекстом приложения
           const appContext = getAppContext();
-          console.log(`[AI Assistant] PageData for iteration ${iterations}:`, appContext.pageData?.stats?.slice(0, 2));
+          console.log(`[AI Assistant] Iteration ${iterations} context:`, {
+            page: appContext.currentPage,
+            hasPageData: !!appContext.pageData,
+            pageType: appContext.pageData?.pageType,
+            statsCount: appContext.pageData?.stats?.length,
+            firstStat: appContext.pageData?.stats?.[0],
+          });
           const toolResults = await executeTools(data.toolCalls, appContext);
           console.log(`[AI Assistant] Tool results:`, toolResults.map(r => ({ id: r.tool_call_id, success: r.success })));
 
