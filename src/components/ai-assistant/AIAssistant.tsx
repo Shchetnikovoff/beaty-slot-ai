@@ -46,7 +46,7 @@ import { usePageData } from '@/contexts/page-data';
 import { useAIToolExecutor } from '@/hooks/useAIToolExecutor';
 import { AI_MODELS, AGENT_MODELS, CHAT_MODELS, type AIModelId } from '@/services/ai.service';
 import type { AIAgentResponse } from '@/types/ai';
-import type { AIAppContext } from '@/types/ai-tools';
+import type { AIAppContext, AIToolCall } from '@/types/ai-tools';
 
 import classes from './AIAssistant.module.css';
 
@@ -173,7 +173,12 @@ export function AIAssistant() {
 
       try {
         // Внутренняя история для multi-turn tool execution
-        let internalMessages = [...messages, userMessage].map((m) => ({
+        // Тип включает как обычные сообщения, так и tool results
+        type InternalMessage =
+          | { role: 'system' | 'user' | 'assistant'; content: string; tool_calls?: AIToolCall[] }
+          | { role: 'tool'; tool_call_id: string; content: string };
+
+        let internalMessages: InternalMessage[] = [...messages, userMessage].map((m) => ({
           role: m.role,
           content: m.content,
           tool_calls: m.toolCalls,

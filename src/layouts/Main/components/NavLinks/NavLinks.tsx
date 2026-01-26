@@ -167,7 +167,7 @@ export function LinksGroup(props: LinksGroupProps) {
                 : undefined
             }
           >
-            <Group justify="space-between" gap={0}>
+            <Group justify="space-between" wrap="nowrap" gap={0}>
               <Box style={{ display: 'flex', alignItems: 'center' }}>
                 <Icon size={18} />
                 {!isMini && (
@@ -195,6 +195,7 @@ export function LinksGroup(props: LinksGroupProps) {
                   stroke={1.5}
                   style={{
                     transform: opened ? `rotate(90deg)` : 'none',
+                    flexShrink: 0,
                   }}
                 />
               )}

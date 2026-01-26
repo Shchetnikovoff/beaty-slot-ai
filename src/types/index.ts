@@ -32,3 +32,9 @@ export * from './staff';
 export * from './ai';
 export * from './ai-tools';
 export * from './broadcast';
+
+// Settings Types
+export * from './carousel';
+export * from './sync';
+export * from './salon-settings';
+export * from './notification-settings';

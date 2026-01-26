@@ -1,8 +1,8 @@
 'use client';
 
 import { Calendar } from '@mantine/dates';
-import { Box, Text, ActionIcon, Group } from '@mantine/core';
-import { IconCalendarEvent, IconRefresh } from '@tabler/icons-react';
+import { Box, Text, ActionIcon, Tooltip, Group } from '@mantine/core';
+import { IconRefresh } from '@tabler/icons-react';
 import 'dayjs/locale/ru';
 
 import { useDashboardDate } from '@/contexts/dashboard-date';
@@ -22,19 +22,6 @@ export function SidebarCalendar() {
 
   return (
     <Box className={classes.root}>
-      <Group justify="space-between" mb="xs">
-        <Group gap="xs">
-          <IconCalendarEvent size={16} />
-          <Text size="sm" fw={500}>
-            Фильтр даты
-          </Text>
-        </Group>
-        {!isToday && (
-          <ActionIcon size="sm" variant="subtle" onClick={resetToToday} title="Сбросить к сегодня">
-            <IconRefresh size={14} />
-          </ActionIcon>
-        )}
-      </Group>
       <Calendar
         size="xs"
         locale="ru"
@@ -45,9 +32,16 @@ export function SidebarCalendar() {
         })}
       />
       {!isToday && (
-        <Text size="xs" c="dimmed" ta="center" mt="xs">
-          Данные за {selectedDate.toLocaleDateString('ru-RU')}
-        </Text>
+        <Group justify="center" gap="xs" mt={4}>
+          <Text size="xs" c="dimmed">
+            {selectedDate.toLocaleDateString('ru-RU')}
+          </Text>
+          <Tooltip label="Сбросить к сегодня">
+            <ActionIcon size="xs" variant="subtle" onClick={resetToToday}>
+              <IconRefresh size={12} />
+            </ActionIcon>
+          </Tooltip>
+        </Group>
       )}
     </Box>
   );

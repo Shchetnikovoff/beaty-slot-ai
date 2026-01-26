@@ -1,0 +1,123 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getSyncedStaff, getSyncedRecords, getStaffActiveOverride } from '@/lib/sync-store';
+import type { Staff, StaffListResponse } from '@/types/staff';
+import type { YclientsStaff } from '@/lib/yclients';
+
+/**
+ * Преобразовать YclientsStaff в Staff (формат админки)
+ */
+function transformStaff(ys: YclientsStaff, appointmentsCount: number): Staff {
+  // Проверяем есть ли переопределение статуса активности
+  const activeOverride = getStaffActiveOverride(ys.id);
+  const isActive = activeOverride !== undefined
+    ? activeOverride
+    : (ys.status === 1 && !ys.fired && !ys.hidden);
+
+  return {
+    id: ys.id,
+    yclients_id: String(ys.id),
+    name: ys.name || 'Без имени',
+    phone: undefined, // YClients не возвращает телефон сотрудника
+    email: undefined, // YClients не возвращает email сотрудника
+    role: 'MASTER',
+    specialization: ys.specialization || undefined,
+    photo_url: ys.avatar_big || ys.avatar || undefined,
+    is_active: isActive,
+    appointments_count: appointmentsCount,
+    rating: ys.rating || undefined,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+}
+
+/**
+ * GET /api/v1/admin/staff
+ * Получить список сотрудников из синхронизированных данных
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const yclientsStaff = getSyncedStaff();
+    const records = getSyncedRecords();
+
+    // Если данных нет - вернуть пустой массив с подсказкой
+    if (yclientsStaff.length === 0) {
+      return NextResponse.json({
+        items: [],
+        total: 0,
+        skip: 0,
+        limit: 20,
+        message: 'Данные не синхронизированы. Запустите синхронизацию на странице /apps/sync',
+      });
+    }
+
+    // Получить параметры запроса
+    const { searchParams } = new URL(request.url);
+    const includeFired = searchParams.get('include_fired') === 'true';
+
+    // Отфильтровать уволенных сотрудников (по умолчанию не показываем)
+    const activeYclientsStaff = includeFired
+      ? yclientsStaff
+      : yclientsStaff.filter(s => !s.fired);
+
+    // Подсчитать записи для каждого сотрудника
+    const appointmentsByStaff = new Map<number, number>();
+    records.forEach(r => {
+      const current = appointmentsByStaff.get(r.staff_id) || 0;
+      appointmentsByStaff.set(r.staff_id, current + 1);
+    });
+
+    // Преобразовать всех сотрудников
+    let staff = activeYclientsStaff.map(s =>
+      transformStaff(s, appointmentsByStaff.get(s.id) || 0)
+    );
+
+    // Дополнительные параметры фильтрации
+    const search = searchParams.get('search')?.toLowerCase();
+    const role = searchParams.get('role');
+    const isActive = searchParams.get('is_active');
+    const skip = parseInt(searchParams.get('skip') || '0', 10);
+    const limit = parseInt(searchParams.get('limit') || '20', 10);
+
+    // Применить фильтры
+    if (search) {
+      staff = staff.filter(s =>
+        s.name.toLowerCase().includes(search) ||
+        (s.specialization && s.specialization.toLowerCase().includes(search))
+      );
+    }
+
+    // Фильтр по роли (игнорируем если role пустой или "null")
+    if (role && role !== 'null') {
+      staff = staff.filter(s => s.role === role);
+    }
+
+    if (isActive !== null && isActive !== undefined) {
+      const active = isActive === 'true';
+      staff = staff.filter(s => s.is_active === active);
+    }
+
+    // Сортировка по количеству записей (популярные сверху)
+    staff.sort((a, b) => (b.appointments_count || 0) - (a.appointments_count || 0));
+
+    // Общее количество после фильтрации
+    const total = staff.length;
+
+    // Применить пагинацию
+    const paginatedStaff = staff.slice(skip, skip + limit);
+
+    const response: StaffListResponse = {
+      items: paginatedStaff,
+      total,
+      skip,
+      limit,
+    };
+
+    return NextResponse.json(response);
+  } catch (error) {
+    console.error('Error getting staff:', error);
+    return NextResponse.json(
+      { error: 'Failed to get staff' },
+      { status: 500 }
+    );
+  }
+}

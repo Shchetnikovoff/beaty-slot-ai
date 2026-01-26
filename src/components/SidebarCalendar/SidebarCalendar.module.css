@@ -1,25 +1,79 @@
 .root {
-  padding: var(--mantine-spacing-md);
+  padding: 8px 10px;
   border-bottom: 1px solid light-dark(
     var(--mantine-color-gray-2),
     var(--mantine-color-dark-4)
   );
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .calendar {
-  width: 100%;
+  width: auto !important;
+  max-width: 210px;
 }
 
 .calendar :global(.mantine-Calendar-calendarHeader) {
   max-width: 100%;
+  min-height: unset !important;
+  height: 24px !important;
+  margin-bottom: 4px;
+  padding: 0;
+}
+
+.calendar :global(.mantine-Calendar-calendarHeaderLevel) {
+  font-size: rem(11px) !important;
+  font-weight: 500;
+  padding: 0 4px !important;
+  height: 22px !important;
+  min-height: unset !important;
+}
+
+.calendar :global(.mantine-Calendar-calendarHeaderControl) {
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px !important;
+  min-height: 22px !important;
+}
+
+.calendar :global(.mantine-Calendar-calendarHeaderControl svg) {
+  width: 12px !important;
+  height: 12px !important;
 }
 
 .calendar :global(.mantine-Calendar-month) {
-  width: 100%;
+  width: auto !important;
+  border-spacing: 1px;
+}
+
+.calendar :global(.mantine-Calendar-monthThead) {
+  height: auto;
+}
+
+.calendar :global(.mantine-Calendar-monthRow) {
+  height: auto;
 }
 
 .calendar :global(.mantine-Calendar-monthCell) {
   text-align: center;
+  padding: 1px !important;
+}
+
+.calendar :global(.mantine-Calendar-weekday) {
+  font-size: rem(9px) !important;
+  padding: 0 !important;
+  height: 18px !important;
+  width: 26px !important;
+}
+
+.calendar :global(.mantine-Calendar-day) {
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+  min-height: 26px !important;
+  font-size: rem(10px) !important;
+  border-radius: 4px;
 }
 
 /* Для colored/gradient sidebar */

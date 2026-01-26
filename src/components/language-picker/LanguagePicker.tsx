@@ -9,29 +9,14 @@ import classes from './LanguagePicker.module.css';
 
 const data = [
   {
-    label: 'Английский',
+    label: 'Русский',
     image:
-      'https://res.cloudinary.com/ddh7hfzso/image/upload/v1677783783/meal%20mart/english_njrlxm.png',
+      'https://flagcdn.com/w40/ru.png',
   },
   {
-    label: 'Немецкий',
+    label: 'English',
     image:
-      'https://res.cloudinary.com/ddh7hfzso/image/upload/v1677783783/meal%20mart/german_a90o3b.png',
-  },
-  {
-    label: 'Итальянский',
-    image:
-      'https://res.cloudinary.com/ddh7hfzso/image/upload/v1677783783/meal%20mart/italian_ruxfnn.png',
-  },
-  {
-    label: 'Французский',
-    image:
-      'https://res.cloudinary.com/ddh7hfzso/image/upload/v1677783783/meal%20mart/french_yek0eo.png',
-  },
-  {
-    label: 'Польский',
-    image:
-      'https://res.cloudinary.com/ddh7hfzso/image/upload/v1677783783/meal%20mart/polish_wjp2xh.png',
+      'https://flagcdn.com/w40/gb.png',
   },
 ];
 

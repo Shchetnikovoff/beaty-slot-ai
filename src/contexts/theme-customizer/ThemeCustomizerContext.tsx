@@ -28,6 +28,7 @@ interface ThemeCustomizerContextType {
   toggleSidebarVisibility: () => void;
   showSidebar: () => void;
   hideSidebar: () => void;
+  setSidebarWidth: (width: number) => void;
   setPrimaryColor: (color: any) => void;
   setColorScheme: (scheme: any) => void;
   setBorderRadius: (radius: ThemeConfig['appearance']['borderRadius']) => void;
@@ -50,17 +51,27 @@ export function ThemeCustomizerProvider({
   defaultConfig = defaultThemeConfig,
   storageKey = 'theme-config',
 }: ThemeCustomizerProviderProps) {
-  const [config, setConfig] = useState<ThemeConfig>(() => {
-    return ThemeStorage.load(storageKey, defaultConfig);
-  });
-
-  const [previewConfig, setPreviewConfig] = useState<ThemeConfig>(config);
+  // Инициализируем с defaultConfig для избежания гидрационных ошибок
+  // localStorage читается только на клиенте после монтирования
+  const [config, setConfig] = useState<ThemeConfig>(defaultConfig);
+  const [previewConfig, setPreviewConfig] = useState<ThemeConfig>(defaultConfig);
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  // Save to localStorage whenever config changes
+  // Загрузка из localStorage после монтирования (только на клиенте)
   useEffect(() => {
-    ThemeStorage.save(storageKey, config);
-  }, [config, storageKey]);
+    const savedConfig = ThemeStorage.load(storageKey, defaultConfig);
+    setConfig(savedConfig);
+    setPreviewConfig(savedConfig);
+    setIsHydrated(true);
+  }, []);
+
+  // Save to localStorage whenever config changes (только после гидрации)
+  useEffect(() => {
+    if (isHydrated) {
+      ThemeStorage.save(storageKey, config);
+    }
+  }, [config, storageKey, isHydrated]);
 
   // Reset preview when customizer opens
   useEffect(() => {

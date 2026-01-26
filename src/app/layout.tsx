@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ru">
+    <html lang="ru" suppressHydrationWarning>
       {/* className={openSans.className} */}
       <head>
         <title>Beauty Slot - Панель администратора</title>
@@ -51,7 +51,7 @@ export default function RootLayout({
         />
         <ColorSchemeScript defaultColorScheme="auto" />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

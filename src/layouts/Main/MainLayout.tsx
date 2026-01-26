@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useCallback, useRef, useState, useEffect } from 'react';
 
 import {
   ActionIcon,
@@ -45,7 +45,56 @@ export function MainLayout({ children }: Props) {
     toggleSidebarVisibility,
     showSidebar,
     hideSidebar,
+    setSidebarWidth,
   } = useThemeCustomizer();
+
+  // Resize sidebar state
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      setIsResizing(true);
+      resizeRef.current = {
+        startX: e.clientX,
+        startWidth: config.layout.sidebar.width,
+      };
+    },
+    [config.layout.sidebar.width]
+  );
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing || !resizeRef.current) return;
+
+      const diff = config.layout.sidebar.position === 'left'
+        ? e.clientX - resizeRef.current.startX
+        : resizeRef.current.startX - e.clientX;
+
+      const newWidth = resizeRef.current.startWidth + diff;
+      setSidebarWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      resizeRef.current = null;
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing, config.layout.sidebar.position, setSidebarWidth]);
 
   // Generate dynamic styles based on theme config
   const sidebarStyles = generateSidebarStyles(config.layout.sidebar);
@@ -142,33 +191,48 @@ export function MainLayout({ children }: Props) {
 
       {/* Sidebar */}
       {isSidebarVisible() && (
-        <Box
-          className={layoutClasses.sidebar}
-          data-variant={config.layout.sidebar.variant}
-          data-position={config.layout.sidebar.position}
-          data-overlay={shouldOverlay}
-          style={{
-            ...sidebarStyles,
-            width: config.layout.sidebar.width,
-            [config.layout.sidebar.position]: 0,
-            zIndex: shouldOverlay ? 102 : 101,
-            direction:
-              config.layout.sidebar.position === 'left' ? 'ltr' : 'rtl',
-            transform:
-              mobile_match && !mobileOpened
-                ? `translateX(${
-                    config.layout.sidebar.position === 'right'
-                      ? '100%'
-                      : '-100%'
-                  })`
-                : 'translateX(0)',
-          }}
-        >
-          <SidebarNav
-            onClose={handleSidebarClose}
-            showCloseButton={config.layout.sidebar.overlay || mobile_match}
-          />
-        </Box>
+        <>
+          <Box
+            className={layoutClasses.sidebar}
+            data-variant={config.layout.sidebar.variant}
+            data-position={config.layout.sidebar.position}
+            data-overlay={shouldOverlay}
+            style={{
+              ...sidebarStyles,
+              width: config.layout.sidebar.width,
+              [config.layout.sidebar.position]: 0,
+              zIndex: shouldOverlay ? 102 : 101,
+              direction:
+                config.layout.sidebar.position === 'left' ? 'ltr' : 'rtl',
+              transform:
+                mobile_match && !mobileOpened
+                  ? `translateX(${
+                      config.layout.sidebar.position === 'right'
+                        ? '100%'
+                        : '-100%'
+                    })`
+                  : 'translateX(0)',
+            }}
+          >
+            <SidebarNav
+              onClose={handleSidebarClose}
+              showCloseButton={config.layout.sidebar.overlay || mobile_match}
+            />
+          </Box>
+          {/* Resize Handle */}
+          {!mobile_match && !shouldOverlay && (
+            <Box
+              className={layoutClasses.resizeHandle}
+              data-position={config.layout.sidebar.position}
+              data-resizing={isResizing}
+              onMouseDown={handleResizeStart}
+              style={{
+                [config.layout.sidebar.position]: config.layout.sidebar.width - 3,
+                zIndex: 103,
+              }}
+            />
+          )}
+        </>
       )}
 
       {/* Main Content */}

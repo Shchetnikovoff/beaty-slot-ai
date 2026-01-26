@@ -72,3 +72,12 @@ export { default as SystemNotificationBanner } from './system-notification-banne
 
 // AI Assistant
 export { AIAssistant } from './ai-assistant';
+
+// Settings Components
+export * from './CarouselSettings';
+export * from './SyncSettings';
+export * from './WebPageSettings';
+export * from './NotificationSettings';
+
+// Public Page Components
+export * from './public';

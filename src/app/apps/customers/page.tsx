@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   ActionIcon,
   Anchor,
   Avatar,
   Badge,
+  Box,
   Button,
   Group,
   Menu,
@@ -22,12 +23,16 @@ import { useDebouncedValue } from '@mantine/hooks';
 import {
   IconAlertCircle,
   IconAlertTriangle,
+  IconArrowDown,
+  IconArrowUp,
+  IconArrowsSort,
   IconCrown,
   IconDotsVertical,
   IconEdit,
   IconEye,
   IconGhost,
   IconLayoutGrid,
+  IconLayoutList,
   IconList,
   IconMoodEmpty,
   IconPhone,
@@ -44,7 +49,14 @@ import { clientsService } from '@/services';
 import type { Client, ClientFilterStatus, ClientsListParams } from '@/types';
 import { PATH_DASHBOARD } from '@/routes';
 
-type ViewMode = 'grid' | 'table';
+import { ClientDetailDrawer } from './components/ClientDetailDrawer';
+import { ClientEditModal } from './components/ClientEditModal';
+
+type ViewMode = 'grid' | 'list' | 'table';
+
+// Типы сортировки
+type SortField = 'name' | 'phone' | 'score' | 'status' | 'visits' | 'noshow' | 'subscription' | 'lastVisit' | null;
+type SortDirection = 'asc' | 'desc';
 
 const CLIENT_FILTERS: Array<{
   value: ClientFilterStatus;
@@ -91,64 +103,113 @@ const items = [
   </Anchor>
 ));
 
+// Форматирование телефона в читаемый вид
+const formatPhone = (phone: string): string => {
+  if (!phone) return '';
+
+  // Убираем все нецифровые символы
+  const digits = phone.replace(/\D/g, '');
+
+  // Если номер начинается с 8, заменяем на 7
+  const normalized = digits.startsWith('8') ? '7' + digits.slice(1) : digits;
+
+  // Форматируем в +7 (XXX) XXX-XX-XX
+  if (normalized.length === 11 && normalized.startsWith('7')) {
+    return `+7 (${normalized.slice(1, 4)}) ${normalized.slice(4, 7)}-${normalized.slice(7, 9)}-${normalized.slice(9, 11)}`;
+  }
+
+  // Если 10 цифр (без кода страны)
+  if (normalized.length === 10) {
+    return `+7 (${normalized.slice(0, 3)}) ${normalized.slice(3, 6)}-${normalized.slice(6, 8)}-${normalized.slice(8, 10)}`;
+  }
+
+  // Возвращаем как есть, если формат неизвестен
+  return phone;
+};
+
 function ClientCard({
   client,
   onEdit,
   onToggleSubscription,
+  onClick,
 }: {
   client: Client;
   onEdit: (client: Client) => void;
   onToggleSubscription: (client: Client) => void;
+  onClick: (client: Client) => void;
 }) {
   return (
-    <Paper p="md" radius="md" withBorder>
-      <Group justify="space-between" mb="md">
-        <Group>
-          <Avatar
-            src={client.photo_url}
-            size="lg"
-            radius="xl"
-            color={client.has_active_subscription ? 'green' : 'gray'}
-          >
-            {client.name?.charAt(0).toUpperCase()}
-          </Avatar>
-          <div>
-            <Text fw={500}>{client.name}</Text>
-            <Text size="sm" c="dimmed">
-              {client.phone}
-            </Text>
-          </div>
-        </Group>
-        <Menu shadow="md" width={200}>
-          <Menu.Target>
-            <ActionIcon variant="subtle">
-              <IconDotsVertical size={16} />
-            </ActionIcon>
-          </Menu.Target>
-          <Menu.Dropdown>
-            <Menu.Item leftSection={<IconEye size={14} />} onClick={() => onEdit(client)}>
-              Просмотр
-            </Menu.Item>
-            <Menu.Item leftSection={<IconEdit size={14} />} onClick={() => onEdit(client)}>
-              Редактировать
-            </Menu.Item>
-            <Menu.Divider />
-            <Menu.Item
-              leftSection={
-                client.has_active_subscription ? (
-                  <IconUserX size={14} />
-                ) : (
-                  <IconUserCheck size={14} />
-                )
-              }
-              color={client.has_active_subscription ? 'red' : 'green'}
-              onClick={() => onToggleSubscription(client)}
+    <Box style={{ width: '100%' }}>
+      <Paper
+        p="md"
+        radius="md"
+        withBorder
+        h="100%"
+        style={{
+          cursor: 'pointer',
+          transition: 'all 150ms ease',
+          minHeight: 220,
+        }}
+        onClick={() => onClick(client)}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'var(--mantine-color-blue-4)';
+          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'var(--mantine-color-gray-3)';
+          e.currentTarget.style.boxShadow = 'none';
+        }}
+      >
+        <Group justify="space-between" mb="md">
+          <Group>
+            <Avatar
+              src={client.photo_url}
+              size="lg"
+              radius="xl"
+              color={client.has_active_subscription ? 'green' : 'gray'}
             >
-              {client.has_active_subscription ? 'Отключить подписку' : 'Включить подписку'}
-            </Menu.Item>
-          </Menu.Dropdown>
-        </Menu>
-      </Group>
+              {client.name?.charAt(0).toUpperCase()}
+            </Avatar>
+            <div>
+              <Text fw={500}>{client.name}</Text>
+              <Text size="sm" c="dimmed" ff="monospace">
+                {formatPhone(client.phone)}
+              </Text>
+            </div>
+          </Group>
+          <Menu shadow="md" width={200}>
+            <Menu.Target>
+              <ActionIcon
+                variant="subtle"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <IconDotsVertical size={16} />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item leftSection={<IconEye size={14} />} onClick={(e) => { e.stopPropagation(); onClick(client); }}>
+                Просмотр
+              </Menu.Item>
+              <Menu.Item leftSection={<IconEdit size={14} />} onClick={(e) => { e.stopPropagation(); onEdit(client); }}>
+                Редактировать
+              </Menu.Item>
+              <Menu.Divider />
+              <Menu.Item
+                leftSection={
+                  client.has_active_subscription ? (
+                    <IconUserX size={14} />
+                  ) : (
+                    <IconUserCheck size={14} />
+                  )
+                }
+                color={client.has_active_subscription ? 'red' : 'green'}
+                onClick={(e) => { e.stopPropagation(); onToggleSubscription(client); }}
+              >
+                {client.has_active_subscription ? 'Отключить подписку' : 'Включить подписку'}
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+        </Group>
 
       <Stack gap="xs">
         {client.email && (
@@ -221,40 +282,164 @@ function ClientCard({
           </Text>
         )}
       </Stack>
-    </Paper>
+      </Paper>
+    </Box>
   );
 }
+
+// Компонент иконки сортировки
+function SortIcon({ field, sortField, sortDirection }: { field: SortField; sortField: SortField; sortDirection: SortDirection }) {
+  if (sortField !== field) {
+    return <IconArrowsSort size={14} style={{ opacity: 0.4 }} />;
+  }
+  return sortDirection === 'desc'
+    ? <IconArrowDown size={14} />
+    : <IconArrowUp size={14} />;
+}
+
+// Стиль для сортируемого заголовка
+const sortableHeaderStyle: React.CSSProperties = {
+  padding: '12px',
+  cursor: 'pointer',
+  userSelect: 'none',
+  transition: 'background-color 150ms ease',
+};
 
 function ClientsTableView({
   clients,
   onEdit,
   onToggleSubscription,
+  onClick,
+  sortField,
+  sortDirection,
+  onSort,
 }: {
   clients: Client[];
   onEdit: (client: Client) => void;
   onToggleSubscription: (client: Client) => void;
+  onClick: (client: Client) => void;
+  sortField: SortField;
+  sortDirection: SortDirection;
+  onSort: (field: SortField) => void;
 }) {
+  // Определяем ширину колонок для равномерного распределения
+  const columnWidths = {
+    client: '16%',
+    phone: '14%',
+    score: '8%',
+    status: '12%',
+    visits: '9%',
+    noshow: '9%',
+    subscription: '10%',
+    lastVisit: '14%',
+    actions: '8%',
+  };
+
   return (
     <div style={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
         <thead>
           <tr style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}>
-            <th style={{ padding: '12px', textAlign: 'left' }}>Клиент</th>
-            <th style={{ padding: '12px', textAlign: 'left' }}>Телефон</th>
-            <th style={{ padding: '12px', textAlign: 'center' }}>ИВК</th>
-            <th style={{ padding: '12px', textAlign: 'left' }}>Статус</th>
-            <th style={{ padding: '12px', textAlign: 'center' }}>Визиты</th>
-            <th style={{ padding: '12px', textAlign: 'center' }}>Неявки</th>
-            <th style={{ padding: '12px', textAlign: 'left' }}>Подписка</th>
-            <th style={{ padding: '12px', textAlign: 'left' }}>Последний визит</th>
-            <th style={{ padding: '12px', textAlign: 'right' }}>Действия</th>
+            <th
+              style={{ ...sortableHeaderStyle, textAlign: 'left', width: columnWidths.client }}
+              onClick={() => onSort('name')}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--mantine-color-gray-1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+            >
+              <Group gap={4} wrap="nowrap">
+                <span>Клиент</span>
+                <SortIcon field="name" sortField={sortField} sortDirection={sortDirection} />
+              </Group>
+            </th>
+            <th style={{ padding: '12px', textAlign: 'left', width: columnWidths.phone }}>Телефон</th>
+            <th
+              style={{ ...sortableHeaderStyle, textAlign: 'center', width: columnWidths.score }}
+              onClick={() => onSort('score')}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--mantine-color-gray-1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+            >
+              <Group gap={4} wrap="nowrap" justify="center">
+                <span>ИВК</span>
+                <SortIcon field="score" sortField={sortField} sortDirection={sortDirection} />
+              </Group>
+            </th>
+            <th
+              style={{ ...sortableHeaderStyle, textAlign: 'left', width: columnWidths.status }}
+              onClick={() => onSort('status')}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--mantine-color-gray-1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+            >
+              <Group gap={4} wrap="nowrap">
+                <span>Статус</span>
+                <SortIcon field="status" sortField={sortField} sortDirection={sortDirection} />
+              </Group>
+            </th>
+            <th
+              style={{ ...sortableHeaderStyle, textAlign: 'center', width: columnWidths.visits }}
+              onClick={() => onSort('visits')}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--mantine-color-gray-1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+            >
+              <Group gap={4} wrap="nowrap" justify="center">
+                <span>Визиты</span>
+                <SortIcon field="visits" sortField={sortField} sortDirection={sortDirection} />
+              </Group>
+            </th>
+            <th
+              style={{ ...sortableHeaderStyle, textAlign: 'center', width: columnWidths.noshow }}
+              onClick={() => onSort('noshow')}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--mantine-color-gray-1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+            >
+              <Group gap={4} wrap="nowrap" justify="center">
+                <span>Неявки</span>
+                <SortIcon field="noshow" sortField={sortField} sortDirection={sortDirection} />
+              </Group>
+            </th>
+            <th
+              style={{ ...sortableHeaderStyle, textAlign: 'center', width: columnWidths.subscription }}
+              onClick={() => onSort('subscription')}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--mantine-color-gray-1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+            >
+              <Group gap={4} wrap="nowrap" justify="center">
+                <span>Подписка</span>
+                <SortIcon field="subscription" sortField={sortField} sortDirection={sortDirection} />
+              </Group>
+            </th>
+            <th
+              style={{ ...sortableHeaderStyle, textAlign: 'center', width: columnWidths.lastVisit }}
+              onClick={() => onSort('lastVisit')}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--mantine-color-gray-1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+            >
+              <Group gap={4} wrap="nowrap" justify="center">
+                <span>Посл. визит</span>
+                <SortIcon field="lastVisit" sortField={sortField} sortDirection={sortDirection} />
+              </Group>
+            </th>
+            <th style={{ padding: '12px', textAlign: 'center', width: columnWidths.actions }}>Действия</th>
           </tr>
         </thead>
         <tbody>
           {clients.map((client) => (
-            <tr key={client.id} style={{ borderBottom: '1px solid var(--mantine-color-gray-2)' }}>
+            <tr
+              key={client.id}
+              style={{
+                borderBottom: '1px solid var(--mantine-color-gray-2)',
+                cursor: 'pointer',
+                transition: 'background-color 150ms ease',
+              }}
+              onClick={() => onClick(client)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--mantine-color-gray-0)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
               <td style={{ padding: '12px' }}>
-                <Group gap="sm">
+                <Group gap="sm" wrap="nowrap">
                   <Avatar
                     src={client.photo_url}
                     size="sm"
@@ -263,16 +448,13 @@ function ClientsTableView({
                   >
                     {client.name?.charAt(0).toUpperCase()}
                   </Avatar>
-                  <Text size="sm" fw={500}>
+                  <Text size="sm" fw={500} truncate style={{ maxWidth: 120 }}>
                     {client.name}
                   </Text>
                 </Group>
               </td>
               <td style={{ padding: '12px' }}>
-                <Group gap="xs">
-                  <IconPhone size={14} />
-                  <Text size="sm">{client.phone}</Text>
-                </Group>
+                <Text size="sm" ff="monospace" style={{ whiteSpace: 'nowrap' }}>{formatPhone(client.phone)}</Text>
               </td>
               <td style={{ padding: '12px', textAlign: 'center' }}>
                 {client.score !== undefined ? (
@@ -309,7 +491,7 @@ function ClientsTableView({
                   {client.no_show_count ?? '—'}
                 </Text>
               </td>
-              <td style={{ padding: '12px' }}>
+              <td style={{ padding: '12px', textAlign: 'center' }}>
                 {client.has_active_subscription ? (
                   <Badge color="green" variant="light" size="sm">
                     Активна
@@ -320,22 +502,22 @@ function ClientsTableView({
                   </Badge>
                 )}
               </td>
-              <td style={{ padding: '12px' }}>
+              <td style={{ padding: '12px', textAlign: 'center' }}>
                 <Text size="sm" c="dimmed">
                   {client.last_visit_at
                     ? new Date(client.last_visit_at).toLocaleDateString('ru-RU')
                     : '—'}
                 </Text>
               </td>
-              <td style={{ padding: '12px', textAlign: 'right' }}>
-                <Group gap="xs" justify="flex-end">
-                  <ActionIcon variant="subtle" onClick={() => onEdit(client)}>
+              <td style={{ padding: '12px', textAlign: 'center' }}>
+                <Group gap="xs" justify="center">
+                  <ActionIcon variant="subtle" onClick={(e) => { e.stopPropagation(); onEdit(client); }}>
                     <IconEdit size={16} />
                   </ActionIcon>
                   <ActionIcon
                     variant="subtle"
                     color={client.has_active_subscription ? 'red' : 'green'}
-                    onClick={() => onToggleSubscription(client)}
+                    onClick={(e) => { e.stopPropagation(); onToggleSubscription(client); }}
                   >
                     {client.has_active_subscription ? (
                       <IconUserX size={16} />
@@ -359,6 +541,79 @@ function Customers() {
   const [debouncedSearch] = useDebouncedValue(search, 300);
   const [importing, setImporting] = useState(false);
   const [statusFilter, setStatusFilter] = useState<ClientFilterStatus>('ALL');
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [drawerOpened, setDrawerOpened] = useState(false);
+  const [editModalOpened, setEditModalOpened] = useState(false); // Отдельная модалка редактирования
+
+  // Состояние сортировки
+  const [sortField, setSortField] = useState<SortField>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  // Обработчик сортировки
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      // Переключаем направление или сбрасываем
+      if (sortDirection === 'desc') {
+        setSortDirection('asc');
+      } else {
+        setSortField(null);
+        setSortDirection('desc');
+      }
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  };
+
+  // Сортировка клиентов
+  const sortClients = (clients: Client[]): Client[] => {
+    if (!sortField || !clients) return clients;
+
+    return [...clients].sort((a, b) => {
+      let aVal: number | string | boolean = 0;
+      let bVal: number | string | boolean = 0;
+
+      switch (sortField) {
+        case 'name':
+          aVal = a.name?.toLowerCase() || '';
+          bVal = b.name?.toLowerCase() || '';
+          break;
+        case 'score':
+          aVal = a.score ?? 0;
+          bVal = b.score ?? 0;
+          break;
+        case 'status':
+          // Сортируем по score для статуса
+          aVal = a.score ?? 0;
+          bVal = b.score ?? 0;
+          break;
+        case 'visits':
+          aVal = a.visits_count ?? 0;
+          bVal = b.visits_count ?? 0;
+          break;
+        case 'noshow':
+          aVal = a.no_show_count ?? 0;
+          bVal = b.no_show_count ?? 0;
+          break;
+        case 'subscription':
+          aVal = a.has_active_subscription ? 1 : 0;
+          bVal = b.has_active_subscription ? 1 : 0;
+          break;
+        case 'lastVisit':
+          aVal = a.last_visit_at ? new Date(a.last_visit_at).getTime() : 0;
+          bVal = b.last_visit_at ? new Date(b.last_visit_at).getTime() : 0;
+          break;
+      }
+
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      }
+
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  };
 
   // Преобразование UI фильтров в параметры API
   const getFilterParams = (): ClientsListParams => {
@@ -400,6 +655,12 @@ function Customers() {
     refetch: refetchClients,
   } = useClients(getFilterParams());
 
+  // Мемоизированный список отсортированных клиентов
+  const sortedClients = useMemo(() => {
+    if (!clientsData?.items) return [];
+    return sortClients(clientsData.items);
+  }, [clientsData?.items, sortField, sortDirection]);
+
   const handleToggleSubscription = async (client: Client) => {
     try {
       await clientsService.toggleSubscription(
@@ -425,24 +686,57 @@ function Customers() {
     }
   };
 
+  const handleClientClick = (client: Client) => {
+    setSelectedClient(client);
+    setDrawerOpened(true);
+  };
+
+  const handleCloseDrawer = () => {
+    setDrawerOpened(false);
+    setSelectedClient(null);
+  };
+
   const handleEditClient = (client: Client) => {
-    // TODO: Open edit drawer
-    console.log('Edit client:', client);
+    setSelectedClient(client);
+    setEditModalOpened(true); // Открыть только модалку редактирования
+  };
+
+  const handleCloseEditModal = () => {
+    setEditModalOpened(false);
+    setSelectedClient(null);
+  };
+
+  const handleToggleBlock = async (client: Client) => {
+    // TODO: Implement toggle block API
+    console.log('Toggle block:', client);
+    refetchClients();
   };
 
   const renderContent = () => {
     if (clientsLoading) {
-      return viewMode === 'grid' ? (
-        <SimpleGrid
-          cols={{ base: 1, sm: 2, lg: 3, xl: 4 }}
-          spacing={{ base: 10, sm: 'xl' }}
-          verticalSpacing={{ base: 'md', sm: 'xl' }}
-        >
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={`client-loading-${i}`} visible={true} height={180} />
-          ))}
-        </SimpleGrid>
-      ) : (
+      if (viewMode === 'grid') {
+        return (
+          <SimpleGrid
+            cols={{ base: 1, sm: 2, lg: 3, xl: 4 }}
+            spacing="md"
+            verticalSpacing="md"
+          >
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={`client-loading-${i}`} visible={true} height={220} />
+            ))}
+          </SimpleGrid>
+        );
+      }
+      if (viewMode === 'list') {
+        return (
+          <Stack gap="md">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={`client-loading-${i}`} visible={true} height={220} />
+            ))}
+          </Stack>
+        );
+      }
+      return (
         <Surface>
           <Skeleton height={400} />
         </Surface>
@@ -483,28 +777,53 @@ function Customers() {
       );
     }
 
-    return viewMode === 'grid' ? (
-      <SimpleGrid
-        cols={{ base: 1, sm: 2, lg: 3, xl: 4 }}
-        spacing={{ base: 10, sm: 'xl' }}
-        verticalSpacing={{ base: 'md', sm: 'xl' }}
-        mt="md"
-      >
-        {clientsData.items.map((client) => (
-          <ClientCard
-            key={client.id}
-            client={client}
-            onEdit={handleEditClient}
-            onToggleSubscription={handleToggleSubscription}
-          />
-        ))}
-      </SimpleGrid>
-    ) : (
+    if (viewMode === 'grid') {
+      return (
+        <SimpleGrid
+          cols={{ base: 1, sm: 2, lg: 3, xl: 4 }}
+          spacing="md"
+          verticalSpacing="md"
+          mt="md"
+        >
+          {clientsData.items.map((client) => (
+            <ClientCard
+              key={client.id}
+              client={client}
+              onEdit={handleEditClient}
+              onToggleSubscription={handleToggleSubscription}
+              onClick={handleClientClick}
+            />
+          ))}
+        </SimpleGrid>
+      );
+    }
+
+    if (viewMode === 'list') {
+      return (
+        <Stack gap="md" mt="md">
+          {clientsData.items.map((client) => (
+            <ClientCard
+              key={client.id}
+              client={client}
+              onEdit={handleEditClient}
+              onToggleSubscription={handleToggleSubscription}
+              onClick={handleClientClick}
+            />
+          ))}
+        </Stack>
+      );
+    }
+
+    return (
       <Surface mt="md">
         <ClientsTableView
-          clients={clientsData.items}
+          clients={sortedClients}
           onEdit={handleEditClient}
           onToggleSubscription={handleToggleSubscription}
+          onClick={handleClientClick}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSort={handleSort}
         />
       </Surface>
     );
@@ -532,6 +851,7 @@ function Customers() {
               onChange={(value) => setViewMode(value as ViewMode)}
               data={[
                 { value: 'grid', label: <IconLayoutGrid size={16} /> },
+                { value: 'list', label: <IconLayoutList size={16} /> },
                 { value: 'table', label: <IconList size={16} /> },
               ]}
             />
@@ -548,7 +868,7 @@ function Customers() {
       />
 
       {/* Filter Buttons */}
-      <Group mb="md" gap="xs">
+      <Group mt="xl" mb="md" gap="xs" grow wrap="nowrap">
         {CLIENT_FILTERS.map((filter) => {
           const Icon = filter.icon;
           const isActive = statusFilter === filter.value;
@@ -558,8 +878,19 @@ function Customers() {
               variant={isActive ? 'filled' : 'light'}
               color={isActive ? filter.color : 'gray'}
               size="sm"
+              radius="md"
               leftSection={<Icon size={16} />}
               onClick={() => setStatusFilter(filter.value)}
+              styles={{
+                root: {
+                  fontWeight: isActive ? 600 : 500,
+                  flex: 1,
+                  minWidth: 0,
+                },
+                label: {
+                  whiteSpace: 'nowrap',
+                },
+              }}
             >
               {filter.label}
             </Button>
@@ -582,6 +913,28 @@ function Customers() {
       )}
 
       {renderContent()}
+
+      {/* Client Detail Drawer (ИВК) - только просмотр */}
+      <ClientDetailDrawer
+        client={selectedClient}
+        opened={drawerOpened}
+        onClose={handleCloseDrawer}
+        onToggleSubscription={(client) => {
+          handleToggleSubscription(client);
+          handleCloseDrawer();
+        }}
+        onToggleBlock={handleToggleBlock}
+      />
+
+      {/* Отдельная модалка редактирования */}
+      <ClientEditModal
+        client={selectedClient}
+        opened={editModalOpened}
+        onClose={handleCloseEditModal}
+        onSave={() => {
+          refetchClients();
+        }}
+      />
     </>
   );
 }

@@ -32,14 +32,14 @@ export const ThemePreviewCanvas: React.FC<ThemePreviewCanvasProps> = ({
     <Box p="lg" style={{ flex: 1 }}>
       <Group mb="md">
         <IconComponents size={20} />
-        <Text fw={600}>Preview</Text>
+        <Text fw={600}>Предпросмотр</Text>
       </Group>
       <ScrollArea h="calc(100vh - 180px)" offsetScrollbars>
         <Paper p="md" withBorder>
           <Stack>
             <Stack gap="md">
               <Text size="sm" c="dimmed">
-                Current primary color:{' '}
+                Текущий основной цвет:{' '}
                 <ColorSwatch
                   color={COLOR_SCHEMES[config.appearance.primaryColor].color}
                   size={16}
@@ -54,14 +54,14 @@ export const ThemePreviewCanvas: React.FC<ThemePreviewCanvasProps> = ({
                   size={config.appearance.compact ? 'xs' : 'sm'}
                   radius={config.appearance.borderRadius}
                 >
-                  Primary Button
+                  Основная кнопка
                 </Button>
                 <Button
                   variant="outline"
                   size={config.appearance.compact ? 'xs' : 'sm'}
                   radius={config.appearance.borderRadius}
                 >
-                  Outline Button
+                  Контурная кнопка
                 </Button>
               </Group>
 
@@ -70,59 +70,59 @@ export const ThemePreviewCanvas: React.FC<ThemePreviewCanvasProps> = ({
                 withBorder
                 radius={config.appearance.borderRadius}
               >
-                <Text size="sm">Sample card content with current settings</Text>
+                <Text size="sm">Пример карточки с текущими настройками</Text>
               </Paper>
             </Stack>
 
             <Tabs defaultValue="preview">
               <Tabs.List>
-                <Tabs.Tab value="preview">Tab 1</Tabs.Tab>
-                <Tabs.Tab value="preview2">Tab 2</Tabs.Tab>
+                <Tabs.Tab value="preview">Вкладка 1</Tabs.Tab>
+                <Tabs.Tab value="preview2">Вкладка 2</Tabs.Tab>
                 <Tabs.Tab value="disabled" disabled>
-                  Disabled
+                  Отключена
                 </Tabs.Tab>
               </Tabs.List>
               <Tabs.Panel value="preview" pt="xs">
-                <Text>This is a tab preview.</Text>
+                <Text>Это предпросмотр вкладки.</Text>
               </Tabs.Panel>
               <Tabs.Panel value="preview2" pt="xs">
-                <Text>This is a tab preview 2.</Text>
+                <Text>Это предпросмотр вкладки 2.</Text>
               </Tabs.Panel>
             </Tabs>
 
             <Stack>
               <Text size="lg" fw={600}>
-                Badges
+                Бейджи
               </Text>
               <Group>
-                <Badge>Default</Badge>
-                <Badge color="primary">Primary</Badge>
-                <Badge variant="outline">Outline</Badge>
+                <Badge>По умолчанию</Badge>
+                <Badge color="primary">Основной</Badge>
+                <Badge variant="outline">Контурный</Badge>
               </Group>
             </Stack>
 
             <Group>
               <TextInput
-                label="Text Input"
-                placeholder="Your name"
+                label="Текстовое поле"
+                placeholder="Ваше имя"
                 radius={config.appearance.borderRadius}
                 size={config.appearance.compact ? 'xs' : 'sm'}
               />
               <Select
-                label="Select Input"
-                data={['Option 1', 'Option 2']}
-                placeholder="Pick one"
+                label="Выпадающий список"
+                data={['Вариант 1', 'Вариант 2']}
+                placeholder="Выберите"
                 radius={config.appearance.borderRadius}
                 size={config.appearance.compact ? 'xs' : 'sm'}
               />
               <NumberInput
-                label="Number Input"
-                placeholder="Input placeholder"
+                label="Числовое поле"
+                placeholder="Введите число"
               />
             </Group>
 
-            <Alert title="Notice" radius={config.appearance.borderRadius}>
-              This is an alert box for preview purposes.
+            <Alert title="Уведомление" radius={config.appearance.borderRadius}>
+              Это пример уведомления для предпросмотра.
             </Alert>
 
             <Accordion
@@ -131,16 +131,16 @@ export const ThemePreviewCanvas: React.FC<ThemePreviewCanvasProps> = ({
               radius={config.appearance.borderRadius}
             >
               <Accordion.Item value="item-1">
-                <Accordion.Control>Accordion 1</Accordion.Control>
-                <Accordion.Panel>Panel 1 content</Accordion.Panel>
+                <Accordion.Control>Аккордеон 1</Accordion.Control>
+                <Accordion.Panel>Содержимое панели 1</Accordion.Panel>
               </Accordion.Item>
               <Accordion.Item value="item-2">
-                <Accordion.Control>Accordion 2</Accordion.Control>
-                <Accordion.Panel>Panel 2 content</Accordion.Panel>
+                <Accordion.Control>Аккордеон 2</Accordion.Control>
+                <Accordion.Panel>Содержимое панели 2</Accordion.Panel>
               </Accordion.Item>
               <Accordion.Item value="item-3">
-                <Accordion.Control>Accordion 3</Accordion.Control>
-                <Accordion.Panel>Panel 3 content</Accordion.Panel>
+                <Accordion.Control>Аккордеон 3</Accordion.Control>
+                <Accordion.Panel>Содержимое панели 3</Accordion.Panel>
               </Accordion.Item>
             </Accordion>
 
@@ -153,14 +153,14 @@ export const ThemePreviewCanvas: React.FC<ThemePreviewCanvasProps> = ({
                 <Image
                   src="https://placehold.co/600x200"
                   height={140}
-                  alt="Preview"
+                  alt="Превью"
                 />
               </Card.Section>
               <Text fw={500} mt="md">
-                Preview Card
+                Пример карточки
               </Text>
               <Text size="sm" c="dimmed" mt={4}>
-                This is an example card with an image and current theme styling.
+                Это пример карточки с изображением и текущим стилем темы.
               </Text>
               <Button
                 variant="light"
@@ -168,7 +168,7 @@ export const ThemePreviewCanvas: React.FC<ThemePreviewCanvasProps> = ({
                 mt="md"
                 radius={config.appearance.borderRadius}
               >
-                Click me
+                Нажми меня
               </Button>
             </Card>
           </Stack>

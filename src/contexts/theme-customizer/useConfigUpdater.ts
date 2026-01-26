@@ -78,6 +78,24 @@ export function useConfigUpdater({
     updateActiveConfig(newConfig);
   }, [getCurrentConfig, updateActiveConfig]);
 
+  const setSidebarWidth = useCallback(
+    (width: number) => {
+      const currentConfig = getCurrentConfig();
+      const newConfig = {
+        ...currentConfig,
+        layout: {
+          ...currentConfig.layout,
+          sidebar: {
+            ...currentConfig.layout.sidebar,
+            width: Math.max(200, Math.min(450, width)), // Clamp between 200-450px
+          },
+        },
+      };
+      updateActiveConfig(newConfig);
+    },
+    [getCurrentConfig, updateActiveConfig],
+  );
+
   // Appearance methods
   const setPrimaryColor = useCallback(
     (color: PrimaryColor) => {
@@ -155,6 +173,7 @@ export function useConfigUpdater({
     toggleSidebarVisibility,
     showSidebar,
     hideSidebar,
+    setSidebarWidth,
     setPrimaryColor,
     setColorScheme,
     setBorderRadius,

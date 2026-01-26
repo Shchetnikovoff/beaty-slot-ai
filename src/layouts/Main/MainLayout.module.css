@@ -142,6 +142,65 @@
   }
 }
 
+/* Resize Handle */
+.resizeHandle {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background-color 0.15s ease;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 2px;
+    height: 32px;
+    border-radius: 2px;
+    background-color: transparent;
+    transition: background-color 0.15s ease;
+  }
+
+  &:hover {
+    background-color: light-dark(
+      rgba(0, 0, 0, 0.05),
+      rgba(255, 255, 255, 0.05)
+    );
+
+    &::after {
+      background-color: light-dark(
+        var(--mantine-color-gray-4),
+        var(--mantine-color-dark-3)
+      );
+    }
+  }
+
+  &[data-resizing="true"] {
+    background-color: light-dark(
+      rgba(var(--mantine-primary-color-filled-rgb), 0.1),
+      rgba(var(--mantine-primary-color-filled-rgb), 0.2)
+    );
+
+    &::after {
+      background-color: var(--mantine-primary-color-filled);
+      height: 48px;
+    }
+  }
+
+  /* Position adjustments */
+  &[data-position="left"] {
+    /* Handle is on the right edge of sidebar */
+  }
+
+  &[data-position="right"] {
+    /* Handle is on the left edge of sidebar */
+  }
+}
+
 /* Footer */
 .footer {
   position: relative;

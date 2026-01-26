@@ -22,6 +22,7 @@ export const PATH_DASHBOARD = {
   root: ROOTS_DASHBOARD,
   default: path(ROOTS_DASHBOARD, '/default'),
   analytics: path(ROOTS_DASHBOARD, '/analytics'),
+  acquisition: path(ROOTS_DASHBOARD, '/acquisition'),
   saas: path(ROOTS_DASHBOARD, '/saas'),
   ecommerce: path(ROOTS_DASHBOARD, '/ecommerce'),
   crm: path(ROOTS_DASHBOARD, '/crm'),
@@ -64,6 +65,15 @@ export const PATH_APPS = {
   team: path(ROOT_APPS, '/team'),
   broadcasts: path(ROOT_APPS, '/broadcasts'),
   documents: path(ROOT_APPS, '/documents'),
+  // Продвижение
+  salonPage: path(ROOT_APPS, '/salon-page'),
+  carousel: path(ROOT_APPS, '/carousel'),
+  // Профиль организации
+  access: path(ROOT_APPS, '/access'),
+  sync: path(ROOT_APPS, '/sync'),
+  subscription: path(ROOT_APPS, '/subscription'),
+  systemNotifications: path(ROOT_APPS, '/system-notifications'),
+  // Суперадмин
   superadmin: {
     root: path(ROOT_APPS, '/superadmin'),
     salons: path(ROOT_APPS, '/superadmin/salons'),

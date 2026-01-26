@@ -58,7 +58,7 @@ export function useClients(params?: ClientsListParams): UseQueryResult<ClientsLi
     } finally {
       setLoading(false);
     }
-  }, [params?.skip, params?.limit, params?.search, params?.has_subscription, params?.is_blocked]);
+  }, [params?.skip, params?.limit, params?.search, params?.has_subscription, params?.is_blocked, params?.client_status, params?.risk_level, params?.max_no_shows, params?.min_visits]);
 
   useEffect(() => {
     fetch();
@@ -614,4 +614,187 @@ export function useBroadcastsStats(): UseQueryResult<BroadcastStats> {
   }, [fetch]);
 
   return { data, loading, error, refetch: fetch };
+}
+
+// Dashboard stats types
+interface DashboardStatsData {
+  revenue: {
+    today: number;
+    week: number;
+    month: number;
+    recordsToday: number;
+    recordsThisWeek: number;
+    recordsThisMonth: number;
+  };
+  occupancy: {
+    weekData: {
+      day: string;
+      date: string;
+      occupancy: number;
+      bookedSlots: number;
+      totalSlots: number;
+      isPast: boolean;
+      isToday: boolean;
+    }[];
+    avgOccupancy: number;
+  };
+  retention: {
+    data: {
+      month: string;
+      newClients: number;
+      returned: number;
+      rate: number;
+    }[];
+    currentRate: number;
+  };
+  lostClients: {
+    items: {
+      id: number;
+      name: string;
+      phone: string;
+      lastVisit: string;
+      daysAgo: number;
+    }[];
+    risk30_60: number;
+    risk60plus: number;
+  };
+  alerts: {
+    type: string;
+    title: string;
+    count: string;
+  }[];
+}
+
+// Hook for dashboard stats from synced YClients data
+// date - опциональный параметр YYYY-MM-DD, если не передан - используется сегодня
+export function useDashboardStatsFromSync(date?: string): UseQueryResult<DashboardStatsData> {
+  const [data, setData] = useState<DashboardStatsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const url = date
+        ? `/api/v1/admin/dashboard/stats?date=${date}`
+        : '/api/v1/admin/dashboard/stats';
+      const response = await globalThis.fetch(url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard stats');
+      }
+      const result = await response.json();
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch dashboard stats'));
+    } finally {
+      setLoading(false);
+    }
+  }, [date]); // Зависимость от date для автоматического refetch при смене даты
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { data, loading, error, refetch: fetchData };
+}
+
+// Payment from YClients sync data types
+interface YclientsPaymentData {
+  paid_full: number;
+  attendance: number; // 2=ожидает, 1=пришёл, 0=нет инфо, -1=неявка
+  visit_attendance: number;
+  confirmed: number; // 1=подтверждён
+  deleted: boolean;
+  online: boolean;
+  seance_length: number;
+  prepaid: string;
+  prepaid_confirmed: boolean;
+}
+
+interface PaymentFromSync {
+  id: number;
+  record_id: number;
+  client_id: string;
+  client_name: string;
+  client_phone: string;
+  client_email: string;
+  staff_id: string;
+  staff_name: string;
+  service_id: string;
+  service_name: string;
+  amount: number;
+  currency: string;
+  status: 'PENDING' | 'PROCESSING' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED' | 'REFUNDED';
+  payment_method: string;
+  description: string;
+  created_at: string;
+  visit_date: string;
+  paid_at?: string;
+  source: 'yclients' | 'native';
+  yclients_data: YclientsPaymentData;
+}
+
+interface PaymentsFromSyncData {
+  items: PaymentFromSync[];
+  total: number;
+  skip: number;
+  limit: number;
+  stats: {
+    total: number;
+    succeeded: number;
+    pending: number;
+    processing: number;
+    cancelled: number;
+    totalAmount: number;
+    succeededAmount: number;
+  };
+}
+
+interface PaymentsFromSyncParams {
+  status?: 'PENDING' | 'PROCESSING' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED' | 'REFUNDED';
+  date_from?: string;
+  date_to?: string;
+  limit?: number;
+  skip?: number;
+}
+
+// Hook for payments from synced YClients data
+export function usePaymentsFromSync(params?: PaymentsFromSyncParams): UseQueryResult<PaymentsFromSyncData> {
+  const [data, setData] = useState<PaymentsFromSyncData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const searchParams = new URLSearchParams();
+      if (params?.status) searchParams.set('status', params.status);
+      if (params?.date_from) searchParams.set('date_from', params.date_from);
+      if (params?.date_to) searchParams.set('date_to', params.date_to);
+      if (params?.limit) searchParams.set('limit', String(params.limit));
+      if (params?.skip) searchParams.set('skip', String(params.skip));
+
+      const query = searchParams.toString();
+      const url = `/api/v1/admin/payments/data${query ? `?${query}` : ''}`;
+
+      const response = await globalThis.fetch(url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch payments data');
+      }
+      const result = await response.json();
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch payments data'));
+    } finally {
+      setLoading(false);
+    }
+  }, [params?.status, params?.date_from, params?.date_to, params?.limit, params?.skip]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { data, loading, error, refetch: fetchData };
 }

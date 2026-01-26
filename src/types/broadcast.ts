@@ -1,4 +1,4 @@
-export type BroadcastStatus = 'DRAFT' | 'SCHEDULED' | 'SENT' | 'FAILED';
+export type BroadcastStatus = 'DRAFT' | 'SCHEDULED' | 'SENT' | 'FAILED' | 'CANCELLED';
 export type BroadcastTargetAudience = 'ALL' | 'SUBSCRIBED' | 'NOT_SUBSCRIBED';
 
 export interface Broadcast {

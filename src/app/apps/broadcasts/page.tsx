@@ -57,6 +57,7 @@ const STATUS_LABELS = {
   SCHEDULED: 'Запланировано',
   SENT: 'Отправлено',
   FAILED: 'Ошибка',
+  CANCELLED: 'Отменено',
 };
 
 const STATUS_COLORS = {
@@ -64,6 +65,7 @@ const STATUS_COLORS = {
   SCHEDULED: 'blue',
   SENT: 'green',
   FAILED: 'red',
+  CANCELLED: 'orange',
 };
 
 const AUDIENCE_LABELS = {
@@ -82,9 +84,9 @@ function BroadcastCard({
   const createdDate = new Date(broadcast.created_at).toLocaleDateString('ru-RU');
 
   return (
-    <Paper p="md" radius="md" withBorder>
-      <Group justify="space-between" mb="md">
-        <div>
+    <Paper p="md" radius="md" withBorder h="100%" style={{ display: 'flex', flexDirection: 'column' }}>
+      <Group justify="space-between" mb="md" wrap="nowrap" align="flex-start">
+        <div style={{ minWidth: 0 }}>
           <Text fw={600} size="lg" lineClamp={1}>
             {broadcast.title}
           </Text>
@@ -92,7 +94,7 @@ function BroadcastCard({
             {AUDIENCE_LABELS[broadcast.target_audience]}
           </Text>
         </div>
-        <Badge color={STATUS_COLORS[broadcast.status]} variant="light" size="lg">
+        <Badge color={STATUS_COLORS[broadcast.status]} variant="light" size="lg" style={{ flexShrink: 0 }}>
           {STATUS_LABELS[broadcast.status]}
         </Badge>
       </Group>
@@ -101,7 +103,7 @@ function BroadcastCard({
         {broadcast.message}
       </Text>
 
-      <Stack gap="xs">
+      <Stack gap="xs" style={{ flex: 1 }}>
         <Group gap="xs">
           <IconUsers size={14} />
           <Text size="sm">
@@ -183,8 +185,8 @@ function StatsCard({
   color: string;
 }) {
   return (
-    <Paper p="md" radius="md" withBorder>
-      <Group justify="space-between">
+    <Paper p="md" radius="md" withBorder h="100%">
+      <Group justify="space-between" h="100%" align="center">
         <div>
           <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
             {title}
@@ -198,6 +200,7 @@ function StatsCard({
             backgroundColor: `var(--mantine-color-${color}-1)`,
             borderRadius: 'var(--mantine-radius-md)',
             padding: '12px',
+            flexShrink: 0,
           }}
         >
           <Icon size={24} />
@@ -437,7 +440,7 @@ function Broadcasts() {
           />
 
           {/* Stats Cards */}
-          <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} mb="lg">
+          <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} mb="lg" style={{ alignItems: 'stretch' }}>
             <StatsCard
               title="Всего рассылок"
               value={stats.total}

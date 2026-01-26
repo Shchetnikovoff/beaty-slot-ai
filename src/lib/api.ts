@@ -1,6 +1,7 @@
 import { mockData } from './mock-data';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+// Если API_URL пустой или не задан — используем локальные API routes (/api/...)
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 type RequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 type QueryParams = Record<string, string | number | boolean | undefined>;
@@ -17,6 +18,17 @@ interface ApiError {
   status: number;
   detail?: string;
 }
+
+// Endpoints которые должны работать даже в demo режиме (используют локальные API routes)
+// Эти endpoints всегда вызывают реальный API вместо возврата mock данных
+const ALWAYS_REAL_ENDPOINTS = [
+  '/v1/admin/sync',
+  '/v1/admin/clients',
+  '/v1/admin/staff',
+  '/v1/admin/appointments',
+  '/v1/admin/services',
+  '/v1/admin/dashboard',
+];
 
 class ApiClient {
   private baseUrl: string;
@@ -61,19 +73,38 @@ class ApiClient {
   // Проверка демо-режима
   isDemoMode(): boolean {
     const token = this.getToken();
-    return !!token && token.startsWith('demo-');
+    // Демо-режим если: нет токена, токен начинается с 'demo-', или явно установлен DEMO_MODE
+    if (!token) return true; // Без авторизации всегда демо
+    return token.startsWith('demo-');
   }
 
   private buildUrl(endpoint: string, params?: QueryParams): string {
-    const url = new URL(`${this.baseUrl}${endpoint}`);
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          url.searchParams.append(key, String(value));
-        }
-      });
+    // Для endpoints из ALWAYS_REAL_ENDPOINTS всегда используем локальные Next.js API routes
+    // Это нужно чтобы данные шли через /api/v1/admin/... которые читают из sync-store
+    const useLocalApi = this.isAlwaysRealEndpoint(endpoint);
+
+    // Если baseUrl пустой или это локальный API endpoint — используем относительные URL
+    const fullPath = (this.baseUrl && !useLocalApi) ? `${this.baseUrl}${endpoint}` : `/api${endpoint}`;
+
+    if (!params || Object.keys(params).length === 0) {
+      return fullPath;
     }
-    return url.toString();
+
+    // Для относительных URL нужно добавить параметры вручную
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) {
+        searchParams.append(key, String(value));
+      }
+    });
+
+    const queryString = searchParams.toString();
+    return queryString ? `${fullPath}?${queryString}` : fullPath;
+  }
+
+  // Проверить, является ли endpoint "всегда реальным" (не использовать mock данные)
+  private isAlwaysRealEndpoint(endpoint: string): boolean {
+    return ALWAYS_REAL_ENDPOINTS.some(prefix => endpoint.startsWith(prefix));
   }
 
   // Получение моковых данных по endpoint
@@ -162,8 +193,12 @@ class ApiClient {
   private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const { method = 'GET', body, headers = {}, params } = options;
 
+    // Некоторые endpoints всегда используют реальные API routes (sync, etc.)
+    const useRealApi = this.isAlwaysRealEndpoint(endpoint);
+
     // В демо-режиме возвращаем моковые данные для GET запросов
-    if (this.isDemoMode() && method === 'GET') {
+    // НО не для endpoints которые должны всегда использовать реальный API
+    if (this.isDemoMode() && method === 'GET' && !useRealApi) {
       const mockResult = this.getMockData<T>(endpoint, params);
       if (mockResult !== null) {
         // Имитация задержки сети
@@ -255,4 +290,5 @@ class ApiClient {
 }
 
 export const api = new ApiClient(API_URL);
+export const isDemoMode = () => api.isDemoMode();
 export type { ApiError };

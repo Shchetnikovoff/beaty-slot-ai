@@ -2,315 +2,319 @@
   {
     "id": "notif-001",
     "type": "mention",
-    "title": "Sarah Johnson mentioned you",
-    "message": "Sarah mentioned you in \"Q4 Marketing Strategy\"",
-    "timestamp": "2024-12-23T10:30:00Z",
+    "title": "Новая запись",
+    "message": "Анна Петрова записалась на маникюр к Ирине Волковой",
+    "timestamp": "2025-01-25T10:30:00Z",
     "read": false,
     "actor": {
-      "name": "Sarah Johnson",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah"
+      "name": "Анна Петрова",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Anna"
     },
     "target": {
       "type": "page",
-      "title": "Q4 Marketing Strategy",
-      "url": "/workspace/marketing/q4-strategy"
+      "title": "Маникюр с покрытием",
+      "url": "/apps/appointments"
     },
     "metadata": {
-      "workspace": "Marketing",
-      "pageIcon": "📊"
+      "workspace": "Записи",
+      "pageIcon": "💅"
     },
     "action": {
-      "label": "View page",
-      "url": "/workspace/marketing/q4-strategy",
+      "label": "Посмотреть",
+      "url": "/apps/appointments",
       "type": "primary"
     }
   },
   {
     "id": "notif-002",
     "type": "comment",
-    "title": "New comment on your page",
-    "message": "Michael Chen commented on \"Product Roadmap 2025\"",
-    "timestamp": "2024-12-23T09:15:00Z",
+    "title": "Новый отзыв",
+    "message": "Мария Сидорова оставила отзыв о визите",
+    "timestamp": "2025-01-25T09:15:00Z",
     "read": false,
     "actor": {
-      "name": "Michael Chen",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Michael"
+      "name": "Мария Сидорова",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Maria"
     },
     "target": {
       "type": "comment",
-      "title": "Product Roadmap 2025",
-      "url": "/workspace/product/roadmap-2025"
+      "title": "Отзыв: ⭐⭐⭐⭐⭐",
+      "url": "/apps/customers"
     },
     "metadata": {
-      "workspace": "Product",
-      "pageIcon": "🚀"
+      "workspace": "Клиенты",
+      "pageIcon": "⭐"
     },
     "action": {
-      "label": "View comment",
-      "url": "/workspace/product/roadmap-2025#comment-123"
+      "label": "Читать отзыв",
+      "url": "/apps/customers"
     }
   },
   {
     "id": "notif-003",
     "type": "assignment",
-    "title": "Task assigned to you",
-    "message": "Emily Rodriguez assigned you a task in \"Website Redesign\"",
-    "timestamp": "2024-12-22T16:45:00Z",
+    "title": "Напоминание о записи",
+    "message": "Через 1 час запись: Елена Козлова на чистку лица",
+    "timestamp": "2025-01-25T08:45:00Z",
     "read": true,
     "actor": {
-      "name": "Emily Rodriguez",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Emily"
+      "name": "Система",
+      "avatar": null
     },
     "target": {
       "type": "task",
-      "title": "Review new homepage mockups",
-      "url": "/tasks/456"
+      "title": "Чистка лица — 14:00",
+      "url": "/apps/appointments"
     },
     "metadata": {
-      "workspace": "Design",
-      "pageIcon": "✅"
+      "workspace": "Расписание",
+      "pageIcon": "⏰"
     },
     "action": {
-      "label": "View task",
-      "url": "/tasks/456"
+      "label": "Открыть запись",
+      "url": "/apps/appointments"
     }
   },
   {
     "id": "notif-004",
     "type": "update",
-    "title": "Page updated",
-    "message": "David Kim updated \"API Documentation\"",
-    "timestamp": "2024-12-22T14:20:00Z",
+    "title": "Подписка продлена",
+    "message": "Татьяна Морозова продлила подписку «Премиум»",
+    "timestamp": "2025-01-24T14:20:00Z",
     "read": true,
     "actor": {
-      "name": "David Kim",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=David"
+      "name": "Татьяна Морозова",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Tatiana"
     },
     "target": {
       "type": "page",
-      "title": "API Documentation",
-      "url": "/workspace/engineering/api-docs"
+      "title": "Подписка Премиум",
+      "url": "/apps/subscriptions"
     },
     "metadata": {
-      "workspace": "Engineering",
-      "pageIcon": "📖"
+      "workspace": "Подписки",
+      "pageIcon": "💎"
     }
   },
   {
     "id": "notif-005",
     "type": "share",
-    "title": "Page shared with you",
-    "message": "Jessica Martinez shared \"Budget Planning\" with you",
-    "timestamp": "2024-12-22T11:30:00Z",
+    "title": "Оплата получена",
+    "message": "Получена оплата 4990 ₽ от Ольги Новиковой",
+    "timestamp": "2025-01-24T11:30:00Z",
     "read": false,
     "actor": {
-      "name": "Jessica Martinez",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Jessica"
+      "name": "Ольга Новикова",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Olga"
     },
     "target": {
       "type": "page",
-      "title": "Budget Planning",
-      "url": "/shared/budget-planning"
+      "title": "Платёж #12345",
+      "url": "/apps/payments"
     },
     "metadata": {
-      "workspace": "Finance",
+      "workspace": "Платежи",
       "pageIcon": "💰"
     },
     "action": {
-      "label": "Open page",
-      "url": "/shared/budget-planning",
+      "label": "Детали платежа",
+      "url": "/apps/payments",
       "type": "primary"
     }
   },
   {
     "id": "notif-006",
     "type": "reminder",
-    "title": "Reminder: Team meeting",
-    "message": "Your meeting \"Design Review\" starts in 15 minutes",
-    "timestamp": "2024-12-22T09:45:00Z",
+    "title": "Синхронизация YClients",
+    "message": "Синхронизация клиентов завершена: добавлено 3 новых",
+    "timestamp": "2025-01-24T09:00:00Z",
     "read": true,
     "target": {
       "type": "page",
-      "title": "Design Review Meeting",
-      "url": "/calendar/event/789"
+      "title": "Результат синхронизации",
+      "url": "/apps/settings"
     },
     "metadata": {
-      "workspace": "Calendar",
-      "pageIcon": "📅"
+      "workspace": "Система",
+      "pageIcon": "🔄"
     },
     "action": {
-      "label": "Join meeting",
-      "url": "/calendar/event/789"
+      "label": "Подробнее",
+      "url": "/apps/settings"
     }
   },
   {
     "id": "notif-007",
     "type": "mention",
-    "title": "Robert Taylor mentioned you",
-    "message": "Robert mentioned you in a comment on \"Partnership Proposal\"",
-    "timestamp": "2024-12-21T17:30:00Z",
+    "title": "Запись отменена",
+    "message": "Светлана Иванова отменила запись на окрашивание",
+    "timestamp": "2025-01-23T17:30:00Z",
     "read": true,
     "actor": {
-      "name": "Robert Taylor",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Robert"
+      "name": "Светлана Иванова",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Svetlana"
     },
     "target": {
-      "type": "comment",
-      "title": "Partnership Proposal",
-      "url": "/workspace/business/partnership#comment-456"
+      "type": "page",
+      "title": "Окрашивание волос",
+      "url": "/apps/appointments"
     },
     "metadata": {
-      "workspace": "Business",
-      "pageIcon": "🤝"
+      "workspace": "Записи",
+      "pageIcon": "❌"
     }
   },
   {
     "id": "notif-008",
     "type": "system",
-    "title": "Workspace storage limit",
-    "message": "Your workspace is using 85% of available storage",
-    "timestamp": "2024-12-21T15:00:00Z",
+    "title": "Резервное копирование",
+    "message": "Автоматическое резервное копирование данных выполнено успешно",
+    "timestamp": "2025-01-23T03:00:00Z",
     "read": true,
     "metadata": {
-      "workspace": "System"
+      "workspace": "Система",
+      "pageIcon": "💾"
     },
     "action": {
-      "label": "Manage storage",
-      "url": "/settings/storage"
+      "label": "Настройки",
+      "url": "/apps/settings"
     }
   },
   {
     "id": "notif-009",
     "type": "invite",
-    "title": "Workspace invitation",
-    "message": "Amanda White invited you to join \"Marketing Team\" workspace",
-    "timestamp": "2024-12-21T10:20:00Z",
+    "title": "Новый клиент",
+    "message": "Зарегистрировался новый клиент: Дарья Смирнова",
+    "timestamp": "2025-01-22T14:20:00Z",
     "read": false,
     "actor": {
-      "name": "Amanda White",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Amanda"
+      "name": "Дарья Смирнова",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Daria"
     },
     "metadata": {
-      "workspace": "Invitations"
+      "workspace": "Клиенты",
+      "pageIcon": "👤"
     },
     "action": {
-      "label": "Accept invitation",
-      "url": "/invites/accept/marketing-team",
+      "label": "Открыть профиль",
+      "url": "/apps/customers",
       "type": "primary"
     }
   },
   {
     "id": "notif-010",
     "type": "comment",
-    "title": "New reply to your comment",
-    "message": "Christopher Lee replied to your comment in \"Feature Requests\"",
-    "timestamp": "2024-12-20T14:15:00Z",
+    "title": "Подписка истекает",
+    "message": "Подписка клиента Елена Козлова истекает через 3 дня",
+    "timestamp": "2025-01-22T10:00:00Z",
     "read": true,
     "actor": {
-      "name": "Christopher Lee",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Christopher"
+      "name": "Система",
+      "avatar": null
     },
     "target": {
-      "type": "comment",
-      "title": "Feature Requests",
-      "url": "/workspace/product/feature-requests#comment-789"
+      "type": "page",
+      "title": "Подписка «Базовая»",
+      "url": "/apps/subscriptions"
     },
     "metadata": {
-      "workspace": "Product",
-      "pageIcon": "💡"
+      "workspace": "Подписки",
+      "pageIcon": "⚠️"
     }
   },
   {
     "id": "notif-011",
     "type": "security",
-    "title": "New login detected",
-    "message": "A new login to your account from Chrome on Windows",
-    "timestamp": "2024-12-20T08:30:00Z",
+    "title": "Вход в систему",
+    "message": "Выполнен вход в админ-панель с нового устройства",
+    "timestamp": "2025-01-21T08:30:00Z",
     "read": true,
     "metadata": {
-      "workspace": "Security"
+      "workspace": "Безопасность",
+      "pageIcon": "🔐"
     },
     "action": {
-      "label": "Review activity",
-      "url": "/settings/security"
+      "label": "Проверить",
+      "url": "/apps/settings"
     }
   },
   {
     "id": "notif-012",
     "type": "update",
-    "title": "Page moved",
-    "message": "Nicole Brown moved \"Meeting Notes\" to \"Archive\"",
-    "timestamp": "2024-12-19T16:45:00Z",
+    "title": "Рассылка отправлена",
+    "message": "Рассылка «Новогодняя акция» отправлена 148 клиентам",
+    "timestamp": "2025-01-20T12:00:00Z",
     "read": true,
     "actor": {
-      "name": "Nicole Brown",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Nicole"
+      "name": "Администратор",
+      "avatar": null
     },
     "target": {
       "type": "page",
-      "title": "Meeting Notes",
-      "url": "/archive/meeting-notes"
+      "title": "Новогодняя акция",
+      "url": "/apps/broadcasts"
     },
     "metadata": {
-      "workspace": "General",
-      "pageIcon": "📝"
+      "workspace": "Рассылки",
+      "pageIcon": "📨"
     }
   },
   {
     "id": "notif-013",
     "type": "assignment",
-    "title": "Task due soon",
-    "message": "Your task \"Update documentation\" is due tomorrow",
-    "timestamp": "2024-12-19T12:00:00Z",
+    "title": "Клиент не пришёл",
+    "message": "Клиент Ольга Новикова не явился на запись",
+    "timestamp": "2025-01-19T16:00:00Z",
     "read": true,
     "target": {
       "type": "task",
-      "title": "Update documentation",
-      "url": "/tasks/789"
+      "title": "Окрашивание — пропущено",
+      "url": "/apps/appointments"
     },
     "metadata": {
-      "workspace": "Tasks",
-      "pageIcon": "⏰"
+      "workspace": "Записи",
+      "pageIcon": "🚫"
     },
     "action": {
-      "label": "View task",
-      "url": "/tasks/789"
+      "label": "Связаться",
+      "url": "/apps/customers"
     }
   },
   {
     "id": "notif-014",
     "type": "mention",
-    "title": "James Wilson mentioned you",
-    "message": "James mentioned you in \"Sprint Planning\"",
-    "timestamp": "2024-12-18T11:30:00Z",
+    "title": "Мастер добавлен",
+    "message": "В систему добавлен новый мастер: Наталья Орлова",
+    "timestamp": "2025-01-18T11:30:00Z",
     "read": true,
     "actor": {
-      "name": "James Wilson",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=James"
+      "name": "Наталья Орлова",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Natalia"
     },
     "target": {
       "type": "page",
-      "title": "Sprint Planning",
-      "url": "/workspace/agile/sprint-planning"
+      "title": "Профиль мастера",
+      "url": "/apps/staff"
     },
     "metadata": {
-      "workspace": "Agile",
-      "pageIcon": "🏃"
+      "workspace": "Персонал",
+      "pageIcon": "👩‍💼"
     }
   },
   {
     "id": "notif-015",
     "type": "system",
-    "title": "Weekly summary ready",
-    "message": "Your weekly activity summary for Dec 16-22 is available",
-    "timestamp": "2024-12-18T06:00:00Z",
+    "title": "Еженедельный отчёт",
+    "message": "Еженедельный отчёт по аналитике готов к просмотру",
+    "timestamp": "2025-01-17T09:00:00Z",
     "read": true,
     "metadata": {
-      "workspace": "System"
+      "workspace": "Аналитика",
+      "pageIcon": "📊"
     },
     "action": {
-      "label": "View summary",
-      "url": "/insights/weekly"
+      "label": "Смотреть отчёт",
+      "url": "/dashboard/analytics"
     }
   }
 ]

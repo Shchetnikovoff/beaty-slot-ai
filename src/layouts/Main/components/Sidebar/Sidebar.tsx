@@ -1,6 +1,16 @@
-import { ActionIcon, Box, Flex, Group, ScrollArea, Text } from '@mantine/core';
+import { useState, useCallback } from 'react';
+import {
+  ActionIcon,
+  Box,
+  Collapse,
+  Flex,
+  Group,
+  ScrollArea,
+  Text,
+  UnstyledButton,
+} from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
-import { IconX } from '@tabler/icons-react';
+import { IconChevronDown, IconX } from '@tabler/icons-react';
 
 import { Logo } from '@/components';
 import { SidebarCalendar } from '@/components/SidebarCalendar';
@@ -19,29 +29,62 @@ const SidebarNav = ({ onClose, showCloseButton = false }: NavigationProps) => {
   const tablet_match = useMediaQuery('(max-width: 768px)');
   const sidebarConfig = useSidebarConfig();
 
+  // Изначально все группы развёрнуты
+  const [openedGroups, setOpenedGroups] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    SIDEBAR_LINKS.forEach((group) => {
+      initial[group.title] = true;
+    });
+    return initial;
+  });
+
+  const toggleGroup = useCallback((title: string) => {
+    setOpenedGroups((prev) => ({
+      ...prev,
+      [title]: !prev[title],
+    }));
+  }, []);
+
   const links = SIDEBAR_LINKS.map((m) => (
-    <Box key={m.title} pl={0} mb="md">
-      <Text
-        tt="uppercase"
-        size="xs"
-        pl="md"
-        fw={500}
-        mb="sm"
-        className={classes.linkHeader}
+    <Box key={m.title} pl={0} mb="xs">
+      <UnstyledButton
+        onClick={() => toggleGroup(m.title)}
+        className={classes.groupHeader}
+        w="100%"
       >
-        {m.title}
-      </Text>
-      {m.links.map((item) => (
-        <LinksGroup
-          key={item.label}
-          {...item}
-          closeSidebar={() => {
-            setTimeout(() => {
-              onClose();
-            }, 250);
-          }}
-        />
-      ))}
+        <Group justify="space-between" wrap="nowrap" px="md" py="xs">
+          <Text
+            tt="uppercase"
+            size="xs"
+            fw={600}
+            className={classes.linkHeader}
+          >
+            {m.title}
+          </Text>
+          <IconChevronDown
+            size={14}
+            className={classes.groupChevron}
+            style={{
+              transform: openedGroups[m.title] ? 'rotate(180deg)' : 'none',
+              transition: 'transform 200ms ease',
+              flexShrink: 0,
+            }}
+          />
+        </Group>
+      </UnstyledButton>
+      <Collapse in={openedGroups[m.title]}>
+        {m.links.map((item) => (
+          <LinksGroup
+            key={item.label}
+            {...item}
+            closeSidebar={() => {
+              setTimeout(() => {
+                onClose();
+              }, 250);
+            }}
+          />
+        ))}
+      </Collapse>
     </Box>
   ));
 

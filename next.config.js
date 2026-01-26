@@ -1,3 +1,5 @@
+const path = require('path');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -5,6 +7,11 @@ const nextConfig = {
 
   // Enable React Compiler (stable in Next.js 16)
   reactCompiler: true,
+
+  // Configure turbopack root to avoid Cyrillic path issues
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
 
   // Отключить все индикаторы разработки Next.js
   devIndicators: {

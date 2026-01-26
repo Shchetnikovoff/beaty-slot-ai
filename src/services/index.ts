@@ -9,3 +9,7 @@ export { staffService } from './staff.service';
 export { aiService, AI_MODELS, AGENT_MODELS, CHAT_MODELS } from './ai.service';
 export type { AIModelId, AgentModelId, ChatModelId } from './ai.service';
 export { broadcastsService } from './broadcasts.service';
+export { carouselService } from './carousel.service';
+export { syncService } from './sync.service';
+export { salonSettingsService } from './salon-settings.service';
+export { notificationSettingsService } from './notification-settings.service';
