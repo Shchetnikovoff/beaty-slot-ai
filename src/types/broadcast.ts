@@ -1,5 +1,5 @@
 export type BroadcastStatus = 'DRAFT' | 'SCHEDULED' | 'SENT' | 'FAILED' | 'CANCELLED';
-export type BroadcastTargetAudience = 'ALL' | 'SUBSCRIBED' | 'NOT_SUBSCRIBED';
+export type BroadcastTargetAudience = 'ALL' | 'SEGMENT' | 'CUSTOM';
 
 export interface Broadcast {
   id: number;
@@ -13,6 +13,8 @@ export interface Broadcast {
   scheduled_at?: string;
   sent_at?: string;
   created_at: string;
+  clientIds?: number[];
+  segmentId?: string;
 }
 
 export interface BroadcastCreate {

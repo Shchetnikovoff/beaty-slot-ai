@@ -12,6 +12,7 @@ import {
   Button,
   Group,
 } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import {
   IconPalette,
   IconPhone,
@@ -19,6 +20,7 @@ import {
   IconSeo,
   IconSettings,
   IconExternalLink,
+  IconEye,
   IconAlertCircle,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
@@ -31,6 +33,7 @@ import { ContactSettings } from './ContactSettings';
 import { SocialSettings } from './SocialSettings';
 import { SeoSettings } from './SeoSettings';
 import { FeaturesSettings } from './FeaturesSettings';
+import { SalonPreviewDrawer } from './SalonPreviewDrawer';
 
 export function WebPageSettings() {
   const [settings, setSettings] = useState<SalonSettings | null>(null);
@@ -38,6 +41,7 @@ export function WebPageSettings() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string | null>('branding');
+  const [previewOpened, { open: openPreview, close: closePreview }] = useDisclosure(false);
 
   const loadSettings = useCallback(async () => {
     try {
@@ -133,15 +137,24 @@ export function WebPageSettings() {
             Настройте публичную страницу вашего салона
           </Text>
         </div>
-        <Button
-          variant="light"
-          leftSection={<IconExternalLink size={16} />}
-          component="a"
-          href="/salon"
-          target="_blank"
-        >
-          Открыть страницу
-        </Button>
+        <Group gap="xs">
+          <Button
+            variant="filled"
+            leftSection={<IconEye size={16} />}
+            onClick={openPreview}
+          >
+            Предпросмотр
+          </Button>
+          <Button
+            variant="light"
+            leftSection={<IconExternalLink size={16} />}
+            component="a"
+            href="/salon"
+            target="_blank"
+          >
+            Открыть
+          </Button>
+        </Group>
       </Group>
 
       <Paper shadow="xs" p="md" pos="relative">
@@ -207,6 +220,12 @@ export function WebPageSettings() {
           )}
         </Tabs>
       </Paper>
+
+      {/* Preview Drawer */}
+      <SalonPreviewDrawer
+        opened={previewOpened}
+        onClose={closePreview}
+      />
     </Stack>
   );
 }

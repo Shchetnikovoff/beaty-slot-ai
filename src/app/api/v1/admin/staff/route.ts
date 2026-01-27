@@ -5,8 +5,10 @@ import type { YclientsStaff } from '@/lib/yclients';
 
 /**
  * Преобразовать YclientsStaff в Staff (формат админки)
+ * @param ys - данные сотрудника из YClients
+ * @param todayAppointmentsCount - количество записей на сегодня
  */
-function transformStaff(ys: YclientsStaff, appointmentsCount: number): Staff {
+function transformStaff(ys: YclientsStaff, todayAppointmentsCount: number): Staff {
   // Проверяем есть ли переопределение статуса активности
   const activeOverride = getStaffActiveOverride(ys.id);
   const isActive = activeOverride !== undefined
@@ -23,7 +25,7 @@ function transformStaff(ys: YclientsStaff, appointmentsCount: number): Staff {
     specialization: ys.specialization || undefined,
     photo_url: ys.avatar_big || ys.avatar || undefined,
     is_active: isActive,
-    appointments_count: appointmentsCount,
+    appointments_count: todayAppointmentsCount, // Записей на сегодня
     rating: ys.rating || undefined,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -59,16 +61,20 @@ export async function GET(request: NextRequest) {
       ? yclientsStaff
       : yclientsStaff.filter(s => !s.fired);
 
-    // Подсчитать записи для каждого сотрудника
-    const appointmentsByStaff = new Map<number, number>();
+    // Подсчитать записи НА СЕГОДНЯ для каждого сотрудника
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const todayAppointmentsByStaff = new Map<number, number>();
     records.forEach(r => {
-      const current = appointmentsByStaff.get(r.staff_id) || 0;
-      appointmentsByStaff.set(r.staff_id, current + 1);
+      // Фильтруем только записи на сегодня (учитываем только подтверждённые/ожидающие, не удалённые)
+      if (r.date === today && !r.deleted && r.attendance !== -1) {
+        const current = todayAppointmentsByStaff.get(r.staff_id) || 0;
+        todayAppointmentsByStaff.set(r.staff_id, current + 1);
+      }
     });
 
     // Преобразовать всех сотрудников
     let staff = activeYclientsStaff.map(s =>
-      transformStaff(s, appointmentsByStaff.get(s.id) || 0)
+      transformStaff(s, todayAppointmentsByStaff.get(s.id) || 0)
     );
 
     // Дополнительные параметры фильтрации

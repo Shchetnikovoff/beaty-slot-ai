@@ -5,6 +5,7 @@ import {
   Modal,
   Stack,
   TextInput,
+  Textarea,
   Button,
   Group,
   Text,
@@ -28,6 +29,7 @@ interface EditCarouselDialogProps {
 
 export function EditCarouselDialog({ item, onClose, onSuccess }: EditCarouselDialogProps) {
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
@@ -38,6 +40,7 @@ export function EditCarouselDialog({ item, onClose, onSuccess }: EditCarouselDia
   useEffect(() => {
     if (item) {
       setTitle(item.title || '');
+      setDescription(item.description || '');
       setIsActive(item.is_active);
       setImagePreview(item.image_url);
       setDocumentPreview(item.pdf_images_urls?.[0] || null);
@@ -109,6 +112,7 @@ export function EditCarouselDialog({ item, onClose, onSuccess }: EditCarouselDia
       setLoading(true);
       await carouselService.updateItem(item.id, {
         title: title || undefined,
+        description: description || undefined,
         is_active: isActive,
         image: imageFile || undefined,
         document: documentFile || undefined,
@@ -132,6 +136,7 @@ export function EditCarouselDialog({ item, onClose, onSuccess }: EditCarouselDia
 
   const handleClose = () => {
     setTitle('');
+    setDescription('');
     setIsActive(true);
     setImageFile(null);
     setDocumentFile(null);
@@ -153,6 +158,16 @@ export function EditCarouselDialog({ item, onClose, onSuccess }: EditCarouselDia
           placeholder="Название элемента (необязательно)"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+        />
+
+        <Textarea
+          label="Описание"
+          placeholder="Текст акции или описание (необязательно)"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          minRows={2}
+          maxRows={4}
+          autosize
         />
 
         <Switch

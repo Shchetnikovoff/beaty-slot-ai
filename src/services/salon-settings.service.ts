@@ -50,6 +50,64 @@ const mockSalonSettings: SalonSettings = {
   online_payment_enabled: false,
   show_prices: true,
   show_staff: true,
+
+  amenities: {
+    // Базовые удобства
+    wifi: true,
+    parking: true,
+    parking_free: false,
+    air_conditioning: true,
+    heating: true,
+
+    // Гостеприимство
+    drinks: true,
+    snacks: false,
+    magazines: true,
+    tv: false,
+
+    // Доступность
+    wheelchair_access: false,
+    elevator: false,
+    ground_floor: true,
+
+    // Для семей
+    kids_room: false,
+    kids_friendly: true,
+    pet_friendly: false,
+
+    // Оплата
+    card_payment: true,
+    cash_payment: true,
+    online_payment: false,
+    installments: false,
+
+    // Сервис
+    appointment_only: false,
+    walk_ins_welcome: true,
+    online_consultation: false,
+    home_service: false,
+
+    // Программы
+    loyalty_program: true,
+    gift_cards: true,
+    subscription_plans: false,
+
+    // Время работы
+    evening_hours: true,
+    weekend_open: true,
+    early_morning: false,
+    open_24h: false,
+
+    // Помещение
+    private_rooms: true,
+    vip_room: false,
+
+    // Гигиена
+    sterile_instruments: true,
+    disposable_tools: true,
+    organic_products: false,
+    hypoallergenic_products: true,
+  },
 };
 
 const mockServices: SalonService[] = [

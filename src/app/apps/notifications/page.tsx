@@ -1,15 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import {
   ActionIcon,
+  Alert,
   Anchor,
   Badge,
   Box,
   Button,
   Divider,
   Group,
+  Loader,
   Modal,
   Paper,
   SimpleGrid,
@@ -18,31 +20,27 @@ import {
   Tabs,
   Text,
   Textarea,
-  TextInput,
   ThemeIcon,
-  Title,
   Tooltip,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { notifications } from '@mantine/notifications';
 import {
+  IconAlertCircle,
   IconBell,
-  IconBellRinging,
   IconCalendarEvent,
   IconCalendarOff,
   IconCalendarPlus,
   IconCheck,
   IconClock,
-  IconCreditCard,
   IconDeviceFloppy,
   IconEdit,
   IconGift,
   IconMail,
   IconMessageCircle,
   IconRefresh,
-  IconStar,
   IconUserCheck,
   IconUserPlus,
-  IconX,
 } from '@tabler/icons-react';
 
 import { PageHeader } from '@/components';
@@ -57,184 +55,51 @@ const breadcrumbItems = [
   </Anchor>
 ));
 
-// Типы уведомлений
+// Типы уведомлений (без подписок)
 type NotificationType =
   | 'after_booking'
-  | 'booking_reminder'
+  | 'booking_reminder_day'
+  | 'booking_reminder_hour'
   | 'booking_rescheduled'
   | 'booking_cancelled'
   | 'post_visit'
-  | 'subscription_activated'
-  | 'subscription_expiring'
-  | 'subscription_expired'
-  | 'subscription_renewed'
   | 'birthday'
-  | 'welcome'
-  | 'feedback_request';
+  | 'welcome';
 
 interface NotificationTemplate {
   id: string;
   type: NotificationType;
   name: string;
   description: string;
-  category: 'visits' | 'subscriptions' | 'marketing';
-  icon: typeof IconBell;
-  color: string;
+  category: 'visits' | 'marketing';
   message: string;
   isActive: boolean;
   variables: string[];
 }
 
-// Шаблоны уведомлений
-const NOTIFICATION_TEMPLATES: NotificationTemplate[] = [
-  // Визиты
-  {
-    id: '1',
-    type: 'after_booking',
-    name: 'После записи',
-    description: 'Отправляется сразу после создания записи',
-    category: 'visits',
-    icon: IconCalendarPlus,
-    color: 'blue',
-    message: 'Здравствуйте, {client_name}! Вы записаны на {service_name} к мастеру {staff_name} на {visit_date} в {visit_time}. Ждём вас!',
-    isActive: true,
-    variables: ['client_name', 'service_name', 'staff_name', 'visit_date', 'visit_time'],
-  },
-  {
-    id: '2',
-    type: 'booking_reminder',
-    name: 'Напоминание о записи',
-    description: 'Отправляется за день до визита',
-    category: 'visits',
-    icon: IconClock,
-    color: 'cyan',
-    message: '{client_name}, напоминаем о вашей записи завтра в {visit_time} на {service_name}. Ждём вас в {salon_name}!',
-    isActive: true,
-    variables: ['client_name', 'service_name', 'visit_time', 'salon_name'],
-  },
-  {
-    id: '3',
-    type: 'booking_rescheduled',
-    name: 'Запись перенесена',
-    description: 'При изменении даты/времени записи',
-    category: 'visits',
-    icon: IconCalendarEvent,
-    color: 'orange',
-    message: '{client_name}, ваша запись перенесена на {visit_date} в {visit_time}. Если у вас есть вопросы, свяжитесь с нами.',
-    isActive: true,
-    variables: ['client_name', 'visit_date', 'visit_time'],
-  },
-  {
-    id: '4',
-    type: 'booking_cancelled',
-    name: 'Запись отменена',
-    description: 'При отмене записи',
-    category: 'visits',
-    icon: IconCalendarOff,
-    color: 'red',
-    message: '{client_name}, ваша запись на {visit_date} отменена. Будем рады видеть вас снова!',
-    isActive: true,
-    variables: ['client_name', 'visit_date'],
-  },
-  {
-    id: '5',
-    type: 'post_visit',
-    name: 'После посещения',
-    description: 'Отправляется после завершения визита',
-    category: 'visits',
-    icon: IconUserCheck,
-    color: 'green',
-    message: '{client_name}, спасибо за визит! Надеемся, вам всё понравилось. Будем рады видеть вас снова!',
-    isActive: false,
-    variables: ['client_name'],
-  },
-  // Подписки
-  {
-    id: '6',
-    type: 'subscription_activated',
-    name: 'Подписка активирована',
-    description: 'При активации новой подписки',
-    category: 'subscriptions',
-    icon: IconCreditCard,
-    color: 'green',
-    message: '{client_name}, ваша подписка "{subscription_name}" успешно активирована! Действует до {subscription_end_date}.',
-    isActive: true,
-    variables: ['client_name', 'subscription_name', 'subscription_end_date'],
-  },
-  {
-    id: '7',
-    type: 'subscription_expiring',
-    name: 'Подписка истекает',
-    description: 'За 3 дня до окончания подписки',
-    category: 'subscriptions',
-    icon: IconBellRinging,
-    color: 'yellow',
-    message: '{client_name}, ваша подписка истекает через {days_left} дня. Продлите её, чтобы не потерять преимущества!',
-    isActive: true,
-    variables: ['client_name', 'days_left'],
-  },
-  {
-    id: '8',
-    type: 'subscription_expired',
-    name: 'Подписка истекла',
-    description: 'После окончания подписки',
-    category: 'subscriptions',
-    icon: IconX,
-    color: 'red',
-    message: '{client_name}, ваша подписка истекла. Возобновите её, чтобы продолжить пользоваться преимуществами!',
-    isActive: true,
-    variables: ['client_name'],
-  },
-  {
-    id: '9',
-    type: 'subscription_renewed',
-    name: 'Подписка продлена',
-    description: 'При продлении подписки',
-    category: 'subscriptions',
-    icon: IconRefresh,
-    color: 'teal',
-    message: '{client_name}, ваша подписка успешно продлена до {subscription_end_date}. Спасибо, что остаётесь с нами!',
-    isActive: true,
-    variables: ['client_name', 'subscription_end_date'],
-  },
-  // Маркетинг
-  {
-    id: '10',
-    type: 'birthday',
-    name: 'День рождения',
-    description: 'Поздравление с днём рождения',
-    category: 'marketing',
-    icon: IconGift,
-    color: 'pink',
-    message: '{client_name}, поздравляем с днём рождения! 🎂 Дарим вам скидку 15% на любую услугу в течение недели!',
-    isActive: true,
-    variables: ['client_name'],
-  },
-  {
-    id: '11',
-    type: 'welcome',
-    name: 'Приветствие',
-    description: 'При регистрации нового клиента',
-    category: 'marketing',
-    icon: IconUserPlus,
-    color: 'blue',
-    message: 'Добро пожаловать в {salon_name}, {client_name}! Мы рады, что вы с нами. Запишитесь на первую процедуру со скидкой 10%!',
-    isActive: true,
-    variables: ['client_name', 'salon_name'],
-  },
-  {
-    id: '12',
-    type: 'feedback_request',
-    name: 'Запрос отзыва',
-    description: 'Просьба оставить отзыв после визита',
-    category: 'marketing',
-    icon: IconStar,
-    color: 'yellow',
-    message: '{client_name}, как вам визит? Оставьте отзыв и помогите нам стать лучше! ⭐',
-    isActive: false,
-    variables: ['client_name'],
-  },
-];
+// Иконки для типов
+const TYPE_ICONS: Record<NotificationType, typeof IconBell> = {
+  after_booking: IconCalendarPlus,
+  booking_reminder_day: IconClock,
+  booking_reminder_hour: IconBell,
+  booking_rescheduled: IconCalendarEvent,
+  booking_cancelled: IconCalendarOff,
+  post_visit: IconUserCheck,
+  birthday: IconGift,
+  welcome: IconUserPlus,
+};
+
+// Цвета для типов
+const TYPE_COLORS: Record<NotificationType, string> = {
+  after_booking: 'blue',
+  booking_reminder_day: 'cyan',
+  booking_reminder_hour: 'teal',
+  booking_rescheduled: 'orange',
+  booking_cancelled: 'red',
+  post_visit: 'green',
+  birthday: 'pink',
+  welcome: 'violet',
+};
 
 // Доступные переменные
 const AVAILABLE_VARIABLES = [
@@ -245,27 +110,27 @@ const AVAILABLE_VARIABLES = [
   { name: 'visit_date', label: 'Дата визита', example: '25 января' },
   { name: 'visit_time', label: 'Время визита', example: '14:00' },
   { name: 'salon_name', label: 'Название салона', example: 'Beauty Slot' },
-  { name: 'subscription_name', label: 'Название подписки', example: 'Премиум' },
-  { name: 'subscription_end_date', label: 'Дата окончания подписки', example: '31 марта' },
-  { name: 'days_left', label: 'Дней до окончания', example: '3' },
 ];
 
 function TemplateCard({
   template,
   onToggle,
   onEdit,
+  loading,
 }: {
   template: NotificationTemplate;
   onToggle: (id: string) => void;
   onEdit: (template: NotificationTemplate) => void;
+  loading: boolean;
 }) {
-  const Icon = template.icon;
+  const Icon = TYPE_ICONS[template.type] || IconBell;
+  const color = TYPE_COLORS[template.type] || 'gray';
 
   return (
     <Paper p="md" radius="md" withBorder>
       <Group justify="space-between" mb="sm">
         <Group gap="sm">
-          <ThemeIcon size="lg" radius="md" variant="light" color={template.color}>
+          <ThemeIcon size="lg" radius="md" variant="light" color={color}>
             <Icon size={20} />
           </ThemeIcon>
           <div>
@@ -277,6 +142,7 @@ function TemplateCard({
           checked={template.isActive}
           onChange={() => onToggle(template.id)}
           color="green"
+          disabled={loading}
         />
       </Group>
 
@@ -314,18 +180,25 @@ function EditTemplateModal({
   opened,
   onClose,
   onSave,
+  loading,
 }: {
   template: NotificationTemplate | null;
   opened: boolean;
   onClose: () => void;
   onSave: (id: string, message: string) => void;
+  loading: boolean;
 }) {
   const [message, setMessage] = useState(template?.message || '');
+
+  useEffect(() => {
+    if (template) {
+      setMessage(template.message);
+    }
+  }, [template]);
 
   const handleSave = () => {
     if (template) {
       onSave(template.id, message);
-      onClose();
     }
   };
 
@@ -341,14 +214,17 @@ function EditTemplateModal({
 
   if (!template) return null;
 
+  const Icon = TYPE_ICONS[template.type] || IconBell;
+  const color = TYPE_COLORS[template.type] || 'gray';
+
   return (
     <Modal
       opened={opened}
       onClose={onClose}
       title={
         <Group gap="sm">
-          <ThemeIcon size="md" radius="md" variant="light" color={template.color}>
-            <template.icon size={16} />
+          <ThemeIcon size="md" radius="md" variant="light" color={color}>
+            <Icon size={16} />
           </ThemeIcon>
           <Text fw={600}>Редактирование: {template.name}</Text>
         </Group>
@@ -393,14 +269,18 @@ function EditTemplateModal({
             <IconMessageCircle size={16} />
             <Text size="xs" fw={500} c="dimmed">Как увидит клиент:</Text>
           </Group>
-          <Text size="sm">{previewMessage}</Text>
+          <Text size="sm" style={{ whiteSpace: 'pre-wrap' }}>{previewMessage}</Text>
         </Paper>
 
         <Group justify="flex-end" gap="sm">
           <Button variant="subtle" onClick={onClose}>
             Отмена
           </Button>
-          <Button leftSection={<IconDeviceFloppy size={16} />} onClick={handleSave}>
+          <Button
+            leftSection={<IconDeviceFloppy size={16} />}
+            onClick={handleSave}
+            loading={loading}
+          >
             Сохранить
           </Button>
         </Group>
@@ -410,15 +290,77 @@ function EditTemplateModal({
 }
 
 function NotificationSettings() {
-  const [templates, setTemplates] = useState(NOTIFICATION_TEMPLATES);
+  const [templates, setTemplates] = useState<NotificationTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string | null>('visits');
   const [editingTemplate, setEditingTemplate] = useState<NotificationTemplate | null>(null);
   const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
 
-  const handleToggle = (id: string) => {
-    setTemplates((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, isActive: !t.isActive } : t))
+  // Загрузка настроек из API
+  const fetchSettings = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch('/api/v1/admin/notification-settings');
+      if (!response.ok) {
+        throw new Error('Failed to fetch settings');
+      }
+      const data = await response.json();
+      setTemplates(data.items || []);
+    } catch (err) {
+      console.error('Error fetching notification settings:', err);
+      setError('Не удалось загрузить настройки');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
+  // Переключение активности
+  const handleToggle = async (id: string) => {
+    const template = templates.find(t => t.id === id);
+    if (!template) return;
+
+    const newValue = !template.isActive;
+
+    // Оптимистичное обновление
+    setTemplates(prev =>
+      prev.map(t => (t.id === id ? { ...t, isActive: newValue } : t))
     );
+
+    try {
+      const response = await fetch('/api/v1/admin/notification-settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, isActive: newValue }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update setting');
+      }
+
+      notifications.show({
+        title: newValue ? 'Уведомление включено' : 'Уведомление отключено',
+        message: template.name,
+        color: newValue ? 'green' : 'gray',
+        icon: newValue ? <IconCheck size={16} /> : undefined,
+      });
+    } catch {
+      // Откатываем при ошибке
+      setTemplates(prev =>
+        prev.map(t => (t.id === id ? { ...t, isActive: !newValue } : t))
+      );
+      notifications.show({
+        title: 'Ошибка',
+        message: 'Не удалось сохранить изменения',
+        color: 'red',
+      });
+    }
   };
 
   const handleEdit = (template: NotificationTemplate) => {
@@ -426,17 +368,89 @@ function NotificationSettings() {
     openModal();
   };
 
-  const handleSave = (id: string, message: string) => {
-    setTemplates((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, message } : t))
-    );
+  const handleSave = async (id: string, message: string) => {
+    setSaving(true);
+    try {
+      const response = await fetch('/api/v1/admin/notification-settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, message }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save');
+      }
+
+      setTemplates(prev =>
+        prev.map(t => (t.id === id ? { ...t, message } : t))
+      );
+
+      notifications.show({
+        title: 'Сохранено',
+        message: 'Шаблон успешно обновлён',
+        color: 'green',
+        icon: <IconCheck size={16} />,
+      });
+
+      closeModal();
+    } catch {
+      notifications.show({
+        title: 'Ошибка',
+        message: 'Не удалось сохранить шаблон',
+        color: 'red',
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const visitTemplates = templates.filter((t) => t.category === 'visits');
-  const subscriptionTemplates = templates.filter((t) => t.category === 'subscriptions');
   const marketingTemplates = templates.filter((t) => t.category === 'marketing');
-
   const activeCount = templates.filter((t) => t.isActive).length;
+
+  if (loading) {
+    return (
+      <>
+        <PageHeader
+          title="Уведомления клиентам"
+          breadcrumbItems={breadcrumbItems}
+        />
+        <Box mt="xl" ta="center">
+          <Loader size="lg" />
+          <Text mt="md" c="dimmed">Загрузка настроек...</Text>
+        </Box>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <PageHeader
+          title="Уведомления клиентам"
+          breadcrumbItems={breadcrumbItems}
+        />
+        <Alert
+          icon={<IconAlertCircle size={16} />}
+          title="Ошибка загрузки"
+          color="red"
+          mt="md"
+        >
+          {error}
+          <Button
+            variant="light"
+            color="red"
+            size="xs"
+            mt="sm"
+            leftSection={<IconRefresh size={14} />}
+            onClick={fetchSettings}
+          >
+            Повторить
+          </Button>
+        </Alert>
+      </>
+    );
+  }
 
   return (
     <>
@@ -452,14 +466,21 @@ function NotificationSettings() {
         <Paper p="md" radius="md" withBorder mb="lg">
           <Group justify="space-between">
             <div>
-              <Text fw={500}>Настройка автоматических уведомлений</Text>
+              <Text fw={500}>Автоматические уведомления через Telegram</Text>
               <Text size="sm" c="dimmed">
-                Управляйте сообщениями, которые получают ваши клиенты
+                Клиенты получают напоминания автоматически после подключения к боту
               </Text>
             </div>
-            <Badge size="lg" variant="light" color="green">
-              {activeCount} из {templates.length} активно
-            </Badge>
+            <Group>
+              <Badge size="lg" variant="light" color="green">
+                {activeCount} из {templates.length} активно
+              </Badge>
+              <Tooltip label="Обновить">
+                <ActionIcon variant="subtle" onClick={fetchSettings}>
+                  <IconRefresh size={18} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
           </Group>
         </Paper>
 
@@ -467,9 +488,6 @@ function NotificationSettings() {
           <Tabs.List mb="lg">
             <Tabs.Tab value="visits" leftSection={<IconCalendarEvent size={16} />}>
               Визиты ({visitTemplates.length})
-            </Tabs.Tab>
-            <Tabs.Tab value="subscriptions" leftSection={<IconCreditCard size={16} />}>
-              Подписки ({subscriptionTemplates.length})
             </Tabs.Tab>
             <Tabs.Tab value="marketing" leftSection={<IconMail size={16} />}>
               Маркетинг ({marketingTemplates.length})
@@ -484,19 +502,7 @@ function NotificationSettings() {
                   template={template}
                   onToggle={handleToggle}
                   onEdit={handleEdit}
-                />
-              ))}
-            </SimpleGrid>
-          </Tabs.Panel>
-
-          <Tabs.Panel value="subscriptions">
-            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
-              {subscriptionTemplates.map((template) => (
-                <TemplateCard
-                  key={template.id}
-                  template={template}
-                  onToggle={handleToggle}
-                  onEdit={handleEdit}
+                  loading={saving}
                 />
               ))}
             </SimpleGrid>
@@ -510,6 +516,7 @@ function NotificationSettings() {
                   template={template}
                   onToggle={handleToggle}
                   onEdit={handleEdit}
+                  loading={saving}
                 />
               ))}
             </SimpleGrid>
@@ -522,6 +529,7 @@ function NotificationSettings() {
         opened={modalOpened}
         onClose={closeModal}
         onSave={handleSave}
+        loading={saving}
       />
     </>
   );

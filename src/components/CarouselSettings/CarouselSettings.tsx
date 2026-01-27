@@ -197,7 +197,13 @@ export function CarouselSettings() {
       ) : (
         <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }} spacing="md">
           {items.map((item, index) => (
-            <Card key={item.id} withBorder padding="sm" radius="md">
+            <Card
+              key={item.id}
+              withBorder
+              padding="sm"
+              radius="md"
+              style={{ display: 'flex', flexDirection: 'column' }}
+            >
               <Card.Section>
                 <Image
                   src={item.image_url}
@@ -207,20 +213,23 @@ export function CarouselSettings() {
                 />
               </Card.Section>
 
-              <Group justify="space-between" mt="sm" mb="xs">
-                <Text fw={500} lineClamp={1}>
+              <Group justify="space-between" mt="sm" mb="xs" wrap="nowrap">
+                <Text fw={500} lineClamp={1} style={{ flex: 1 }}>
                   {item.title || `Элемент #${item.id}`}
                 </Text>
-                <Badge color={item.is_active ? 'green' : 'gray'} size="sm">
+                <Badge color={item.is_active ? 'green' : 'gray'} size="sm" style={{ flexShrink: 0 }}>
                   {item.is_active ? 'Активен' : 'Неактивен'}
                 </Badge>
               </Group>
 
-              <Text size="xs" c="dimmed" mb="sm">
+              <Text size="xs" c="dimmed">
                 Порядок: {item.order}
               </Text>
 
-              <Group gap="xs">
+              {/* Spacer to push buttons to bottom */}
+              <div style={{ flex: 1, minHeight: 8 }} />
+
+              <Group gap="xs" mt="sm">
                 <ActionIcon
                   variant="light"
                   color={item.is_active ? 'gray' : 'green'}

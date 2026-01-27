@@ -537,8 +537,16 @@ const HeaderNav = (props: HeaderNavProps) => {
               </Stack>
             </Menu.Label>
             <Menu.Divider />
-            <Menu.Item leftSection={<IconUser size={16} />}>Профиль</Menu.Item>
-            <Menu.Item leftSection={<IconSettings size={16} />}>
+            <Menu.Item
+              leftSection={<IconUser size={16} />}
+              onClick={() => router.push('/apps/profile')}
+            >
+              Профиль
+            </Menu.Item>
+            <Menu.Item
+              leftSection={<IconSettings size={16} />}
+              onClick={() => router.push('/apps/settings')}
+            >
               Настройки
             </Menu.Item>
             <Menu.Divider />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Stack,
   Text,
@@ -11,10 +11,17 @@ import {
   Skeleton,
   Alert,
   Switch,
-  NumberInput,
   Table,
   Progress,
   ThemeIcon,
+  Paper,
+  SimpleGrid,
+  ScrollArea,
+  Tooltip,
+  ActionIcon,
+  Box,
+  Indicator,
+  Transition,
 } from '@mantine/core';
 import {
   IconRefresh,
@@ -24,12 +31,29 @@ import {
   IconClock,
   IconUsers,
   IconPlayerPlay,
-  IconSettings,
+  IconWifi,
+  IconWifiOff,
+  IconPlugConnected,
+  IconCalendarEvent,
+  IconCash,
+  IconUserPlus,
+  IconUserEdit,
+  IconTrash,
+  IconActivity,
+  IconBolt,
+  IconPlugConnectedX,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 
-import { syncService } from '@/services/sync.service';
-import type { SyncStatus, SyncHistoryItem, SyncConfig } from '@/types/sync';
+import { syncService, realtimeSync } from '@/services/sync.service';
+import type {
+  SyncStatus,
+  SyncHistoryItem,
+  SyncConfig,
+  ConnectionStatus,
+  RealtimeEvent,
+  RealtimeStats,
+} from '@/types/sync';
 
 function formatDate(dateString: string | null): string {
   if (!dateString) return 'Никогда';
@@ -41,6 +65,24 @@ function formatDate(dateString: string | null): string {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+function formatTime(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleString('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+}
+
+function formatUptime(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (hours > 0) {
+    return `${hours}ч ${minutes}м`;
+  }
+  return `${minutes}м`;
 }
 
 function StatusIcon({ status }: { status: SyncHistoryItem['status'] }) {
@@ -66,7 +108,7 @@ function StatusIcon({ status }: { status: SyncHistoryItem['status'] }) {
     case 'running':
       return (
         <ThemeIcon color="blue" size="sm" radius="xl">
-          <IconRefresh size={14} className="animate-spin" />
+          <IconRefresh size={14} style={{ animation: 'spin 1s linear infinite' }} />
         </ThemeIcon>
       );
     default:
@@ -74,25 +116,138 @@ function StatusIcon({ status }: { status: SyncHistoryItem['status'] }) {
   }
 }
 
+function ConnectionStatusBadge({ status }: { status: ConnectionStatus }) {
+  const config = {
+    disconnected: { color: 'gray', icon: IconWifiOff, label: 'Отключено' },
+    connecting: { color: 'yellow', icon: IconWifi, label: 'Подключение...' },
+    connected: { color: 'green', icon: IconPlugConnected, label: 'Подключено' },
+    error: { color: 'red', icon: IconPlugConnectedX, label: 'Ошибка' },
+  }[status];
+
+  const Icon = config.icon;
+
+  return (
+    <Badge
+      color={config.color}
+      variant="light"
+      size="lg"
+      leftSection={<Icon size={14} />}
+    >
+      {config.label}
+    </Badge>
+  );
+}
+
+function EventIcon({ type }: { type: RealtimeEvent['type'] }) {
+  const config = {
+    client_created: { color: 'green', icon: IconUserPlus },
+    client_updated: { color: 'blue', icon: IconUserEdit },
+    appointment_created: { color: 'teal', icon: IconCalendarEvent },
+    appointment_updated: { color: 'cyan', icon: IconCalendarEvent },
+    appointment_cancelled: { color: 'red', icon: IconTrash },
+    payment_received: { color: 'yellow', icon: IconCash },
+    connection_status: { color: 'gray', icon: IconActivity },
+  }[type];
+
+  const Icon = config.icon;
+
+  return (
+    <ThemeIcon color={config.color} size="sm" radius="xl" variant="light">
+      <Icon size={14} />
+    </ThemeIcon>
+  );
+}
+
+function getEventDescription(event: RealtimeEvent): string {
+  switch (event.type) {
+    case 'client_created':
+      return `Новый клиент: ${event.data.client_name || 'Без имени'}`;
+    case 'client_updated':
+      return `Обновлён клиент: ${event.data.client_name || 'Без имени'}`;
+    case 'appointment_created':
+      return `Новая запись: ${event.data.service_name || 'Услуга'}`;
+    case 'appointment_updated':
+      return `Изменена запись: ${event.data.service_name || 'Услуга'}`;
+    case 'appointment_cancelled':
+      return `Отменена запись: ${event.data.service_name || 'Услуга'}`;
+    case 'payment_received':
+      return `Оплата: ${event.data.amount?.toLocaleString('ru-RU')} ₽`;
+    case 'connection_status':
+      return event.data.message || 'Изменение статуса';
+    default:
+      return 'Событие';
+  }
+}
+
+// Компонент для отображения real-time события
+function RealtimeEventItem({ event, isNew }: { event: RealtimeEvent; isNew: boolean }) {
+  return (
+    <Transition mounted={true} transition="slide-right" duration={300}>
+      {(styles) => (
+        <Paper
+          p="xs"
+          withBorder
+          style={{
+            ...styles,
+            borderLeftWidth: 3,
+            borderLeftColor: isNew ? 'var(--mantine-color-green-5)' : 'transparent',
+            backgroundColor: isNew ? 'var(--mantine-color-green-0)' : undefined,
+          }}
+        >
+          <Group gap="xs" wrap="nowrap">
+            <EventIcon type={event.type} />
+            <Box style={{ flex: 1, minWidth: 0 }}>
+              <Text size="sm" lineClamp={1}>
+                {getEventDescription(event)}
+              </Text>
+              <Text size="xs" c="dimmed">
+                {formatTime(event.timestamp)}
+              </Text>
+            </Box>
+          </Group>
+        </Paper>
+      )}
+    </Transition>
+  );
+}
+
 export function SyncSettings() {
   const [status, setStatus] = useState<SyncStatus | null>(null);
   const [history, setHistory] = useState<SyncHistoryItem[]>([]);
   const [config, setConfig] = useState<SyncConfig | null>(null);
+  const [realtimeStats, setRealtimeStats] = useState<RealtimeStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
-  const [savingConfig, setSavingConfig] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
+  const [realtimeEvents, setRealtimeEvents] = useState<RealtimeEvent[]>([]);
+  const [newEventIds, setNewEventIds] = useState<Set<string>>(new Set());
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [connectionTestResult, setConnectionTestResult] = useState<{
+    success: boolean;
+    message: string;
+    latency_ms?: number;
+  } | null>(null);
+
+  const eventScrollRef = useRef<HTMLDivElement>(null);
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [statusData, historyData, configData] = await Promise.all([
+      const [statusData, historyData, configData, statsData] = await Promise.all([
         syncService.getStatus(),
         syncService.getHistory(10),
         syncService.getConfig(),
+        syncService.getRealtimeStats(),
       ]);
       setStatus(statusData);
       setHistory(historyData);
       setConfig(configData);
+      setRealtimeStats(statsData);
+
+      // Автоматически подключаемся если realtime включён
+      if (configData.realtime_enabled) {
+        realtimeSync.connect();
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -102,6 +257,48 @@ export function SyncSettings() {
 
   useEffect(() => {
     loadData();
+
+    // Подписываемся на изменения статуса подключения
+    const unsubStatus = realtimeSync.onStatusChange(setConnectionStatus);
+
+    // Подписываемся на события
+    const unsubEvents = realtimeSync.onEvent((event) => {
+      setRealtimeEvents((prev) => [event, ...prev].slice(0, 50));
+      setNewEventIds((prev) => new Set(prev).add(event.id));
+
+      // Убираем подсветку через 3 секунды
+      setTimeout(() => {
+        setNewEventIds((prev) => {
+          const next = new Set(prev);
+          next.delete(event.id);
+          return next;
+        });
+      }, 3000);
+
+      // Обновляем статистику
+      setRealtimeStats((prev) =>
+        prev
+          ? {
+              ...prev,
+              events_today: prev.events_today + 1,
+              last_event_at: event.timestamp,
+              clients_synced_today:
+                event.type === 'client_created' || event.type === 'client_updated'
+                  ? prev.clients_synced_today + 1
+                  : prev.clients_synced_today,
+              appointments_synced_today:
+                event.type.startsWith('appointment_')
+                  ? prev.appointments_synced_today + 1
+                  : prev.appointments_synced_today,
+            }
+          : prev
+      );
+    });
+
+    return () => {
+      unsubStatus();
+      unsubEvents();
+    };
   }, [loadData]);
 
   // Поллинг статуса во время синхронизации
@@ -139,33 +336,59 @@ export function SyncSettings() {
     }
   };
 
-  const handleSaveConfig = async () => {
-    if (!config) return;
-
+  const handleToggleRealtime = async (enabled: boolean) => {
     try {
-      setSavingConfig(true);
-      await syncService.updateConfig(config);
+      if (!config) return;
+
+      setConfig({ ...config, realtime_enabled: enabled });
+
+      if (enabled) {
+        realtimeSync.connect();
+      } else {
+        realtimeSync.disconnect();
+      }
+
+      await syncService.updateConfig({ realtime_enabled: enabled });
+
       notifications.show({
-        title: 'Успешно',
-        message: 'Настройки синхронизации сохранены',
-        color: 'green',
+        title: enabled ? 'Онлайн-синхронизация включена' : 'Онлайн-синхронизация выключена',
+        message: enabled
+          ? 'Данные будут обновляться автоматически'
+          : 'Используйте ручную синхронизацию',
+        color: enabled ? 'green' : 'gray',
       });
     } catch (err) {
       notifications.show({
         title: 'Ошибка',
-        message: 'Не удалось сохранить настройки',
+        message: 'Не удалось изменить настройки',
         color: 'red',
       });
-    } finally {
-      setSavingConfig(false);
     }
+  };
+
+  const handleTestConnection = async () => {
+    try {
+      setTestingConnection(true);
+      setConnectionTestResult(null);
+      const result = await syncService.testConnection();
+      setConnectionTestResult(result);
+    } catch (err) {
+      setConnectionTestResult({ success: false, message: 'Ошибка проверки' });
+    } finally {
+      setTestingConnection(false);
+    }
+  };
+
+  const handleReconnect = () => {
+    realtimeSync.disconnect();
+    setTimeout(() => realtimeSync.connect(), 500);
   };
 
   if (loading) {
     return (
       <Stack gap="md">
-        <Skeleton height={150} radius="md" />
         <Skeleton height={200} radius="md" />
+        <Skeleton height={150} radius="md" />
         <Skeleton height={300} radius="md" />
       </Stack>
     );
@@ -173,32 +396,214 @@ export function SyncSettings() {
 
   return (
     <Stack gap="lg">
-      {/* Статус синхронизации */}
+      {/* Real-time панель */}
+      <Card withBorder p="md">
+        <Group justify="space-between" mb="md">
+          <Group gap="sm">
+            <Indicator
+              processing={connectionStatus === 'connected'}
+              color={connectionStatus === 'connected' ? 'green' : 'gray'}
+              size={12}
+            >
+              <ThemeIcon
+                size="lg"
+                radius="md"
+                variant="light"
+                color={connectionStatus === 'connected' ? 'green' : 'gray'}
+              >
+                <IconBolt size={20} />
+              </ThemeIcon>
+            </Indicator>
+            <div>
+              <Text size="lg" fw={600}>
+                Онлайн-синхронизация
+              </Text>
+              <Text size="sm" c="dimmed">
+                Автоматическое обновление данных из YClients
+              </Text>
+            </div>
+          </Group>
+
+          <Group gap="sm">
+            <ConnectionStatusBadge status={connectionStatus} />
+            <Switch
+              size="lg"
+              checked={config?.realtime_enabled ?? false}
+              onChange={(e) => handleToggleRealtime(e.currentTarget.checked)}
+              onLabel="ON"
+              offLabel="OFF"
+            />
+          </Group>
+        </Group>
+
+        {config?.realtime_enabled && (
+          <>
+            {/* Статистика real-time */}
+            <SimpleGrid cols={{ base: 2, md: 4 }} spacing="sm" mb="md">
+              <Paper p="sm" radius="md" bg="green.0">
+                <Group gap="xs">
+                  <ThemeIcon size="sm" color="green" variant="light">
+                    <IconActivity size={14} />
+                  </ThemeIcon>
+                  <div>
+                    <Text size="xl" fw={700} c="green.7">
+                      {realtimeStats?.events_today || 0}
+                    </Text>
+                    <Text size="xs" c="green.6">
+                      Событий сегодня
+                    </Text>
+                  </div>
+                </Group>
+              </Paper>
+
+              <Paper p="sm" radius="md" bg="blue.0">
+                <Group gap="xs">
+                  <ThemeIcon size="sm" color="blue" variant="light">
+                    <IconUsers size={14} />
+                  </ThemeIcon>
+                  <div>
+                    <Text size="xl" fw={700} c="blue.7">
+                      {realtimeStats?.clients_synced_today || 0}
+                    </Text>
+                    <Text size="xs" c="blue.6">
+                      Клиентов
+                    </Text>
+                  </div>
+                </Group>
+              </Paper>
+
+              <Paper p="sm" radius="md" bg="teal.0">
+                <Group gap="xs">
+                  <ThemeIcon size="sm" color="teal" variant="light">
+                    <IconCalendarEvent size={14} />
+                  </ThemeIcon>
+                  <div>
+                    <Text size="xl" fw={700} c="teal.7">
+                      {realtimeStats?.appointments_synced_today || 0}
+                    </Text>
+                    <Text size="xs" c="teal.6">
+                      Записей
+                    </Text>
+                  </div>
+                </Group>
+              </Paper>
+
+              <Paper p="sm" radius="md" bg="violet.0">
+                <Group gap="xs">
+                  <ThemeIcon size="sm" color="violet" variant="light">
+                    <IconClock size={14} />
+                  </ThemeIcon>
+                  <div>
+                    <Text size="xl" fw={700} c="violet.7">
+                      {formatUptime(realtimeStats?.uptime_seconds || 0)}
+                    </Text>
+                    <Text size="xs" c="violet.6">
+                      Uptime
+                    </Text>
+                  </div>
+                </Group>
+              </Paper>
+            </SimpleGrid>
+
+            {/* Лента событий */}
+            <Paper withBorder p="sm" radius="md">
+              <Group justify="space-between" mb="sm">
+                <Text size="sm" fw={600}>
+                  Последние события
+                </Text>
+                <Group gap="xs">
+                  {connectionStatus === 'error' && (
+                    <Tooltip label="Переподключиться">
+                      <ActionIcon size="sm" variant="light" color="blue" onClick={handleReconnect}>
+                        <IconRefresh size={14} />
+                      </ActionIcon>
+                    </Tooltip>
+                  )}
+                  <Text size="xs" c="dimmed">
+                    {realtimeStats?.last_event_at
+                      ? `Последнее: ${formatTime(realtimeStats.last_event_at)}`
+                      : 'Ожидание событий...'}
+                  </Text>
+                </Group>
+              </Group>
+
+              <ScrollArea h={200} ref={eventScrollRef}>
+                {realtimeEvents.length === 0 ? (
+                  <Text c="dimmed" ta="center" py="xl" size="sm">
+                    {connectionStatus === 'connected'
+                      ? 'Ожидание событий из YClients...'
+                      : 'Подключитесь для получения событий'}
+                  </Text>
+                ) : (
+                  <Stack gap="xs">
+                    {realtimeEvents.map((event) => (
+                      <RealtimeEventItem
+                        key={event.id}
+                        event={event}
+                        isNew={newEventIds.has(event.id)}
+                      />
+                    ))}
+                  </Stack>
+                )}
+              </ScrollArea>
+            </Paper>
+          </>
+        )}
+
+        {/* Тест подключения */}
+        <Group mt="md" gap="sm">
+          <Button
+            variant="light"
+            size="xs"
+            leftSection={<IconWifi size={14} />}
+            onClick={handleTestConnection}
+            loading={testingConnection}
+          >
+            Проверить подключение
+          </Button>
+          {connectionTestResult && (
+            <Badge color={connectionTestResult.success ? 'green' : 'red'} variant="light">
+              {connectionTestResult.message}
+              {connectionTestResult.latency_ms && ` (${connectionTestResult.latency_ms}ms)`}
+            </Badge>
+          )}
+        </Group>
+      </Card>
+
+      {/* Ручная синхронизация */}
       <Card withBorder>
         <Group justify="space-between" mb="md">
           <div>
-            <Text size="lg" fw={600}>Синхронизация с YClients</Text>
+            <Text size="lg" fw={600}>
+              Полная синхронизация
+            </Text>
             <Text size="sm" c="dimmed">
-              Импорт клиентов из системы YClients
+              Импорт всех клиентов из YClients
             </Text>
           </div>
           <Button
-            leftSection={syncing ? <IconRefresh size={16} className="animate-spin" /> : <IconPlayerPlay size={16} />}
+            leftSection={
+              syncing ? (
+                <IconRefresh size={16} style={{ animation: 'spin 1s linear infinite' }} />
+              ) : (
+                <IconPlayerPlay size={16} />
+              )
+            }
             onClick={handleStartSync}
             loading={syncing}
             disabled={status?.is_running}
           >
-            {syncing ? 'Синхронизация...' : 'Запустить синхронизацию'}
+            {syncing ? 'Синхронизация...' : 'Запустить'}
           </Button>
         </Group>
 
-        {syncing && (
-          <Progress value={100} animated mb="md" />
-        )}
+        {syncing && <Progress value={100} animated mb="md" />}
 
-        <Group gap="xl">
+        <SimpleGrid cols={{ base: 2, md: 4 }} spacing="md">
           <div>
-            <Text size="xs" c="dimmed" tt="uppercase">Последняя синхронизация</Text>
+            <Text size="xs" c="dimmed" tt="uppercase">
+              Последняя синхронизация
+            </Text>
             <Group gap="xs">
               <IconClock size={16} />
               <Text fw={500}>{formatDate(status?.last_sync_at || null)}</Text>
@@ -206,7 +611,9 @@ export function SyncSettings() {
           </div>
 
           <div>
-            <Text size="xs" c="dimmed" tt="uppercase">Синхронизировано</Text>
+            <Text size="xs" c="dimmed" tt="uppercase">
+              Синхронизировано
+            </Text>
             <Group gap="xs">
               <IconUsers size={16} />
               <Text fw={500}>{status?.clients_synced || 0} клиентов</Text>
@@ -214,74 +621,40 @@ export function SyncSettings() {
           </div>
 
           <div>
-            <Text size="xs" c="dimmed" tt="uppercase">Пропущено</Text>
-            <Text fw={500} c="dimmed">{status?.clients_skipped || 0}</Text>
+            <Text size="xs" c="dimmed" tt="uppercase">
+              Пропущено
+            </Text>
+            <Text fw={500} c="dimmed">
+              {status?.clients_skipped || 0}
+            </Text>
           </div>
 
           <div>
-            <Text size="xs" c="dimmed" tt="uppercase">Статус</Text>
+            <Text size="xs" c="dimmed" tt="uppercase">
+              Статус
+            </Text>
             <Badge color={status?.is_running ? 'blue' : 'green'} size="lg">
               {status?.is_running ? 'Выполняется' : 'Готово'}
             </Badge>
           </div>
-        </Group>
+        </SimpleGrid>
 
         {status?.errors && status.errors.length > 0 && (
           <Alert color="red" mt="md" title="Ошибки синхронизации">
             {status.errors.map((error, i) => (
-              <Text key={i} size="sm">{error}</Text>
+              <Text key={i} size="sm">
+                {error}
+              </Text>
             ))}
           </Alert>
         )}
       </Card>
 
-      {/* Настройки */}
-      {config && (
-        <Card withBorder>
-          <Group gap="xs" mb="md">
-            <IconSettings size={20} />
-            <Text size="lg" fw={600}>Настройки синхронизации</Text>
-          </Group>
-
-          <Stack gap="md">
-            <Switch
-              label="Автоматическая синхронизация"
-              description="Автоматически синхронизировать клиентов по расписанию"
-              checked={config.auto_sync_enabled}
-              onChange={(e) => setConfig({ ...config, auto_sync_enabled: e.currentTarget.checked })}
-            />
-
-            <NumberInput
-              label="Интервал синхронизации (часов)"
-              description="Как часто выполнять автоматическую синхронизацию"
-              value={config.sync_interval_hours}
-              onChange={(value) => setConfig({ ...config, sync_interval_hours: Number(value) || 24 })}
-              min={1}
-              max={168}
-              disabled={!config.auto_sync_enabled}
-            />
-
-            <NumberInput
-              label="Минимальное количество визитов"
-              description="Импортировать только клиентов с указанным количеством визитов"
-              value={config.min_visits_threshold}
-              onChange={(value) => setConfig({ ...config, min_visits_threshold: Number(value) || 1 })}
-              min={0}
-              max={100}
-            />
-
-            <Group justify="flex-end">
-              <Button onClick={handleSaveConfig} loading={savingConfig}>
-                Сохранить настройки
-              </Button>
-            </Group>
-          </Stack>
-        </Card>
-      )}
-
       {/* История синхронизаций */}
       <Card withBorder>
-        <Text size="lg" fw={600} mb="md">История синхронизаций</Text>
+        <Text size="lg" fw={600} mb="md">
+          История синхронизаций
+        </Text>
 
         {history.length === 0 ? (
           <Text c="dimmed" ta="center" py="xl">
@@ -317,13 +690,19 @@ export function SyncSettings() {
                     <Text size="sm">{formatDate(item.started_at)}</Text>
                   </Table.Td>
                   <Table.Td>
-                    <Text size="sm" c="green">{item.clients_created}</Text>
+                    <Text size="sm" c="green">
+                      {item.clients_created}
+                    </Text>
                   </Table.Td>
                   <Table.Td>
-                    <Text size="sm" c="blue">{item.clients_updated}</Text>
+                    <Text size="sm" c="blue">
+                      {item.clients_updated}
+                    </Text>
                   </Table.Td>
                   <Table.Td>
-                    <Text size="sm" c="dimmed">{item.clients_skipped}</Text>
+                    <Text size="sm" c="dimmed">
+                      {item.clients_skipped}
+                    </Text>
                   </Table.Td>
                   <Table.Td>
                     <Text size="sm" c="red" lineClamp={1}>

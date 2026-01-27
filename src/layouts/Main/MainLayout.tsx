@@ -12,6 +12,7 @@ import {
 } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { IconPalette } from '@tabler/icons-react';
+import { usePathname } from 'next/navigation';
 
 import { AIAssistant, ThemeCustomizer } from '@/components';
 import {
@@ -32,10 +33,16 @@ type Props = {
 
 export function MainLayout({ children }: Props) {
   const theme = useMantineTheme();
+  const pathname = usePathname();
   const tablet_match = useMediaQuery('(max-width: 768px)');
   const mobile_match = useMediaQuery('(max-width: 425px)');
   const [mobileOpened, { toggle: toggleMobile, close: closeMobile }] =
     useDisclosure();
+
+  // Scroll to top при навигации между страницами
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
 
   const {
     config,

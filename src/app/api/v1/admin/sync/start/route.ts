@@ -230,16 +230,40 @@ async function runFullSync(syncId: number): Promise<void> {
     }
     console.log(`[Sync] ✓ Загружено ${syncData.records.length} записей`);
 
-    // Обработка клиентов
+    // Обработка клиентов: вычисляем visit_count на основе записей
     console.log('[Sync] Обработка клиентов...');
+
+    // Подсчитываем визиты для каждого клиента на основе records
+    const clientVisitCounts = new Map<number, number>();
+    for (const record of syncData.records) {
+      if (record.client && record.client.id && record.attendance === 2) { // attendance === 2 = клиент пришел
+        const currentCount = clientVisitCounts.get(record.client.id) || 0;
+        clientVisitCounts.set(record.client.id, currentCount + 1);
+      }
+    }
+
+    // Обновляем данные клиентов
     for (const client of syncData.clients) {
+      // Устанавливаем visit_count на основе подсчета из records
+      const actualVisitCount = clientVisitCounts.get(client.id) || 0;
+      client.visit_count = actualVisitCount;
+
+      // Используем sold_amount как spent (YClients не возвращает spent)
+      client.spent = client.sold_amount || 0;
+
+      // Вычисляем средний чек
+      if (actualVisitCount > 0 && client.sold_amount) {
+        client.avg_sum = Math.round(client.sold_amount / actualVisitCount);
+      } else {
+        client.avg_sum = 0;
+      }
+
       // Фильтрация по минимальному количеству визитов
-      if (client.visit_count !== undefined && client.visit_count < config.min_visits_threshold) {
+      if (actualVisitCount < config.min_visits_threshold) {
         clientsSkipped++;
         continue;
       }
 
-      // TODO: Сохранить в базу данных
       // Пока считаем как "обновленных"
       clientsUpdated++;
     }

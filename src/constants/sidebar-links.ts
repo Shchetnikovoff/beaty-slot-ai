@@ -1,17 +1,15 @@
 import {
   IconBell,
   IconBellRinging,
-  IconBuildingStore,
   IconCalendar,
   IconChartBar,
   IconChartInfographic,
-  IconCreditCard,
   IconFileInvoice,
   IconFileText,
-  IconPackages,
   IconReceipt,
   IconRefresh,
   IconSend,
+  IconShoppingCart,
   IconSpeakerphone,
   IconUserPlus,
   IconUsers,
@@ -40,14 +38,7 @@ export const SIDEBAR_LINKS = [
       { label: 'Платежи', icon: IconFileInvoice, link: PATH_APPS.invoices.root },
       { label: 'Рассылки', icon: IconSend, link: PATH_APPS.broadcasts },
       { label: 'Уведомления клиентам', icon: IconBell, link: PATH_APPS.notifications },
-      {
-        label: 'Тарифы',
-        icon: IconPackages,
-        links: [
-          { label: 'Список', link: PATH_APPS.products.root },
-          { label: 'Категории', link: PATH_APPS.products.categories },
-        ],
-      },
+      { label: 'Магазин', icon: IconShoppingCart, link: PATH_APPS.shop.root },
     ],
   },
   {
@@ -56,13 +47,11 @@ export const SIDEBAR_LINKS = [
       { label: 'Привлечение', icon: IconUserPlus, link: PATH_DASHBOARD.acquisition },
       { label: 'Публичная страница', icon: IconWorld, link: PATH_APPS.salonPage },
       { label: 'Баннеры и акции', icon: IconSpeakerphone, link: PATH_APPS.carousel },
-      { label: 'Подписка клиентов', icon: IconCreditCard, link: PATH_APPS.orders },
     ],
   },
   {
     title: 'Профиль организации',
     links: [
-      { label: 'Данные салона', icon: IconBuildingStore, link: PATH_APPS.settings },
       { label: 'Синхронизация', icon: IconRefresh, link: PATH_APPS.sync },
       { label: 'Документы', icon: IconFileText, link: PATH_APPS.documents },
       { label: 'Подписка салона', icon: IconReceipt, link: PATH_APPS.subscription },

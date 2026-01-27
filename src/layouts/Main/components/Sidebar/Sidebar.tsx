@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   ActionIcon,
   Box,
@@ -25,9 +25,32 @@ type NavigationProps = {
   showCloseButton?: boolean;
 };
 
+const SCROLL_STORAGE_KEY = 'sidebar-scroll-position';
+
 const SidebarNav = ({ onClose, showCloseButton = false }: NavigationProps) => {
   const tablet_match = useMediaQuery('(max-width: 768px)');
   const sidebarConfig = useSidebarConfig();
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
+
+  // Восстановить позицию скролла при монтировании
+  useEffect(() => {
+    const savedPosition = sessionStorage.getItem(SCROLL_STORAGE_KEY);
+    if (savedPosition && scrollViewportRef.current) {
+      // Небольшая задержка чтобы DOM успел отрисоваться
+      requestAnimationFrame(() => {
+        if (scrollViewportRef.current) {
+          scrollViewportRef.current.scrollTop = parseInt(savedPosition, 10);
+        }
+      });
+    }
+  }, []);
+
+  // Сохранять позицию скролла при каждом изменении
+  const handleScroll = useCallback(() => {
+    if (scrollViewportRef.current) {
+      sessionStorage.setItem(SCROLL_STORAGE_KEY, String(scrollViewportRef.current.scrollTop));
+    }
+  }, []);
 
   // Изначально все группы развёрнуты
   const [openedGroups, setOpenedGroups] = useState<Record<string, boolean>>(() => {
@@ -120,7 +143,11 @@ const SidebarNav = ({ onClose, showCloseButton = false }: NavigationProps) => {
 
       <SidebarCalendar />
 
-      <ScrollArea className={classes.links}>
+      <ScrollArea
+        className={classes.links}
+        viewportRef={scrollViewportRef}
+        onScrollPositionChange={handleScroll}
+      >
         <div className={classes.linksInner}>{links}</div>
       </ScrollArea>
     </div>

@@ -15,6 +15,7 @@ const mockCarouselItems: CarouselItem[] = [
     pdf_url: '',
     pdf_images_urls: ['https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200'],
     title: 'Акция: Скидка 20% на маникюр',
+    description: 'Только до конца месяца! Скидка 20% на все виды маникюра.',
     order: 1,
     is_active: true,
     created_at: '2026-01-20T10:00:00Z',
@@ -26,6 +27,7 @@ const mockCarouselItems: CarouselItem[] = [
     pdf_url: '',
     pdf_images_urls: ['https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1200'],
     title: 'Новинка: SPA-уход для волос',
+    description: 'Попробуйте наш новый SPA-уход с аргановым маслом.',
     order: 2,
     is_active: true,
     created_at: '2026-01-18T14:30:00Z',
@@ -37,6 +39,7 @@ const mockCarouselItems: CarouselItem[] = [
     pdf_url: '',
     pdf_images_urls: ['https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=1200'],
     title: 'Комплексный уход за лицом',
+    description: 'Полный комплекс процедур для сияющей кожи.',
     order: 3,
     is_active: false,
     created_at: '2026-01-15T09:00:00Z',
@@ -90,6 +93,7 @@ export const carouselService = {
         pdf_url: '',
         pdf_images_urls: [URL.createObjectURL(data.document)],
         title: data.title || null,
+        description: data.description || null,
         order: maxOrder + 1,
         is_active: true,
         created_at: new Date().toISOString(),
@@ -111,6 +115,9 @@ export const carouselService = {
       if (data.title) {
         formData.append('title', data.title);
       }
+      if (data.description) {
+        formData.append('description', data.description);
+      }
       return await api.post<CarouselItem>(CAROUSEL_ENDPOINT, formData);
     } catch {
       return createLocal();
@@ -129,7 +136,8 @@ export const carouselService = {
 
       const updated: CarouselItem = {
         ...localCarouselItems[index],
-        ...(data.title !== undefined && { title: data.title }),
+        ...(data.title !== undefined && { title: data.title || null }),
+        ...(data.description !== undefined && { description: data.description || null }),
         ...(data.order !== undefined && { order: data.order }),
         ...(data.is_active !== undefined && { is_active: data.is_active }),
         ...(data.image && { image_url: URL.createObjectURL(data.image) }),
@@ -155,6 +163,9 @@ export const carouselService = {
       }
       if (data.title !== undefined) {
         formData.append('title', data.title);
+      }
+      if (data.description !== undefined) {
+        formData.append('description', data.description);
       }
       if (data.order !== undefined) {
         formData.append('order', data.order.toString());

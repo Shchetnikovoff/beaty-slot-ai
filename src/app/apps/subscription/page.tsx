@@ -110,110 +110,110 @@ function SubscriptionPage() {
           />
 
           {/* Текущий план */}
-          <Surface>
-            <Group justify="space-between" mb="lg">
-              <div>
-                <Group gap="sm">
-                  <ThemeIcon size="lg" color="blue" variant="light">
-                    <IconCrown size={20} />
-                  </ThemeIcon>
-                  <div>
-                    <Text size="sm" c="dimmed">Текущий тариф</Text>
-                    <Group gap="xs">
-                      <Title order={3}>{currentPlan.name}</Title>
-                      <Badge color="green" variant="light">Активна</Badge>
-                    </Group>
-                  </div>
-                </Group>
-              </div>
+          <Surface p="sm">
+            <Group justify="space-between" mb="sm" wrap="nowrap">
+              <Group gap="xs" wrap="nowrap">
+                <ThemeIcon size="md" color="blue" variant="light">
+                  <IconCrown size={16} />
+                </ThemeIcon>
+                <div>
+                  <Text size="xs" c="dimmed" lh={1.2}>Текущий тариф</Text>
+                  <Group gap={6}>
+                    <Text size="md" fw={600}>{currentPlan.name}</Text>
+                    <Badge size="xs" color="green" variant="light">Активна</Badge>
+                  </Group>
+                </div>
+              </Group>
               <div style={{ textAlign: 'right' }}>
-                <Text size="sm" c="dimmed">Действует до</Text>
-                <Text size="lg" fw={600}>
+                <Text size="xs" c="dimmed" lh={1.2}>Действует до</Text>
+                <Text size="sm" fw={600} lh={1.3}>
                   {new Date(currentPlan.expiresAt).toLocaleDateString('ru-RU', {
                     day: 'numeric',
                     month: 'long',
                     year: 'numeric',
                   })}
                 </Text>
-                <Text size="sm" c="orange">Осталось {currentPlan.daysLeft} дней</Text>
+                <Text size="xs" c="orange" lh={1.2}>Осталось {currentPlan.daysLeft} дней</Text>
               </div>
             </Group>
 
-            <Paper p="md" radius="md" bg="gray.0" mb="md">
-              <Group justify="space-between" mb="xs">
-                <Text size="sm">Использовано клиентов</Text>
-                <Text size="sm" fw={600}>
+            <Paper p="xs" radius="sm" bg="gray.0" mb="sm">
+              <Group justify="space-between" mb={4}>
+                <Text size="xs" c="dimmed">Использовано клиентов</Text>
+                <Text size="xs" fw={600}>
                   {currentPlan.clientsUsed} / {currentPlan.clientsLimit}
                 </Text>
               </Group>
               <Progress
                 value={(currentPlan.clientsUsed / currentPlan.clientsLimit) * 100}
                 color={currentPlan.clientsUsed / currentPlan.clientsLimit > 0.8 ? 'orange' : 'blue'}
-                size="lg"
+                size="sm"
                 radius="xl"
               />
             </Paper>
 
-            <Group>
-              <Button variant="light" leftSection={<IconReceipt size={18} />}>
+            <Group gap="xs">
+              <Button size="xs" variant="light" leftSection={<IconReceipt size={14} />}>
                 История платежей
               </Button>
-              <Button variant="light" leftSection={<IconRocket size={18} />}>
+              <Button size="xs" variant="light" leftSection={<IconRocket size={14} />}>
                 Улучшить тариф
               </Button>
             </Group>
           </Surface>
 
           {/* Тарифные планы */}
-          <Title order={4}>Доступные тарифы</Title>
+          <Text size="sm" fw={600}>Доступные тарифы</Text>
 
-          <SimpleGrid cols={{ base: 1, md: 3 }} spacing="lg">
+          <SimpleGrid cols={{ base: 1, md: 3 }} spacing="md">
             {plans.map((plan) => (
               <Card
                 key={plan.name}
                 withBorder
                 radius="md"
-                p="xl"
+                p="md"
                 style={{
                   borderColor: plan.popular ? 'var(--mantine-color-blue-5)' : undefined,
                   borderWidth: plan.popular ? 2 : 1,
+                  display: 'flex',
+                  flexDirection: 'column',
                 }}
               >
-                {plan.popular && (
-                  <Badge
-                    color="blue"
-                    variant="filled"
-                    style={{
-                      position: 'absolute',
-                      top: -10,
-                      right: 20,
-                    }}
-                  >
-                    Популярный
-                  </Badge>
-                )}
-
-                <Text size="lg" fw={600} mb="xs">{plan.name}</Text>
-                <Text size="sm" c="dimmed" mb="md">{plan.description}</Text>
-
-                <Group align="baseline" mb="lg">
-                  <Text size="36px" fw={700}>{plan.price.toLocaleString('ru-RU')}</Text>
-                  <Text size="sm" c="dimmed">₽/месяц</Text>
+                {/* Заголовок с бейджем */}
+                <Group justify="space-between" align="flex-start" mb="xs">
+                  <div>
+                    <Text size="md" fw={600}>{plan.name}</Text>
+                    <Text size="xs" c="dimmed">{plan.description}</Text>
+                  </div>
+                  {plan.popular && (
+                    <Badge size="xs" color="blue" variant="filled">
+                      Популярный
+                    </Badge>
+                  )}
                 </Group>
 
-                <Stack gap="xs" mb="xl">
+                {/* Цена */}
+                <Group align="baseline" gap="xs" mb="md">
+                  <Text size="xl" fw={700}>{plan.price.toLocaleString('ru-RU')}</Text>
+                  <Text size="xs" c="dimmed">₽/месяц</Text>
+                </Group>
+
+                {/* Фичи - растягиваются */}
+                <Stack gap={6} style={{ flex: 1 }} mb="md">
                   {plan.features.map((feature) => (
-                    <Group key={feature} gap="xs">
-                      <ThemeIcon size="sm" color={plan.color} variant="light">
-                        <IconCheck size={12} />
+                    <Group key={feature} gap={6} wrap="nowrap">
+                      <ThemeIcon size="xs" color={plan.color} variant="light">
+                        <IconCheck size={10} />
                       </ThemeIcon>
-                      <Text size="sm">{feature}</Text>
+                      <Text size="xs">{feature}</Text>
                     </Group>
                   ))}
                 </Stack>
 
+                {/* Кнопка всегда внизу */}
                 <Button
                   fullWidth
+                  size="sm"
                   variant={currentPlan.name === plan.name ? 'light' : 'filled'}
                   color={plan.color}
                   disabled={currentPlan.name === plan.name}
@@ -225,36 +225,36 @@ function SubscriptionPage() {
           </SimpleGrid>
 
           {/* Статистика использования */}
-          <Surface>
-            <Title order={4} mb="lg">Статистика использования</Title>
-            <SimpleGrid cols={{ base: 2, md: 4 }} spacing="lg">
-              <Paper p="md" radius="md" bg="blue.0" ta="center">
-                <ThemeIcon size="xl" color="blue" variant="light" mx="auto" mb="sm">
-                  <IconUsers size={24} />
+          <Surface p="sm">
+            <Text size="sm" fw={600} mb="sm">Статистика использования</Text>
+            <SimpleGrid cols={{ base: 2, md: 4 }} spacing="xs">
+              <Paper p="xs" radius="sm" bg="blue.0" ta="center">
+                <ThemeIcon size="md" color="blue" variant="light" mx="auto" mb={4}>
+                  <IconUsers size={16} />
                 </ThemeIcon>
-                <Text size="24px" fw={700} c="blue.7">287</Text>
-                <Text size="sm" c="blue.6">Клиентов</Text>
+                <Text size="md" fw={700} c="blue.7">287</Text>
+                <Text size="xs" c="blue.6">Клиентов</Text>
               </Paper>
-              <Paper p="md" radius="md" bg="green.0" ta="center">
-                <ThemeIcon size="xl" color="green" variant="light" mx="auto" mb="sm">
-                  <IconCalendar size={24} />
+              <Paper p="xs" radius="sm" bg="green.0" ta="center">
+                <ThemeIcon size="md" color="green" variant="light" mx="auto" mb={4}>
+                  <IconCalendar size={16} />
                 </ThemeIcon>
-                <Text size="24px" fw={700} c="green.7">1,245</Text>
-                <Text size="sm" c="green.6">Записей</Text>
+                <Text size="md" fw={700} c="green.7">1,245</Text>
+                <Text size="xs" c="green.6">Записей</Text>
               </Paper>
-              <Paper p="md" radius="md" bg="violet.0" ta="center">
-                <ThemeIcon size="xl" color="violet" variant="light" mx="auto" mb="sm">
-                  <IconMessageCircle size={24} />
+              <Paper p="xs" radius="sm" bg="violet.0" ta="center">
+                <ThemeIcon size="md" color="violet" variant="light" mx="auto" mb={4}>
+                  <IconMessageCircle size={16} />
                 </ThemeIcon>
-                <Text size="24px" fw={700} c="violet.7">3,892</Text>
-                <Text size="sm" c="violet.6">Уведомлений</Text>
+                <Text size="md" fw={700} c="violet.7">3,892</Text>
+                <Text size="xs" c="violet.6">Уведомлений</Text>
               </Paper>
-              <Paper p="md" radius="md" bg="orange.0" ta="center">
-                <ThemeIcon size="xl" color="orange" variant="light" mx="auto" mb="sm">
-                  <IconChartBar size={24} />
+              <Paper p="xs" radius="sm" bg="orange.0" ta="center">
+                <ThemeIcon size="md" color="orange" variant="light" mx="auto" mb={4}>
+                  <IconChartBar size={16} />
                 </ThemeIcon>
-                <Text size="24px" fw={700} c="orange.7">15.2K</Text>
-                <Text size="sm" c="orange.6">API запросов</Text>
+                <Text size="md" fw={700} c="orange.7">15.2K</Text>
+                <Text size="xs" c="orange.6">API запросов</Text>
               </Paper>
             </SimpleGrid>
           </Surface>

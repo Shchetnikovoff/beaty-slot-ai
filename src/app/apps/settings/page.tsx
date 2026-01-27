@@ -4,42 +4,42 @@ import { useEffect, useState } from 'react';
 
 import {
   Anchor,
-  Box,
+  Avatar,
   Button,
   Container,
+  Divider,
   FileButton,
-  Grid,
   Group,
-  Image,
-  PaperProps,
+  Modal,
+  PasswordInput,
+  Select,
   Stack,
-  Tabs,
+  Switch,
   Text,
   TextInput,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
+import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import {
-  IconCloudUpload,
+  IconCamera,
   IconDeviceFloppy,
+  IconKey,
+  IconLock,
+  IconLogout,
+  IconMail,
+  IconPhone,
+  IconShieldCheck,
   IconUser,
-  IconCarouselHorizontal,
-  IconRefresh,
-  IconWorld,
-  IconBell,
 } from '@tabler/icons-react';
 
-import { PageHeader, Surface, TextEditor } from '@/components';
-import { CarouselSettings } from '@/components/CarouselSettings';
-import { SyncSettings } from '@/components/SyncSettings';
-import { WebPageSettings } from '@/components/WebPageSettings';
-import { NotificationSettings } from '@/components/NotificationSettings';
+import { PageHeader, Surface } from '@/components';
 import { useProfile } from '@/lib/hooks/useApi';
 import { PATH_DASHBOARD } from '@/routes';
 
-const items = [
+const breadcrumbItems = [
   { title: 'Дашборд', href: PATH_DASHBOARD.default },
-  { title: 'Приложения', href: '#' },
+  { title: 'Профиль пользователя', href: '#' },
   { title: 'Настройки', href: '#' },
 ].map((item, index) => (
   <Anchor href={item.href} key={index}>
@@ -47,260 +47,389 @@ const items = [
   </Anchor>
 ));
 
-const ICON_SIZE = 16;
+// Password change modal
+function ChangePasswordModal({
+  opened,
+  onClose,
+}: {
+  opened: boolean;
+  onClose: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
 
-const PAPER_PROPS: PaperProps = {
-  p: 'md',
-  style: { minHeight: '100%' },
-};
-
-const BIO =
-  'Администратор салона красоты с опытом работы в сфере управления и обслуживания клиентов. Отвечает за координацию работы персонала, ведение клиентской базы и контроль качества услуг.\n' +
-  '\n' +
-  'Стремится к постоянному улучшению сервиса и повышению удовлетворённости клиентов.';
-
-function ProfileSettings() {
-  const [file, setFile] = useState<File | null>(null);
-
-  const {
-    data: profileData,
-    loading: profileLoading,
-  } = useProfile();
-
-  const profile = profileData?.data;
-
-  const accountForm = useForm({
+  const form = useForm({
     initialValues: {
-      username: profile?.name || '',
-      biograghy: BIO,
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
+    validate: {
+      currentPassword: (value) => (!value ? 'Введите текущий пароль' : null),
+      newPassword: (value) =>
+        value.length < 8 ? 'Минимум 8 символов' : null,
+      confirmPassword: (value, values) =>
+        value !== values.newPassword ? 'Пароли не совпадают' : null,
     },
   });
 
-  const accountInfoForm = useForm({
+  const handleSubmit = async (values: typeof form.values) => {
+    setLoading(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      notifications.show({
+        title: 'Пароль изменён',
+        message: 'Ваш пароль успешно обновлён',
+        color: 'green',
+      });
+      form.reset();
+      onClose();
+    } catch {
+      notifications.show({
+        title: 'Ошибка',
+        message: 'Не удалось изменить пароль',
+        color: 'red',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal opened={opened} onClose={onClose} title="Смена пароля" centered>
+      <form onSubmit={form.onSubmit(handleSubmit)}>
+        <Stack gap="sm">
+          <PasswordInput
+            label="Текущий пароль"
+            placeholder="Введите текущий пароль"
+            size="sm"
+            {...form.getInputProps('currentPassword')}
+          />
+          <PasswordInput
+            label="Новый пароль"
+            placeholder="Минимум 8 символов"
+            size="sm"
+            {...form.getInputProps('newPassword')}
+          />
+          <PasswordInput
+            label="Подтвердите пароль"
+            placeholder="Повторите новый пароль"
+            size="sm"
+            {...form.getInputProps('confirmPassword')}
+          />
+          <Group justify="flex-end" mt="sm">
+            <Button variant="light" size="sm" onClick={onClose}>
+              Отмена
+            </Button>
+            <Button type="submit" size="sm" loading={loading}>
+              Изменить пароль
+            </Button>
+          </Group>
+        </Stack>
+      </form>
+    </Modal>
+  );
+}
+
+function Settings() {
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [passwordModalOpened, { open: openPasswordModal, close: closePasswordModal }] = useDisclosure(false);
+
+  // Notification settings state
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [pushNotifications, setPushNotifications] = useState(false);
+  const [telegramNotifications, setTelegramNotifications] = useState(true);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+
+  const { data: profileData, loading: profileLoading } = useProfile();
+  const profile = profileData?.data;
+
+  const form = useForm({
     initialValues: {
-      email: profile?.email || '',
-      phoneNumber: '',
+      name: '',
+      email: '',
+      phone: '',
+      position: 'admin',
     },
     validate: {
+      name: (value) => (!value ? 'Имя обязательно' : null),
       email: (value) => {
         if (!value) return 'Email обязателен';
         return /^\S+@\S+$/.test(value) ? null : 'Некорректный email';
+      },
+      phone: (value) => {
+        if (!value) return null;
+        return /^[\d\s\-+()]+$/.test(value) ? null : 'Некорректный телефон';
       },
     },
   });
 
   useEffect(() => {
     if (profile) {
-      accountForm.setValues({
-        username: profile.name || '',
-        biograghy: BIO,
-      });
-      accountInfoForm.setValues({
+      form.setValues({
+        name: profile.name || '',
         email: profile.email || '',
-        phoneNumber: '',
+        phone: profile.phone || '',
+        position: 'admin',
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
 
-  const handleSaveAccountInfo = async () => {
+  // Handle avatar file change
+  useEffect(() => {
+    if (avatarFile) {
+      const url = URL.createObjectURL(avatarFile);
+      setAvatarPreview(url);
+      return () => URL.revokeObjectURL(url);
+    }
+  }, [avatarFile]);
+
+  const handleSaveProfile = async (values: typeof form.values) => {
+    setSaving(true);
     try {
+      await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+      });
       notifications.show({
-        title: 'Успешно',
+        title: 'Сохранено',
         message: 'Профиль успешно обновлён',
         color: 'green',
       });
-    } catch (error) {
+    } catch {
       notifications.show({
         title: 'Ошибка',
-        message: 'Не удалось обновить профиль',
+        message: 'Не удалось сохранить профиль',
         color: 'red',
       });
+    } finally {
+      setSaving(false);
     }
   };
 
-  return (
-    <Grid>
-      <Grid.Col span={{ base: 12, md: 8 }}>
-        <Surface {...PAPER_PROPS}>
-          <Text size="lg" fw={600} mb="md">
-            Информация о пользователе
-          </Text>
-          <Grid gutter={{ base: 5, xs: 'md', md: 'md', lg: 'lg' }}>
-            <Grid.Col span={{ base: 12, md: 6, lg: 9, xl: 9 }}>
-              <Stack>
-                <TextInput
-                  label="Имя пользователя"
-                  placeholder="имя пользователя"
-                  {...accountForm.getInputProps('username')}
-                />
-                <TextEditor content={BIO} label="Биография" />
-                <Button
-                  style={{ width: 'fit-content' }}
-                  leftSection={<IconDeviceFloppy size={ICON_SIZE} />}
-                >
-                  Сохранить изменения
-                </Button>
-              </Stack>
-            </Grid.Col>
-            <Grid.Col span={{ base: 12, md: 6, lg: 3, xl: 3 }}>
-              <Stack align="center">
-                <Image
-                  src={
-                    profile?.avatar ||
-                    'https://res.cloudinary.com/ddh7hfzso/image/upload/v1700303804/me/ovqjhhs79u3g2fwbl2dd.jpg'
-                  }
-                  h={128}
-                  w={128}
-                  radius="50%"
-                  alt=""
-                />
-                <FileButton
-                  onChange={setFile}
-                  accept="image/png,image/jpeg"
-                >
-                  {(props) => (
-                    <Button
-                      {...props}
-                      variant="subtle"
-                      leftSection={<IconCloudUpload size={ICON_SIZE} />}
-                    >
-                      Загрузить изображение
-                    </Button>
-                  )}
-                </FileButton>
-                <Text ta="center" size="xs" c="dimmed">
-                  Для лучшего результата используйте изображение не менее
-                  128x128 пикселей в формате .jpg
-                </Text>
-              </Stack>
-            </Grid.Col>
-          </Grid>
-        </Surface>
-      </Grid.Col>
-      <Grid.Col span={{ base: 12, md: 4 }}>
-        <Surface {...PAPER_PROPS}>
-          <Stack>
-            <Text size="lg" fw={600}>
-              Данные аккаунта
-            </Text>
-            <Group grow>
-              <TextInput
-                label="Имя"
-                placeholder="имя"
-                {...accountInfoForm.getInputProps('firstname')}
-              />
-              <TextInput
-                label="Фамилия"
-                placeholder="фамилия"
-                {...accountInfoForm.getInputProps('lastname')}
-              />
-            </Group>
-            <TextInput
-              label="Email"
-              placeholder="email"
-              {...accountInfoForm.getInputProps('email')}
-            />
-            <TextInput
-              label="Адрес"
-              placeholder="адрес"
-              {...accountInfoForm.getInputProps('address')}
-            />
-            <TextInput
-              label="Квартира/Офис/Этаж"
-              placeholder="квартира, офис или этаж"
-              {...accountInfoForm.getInputProps('apartment')}
-            />
-            <Group grow>
-              <TextInput
-                label="Город"
-                placeholder="город"
-                {...accountInfoForm.getInputProps('city')}
-              />
-              <TextInput
-                label="Регион"
-                placeholder="регион"
-                {...accountInfoForm.getInputProps('state')}
-              />
-              <TextInput
-                label="Индекс"
-                placeholder="индекс"
-                {...accountInfoForm.getInputProps('zip')}
-              />
-            </Group>
-            <Box style={{ width: 'auto' }}>
-              <Button
-                leftSection={<IconDeviceFloppy size={16} />}
-                onClick={handleSaveAccountInfo}
-                loading={profileLoading}
-              >
-                Сохранить изменения
-              </Button>
-            </Box>
-          </Stack>
-        </Surface>
-      </Grid.Col>
-    </Grid>
-  );
-}
+  const handleLogoutAll = () => {
+    notifications.show({
+      title: 'Выход выполнен',
+      message: 'Вы вышли со всех устройств',
+      color: 'blue',
+    });
+  };
 
-function Settings() {
-  const [activeTab, setActiveTab] = useState<string | null>('profile');
+  const avatarSrc = avatarPreview || profile?.avatar || '/assets/default_user.jpg';
 
   return (
     <>
-      <>
-        <title>Настройки | Beauty Slot</title>
-        <meta
-          name="description"
-          content="Настройки профиля администратора салона красоты Beauty Slot"
-        />
-      </>
+      <title>Настройки | Beauty Slot</title>
+      <meta name="description" content="Настройки профиля администратора" />
+
       <Container fluid>
-        <Stack gap="lg">
-          <PageHeader title="Настройки" breadcrumbItems={items} />
+        <Stack gap="md">
+          <PageHeader title="Настройки профиля" breadcrumbItems={breadcrumbItems} />
 
-          <Tabs value={activeTab} onChange={setActiveTab}>
-            <Tabs.List mb="lg">
-              <Tabs.Tab value="profile" leftSection={<IconUser size={16} />}>
-                Профиль
-              </Tabs.Tab>
-              <Tabs.Tab value="carousel" leftSection={<IconCarouselHorizontal size={16} />}>
-                Карусель
-              </Tabs.Tab>
-              <Tabs.Tab value="sync" leftSection={<IconRefresh size={16} />}>
-                Синхронизация
-              </Tabs.Tab>
-              <Tabs.Tab value="webpage" leftSection={<IconWorld size={16} />}>
-                Веб-страница
-              </Tabs.Tab>
-              <Tabs.Tab value="notifications" leftSection={<IconBell size={16} />}>
-                Уведомления
-              </Tabs.Tab>
-            </Tabs.List>
+          {/* Profile Section */}
+          <Surface p="sm">
+            <Text size="sm" fw={600} mb="sm">
+              <IconUser size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+              Основная информация
+            </Text>
 
-            <Tabs.Panel value="profile">
-              <ProfileSettings />
-            </Tabs.Panel>
+            <form onSubmit={form.onSubmit(handleSaveProfile)}>
+              <Group align="flex-start" gap="md" wrap="nowrap">
+                {/* Avatar */}
+                <Stack align="center" gap="xs">
+                  <Avatar
+                    src={avatarSrc}
+                    size={80}
+                    radius="xl"
+                  />
+                  <FileButton onChange={setAvatarFile} accept="image/png,image/jpeg">
+                    {(props) => (
+                      <Button
+                        {...props}
+                        variant="subtle"
+                        size="xs"
+                        leftSection={<IconCamera size={12} />}
+                      >
+                        Изменить
+                      </Button>
+                    )}
+                  </FileButton>
+                </Stack>
 
-            <Tabs.Panel value="carousel">
-              <CarouselSettings />
-            </Tabs.Panel>
+                {/* Form Fields */}
+                <Stack style={{ flex: 1 }} gap="xs">
+                  <Group grow gap="xs">
+                    <TextInput
+                      label="Имя"
+                      placeholder="Ваше имя"
+                      size="sm"
+                      leftSection={<IconUser size={14} />}
+                      {...form.getInputProps('name')}
+                    />
+                    <Select
+                      label="Должность"
+                      size="sm"
+                      data={[
+                        { value: 'owner', label: 'Владелец' },
+                        { value: 'admin', label: 'Администратор' },
+                        { value: 'manager', label: 'Менеджер' },
+                      ]}
+                      {...form.getInputProps('position')}
+                    />
+                  </Group>
+                  <Group grow gap="xs">
+                    <TextInput
+                      label="Email"
+                      placeholder="email@example.com"
+                      size="sm"
+                      leftSection={<IconMail size={14} />}
+                      {...form.getInputProps('email')}
+                    />
+                    <TextInput
+                      label="Телефон"
+                      placeholder="+7 (999) 123-45-67"
+                      size="sm"
+                      leftSection={<IconPhone size={14} />}
+                      {...form.getInputProps('phone')}
+                    />
+                  </Group>
+                </Stack>
+              </Group>
 
-            <Tabs.Panel value="sync">
-              <SyncSettings />
-            </Tabs.Panel>
+              <Group justify="flex-end" mt="sm">
+                <Button
+                  type="submit"
+                  size="xs"
+                  leftSection={<IconDeviceFloppy size={14} />}
+                  loading={saving || profileLoading}
+                >
+                  Сохранить
+                </Button>
+              </Group>
+            </form>
+          </Surface>
 
-            <Tabs.Panel value="webpage">
-              <WebPageSettings />
-            </Tabs.Panel>
+          {/* Security Section */}
+          <Surface p="sm">
+            <Text size="sm" fw={600} mb="sm">
+              <IconShieldCheck size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+              Безопасность
+            </Text>
 
-            <Tabs.Panel value="notifications">
-              <NotificationSettings />
-            </Tabs.Panel>
-          </Tabs>
+            <Stack gap="xs">
+              <Group justify="space-between">
+                <div>
+                  <Text size="sm">Пароль</Text>
+                  <Text size="xs" c="dimmed">Последнее изменение: неизвестно</Text>
+                </div>
+                <Button
+                  variant="light"
+                  size="xs"
+                  leftSection={<IconKey size={14} />}
+                  onClick={openPasswordModal}
+                >
+                  Изменить
+                </Button>
+              </Group>
+
+              <Divider />
+
+              <Group justify="space-between">
+                <div>
+                  <Text size="sm">Двухфакторная аутентификация</Text>
+                  <Text size="xs" c="dimmed">Дополнительная защита аккаунта</Text>
+                </div>
+                <Switch
+                  checked={twoFactorEnabled}
+                  onChange={(e) => setTwoFactorEnabled(e.currentTarget.checked)}
+                  size="sm"
+                />
+              </Group>
+
+              <Divider />
+
+              <Group justify="space-between">
+                <div>
+                  <Text size="sm">Последний вход</Text>
+                  <Text size="xs" c="dimmed">
+                    {new Date().toLocaleDateString('ru-RU', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </Text>
+                </div>
+                <Button
+                  variant="subtle"
+                  size="xs"
+                  color="red"
+                  leftSection={<IconLogout size={14} />}
+                  onClick={handleLogoutAll}
+                >
+                  Выйти везде
+                </Button>
+              </Group>
+            </Stack>
+          </Surface>
+
+          {/* Notifications Section */}
+          <Surface p="sm">
+            <Text size="sm" fw={600} mb="sm">
+              <IconMail size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+              Уведомления
+            </Text>
+
+            <Stack gap="xs">
+              <Group justify="space-between">
+                <div>
+                  <Text size="sm">Email-уведомления</Text>
+                  <Text size="xs" c="dimmed">Получать уведомления на почту</Text>
+                </div>
+                <Switch
+                  checked={emailNotifications}
+                  onChange={(e) => setEmailNotifications(e.currentTarget.checked)}
+                  size="sm"
+                />
+              </Group>
+
+              <Divider />
+
+              <Group justify="space-between">
+                <div>
+                  <Text size="sm">Push-уведомления</Text>
+                  <Text size="xs" c="dimmed">Уведомления в браузере</Text>
+                </div>
+                <Switch
+                  checked={pushNotifications}
+                  onChange={(e) => setPushNotifications(e.currentTarget.checked)}
+                  size="sm"
+                />
+              </Group>
+
+              <Divider />
+
+              <Group justify="space-between">
+                <div>
+                  <Text size="sm">Telegram-уведомления</Text>
+                  <Text size="xs" c="dimmed">Уведомления через Telegram-бот</Text>
+                </div>
+                <Switch
+                  checked={telegramNotifications}
+                  onChange={(e) => setTelegramNotifications(e.currentTarget.checked)}
+                  size="sm"
+                />
+              </Group>
+            </Stack>
+          </Surface>
         </Stack>
       </Container>
+
+      <ChangePasswordModal opened={passwordModalOpened} onClose={closePasswordModal} />
     </>
   );
 }

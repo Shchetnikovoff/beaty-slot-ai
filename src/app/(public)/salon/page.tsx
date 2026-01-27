@@ -18,6 +18,7 @@ import { SalonHeader } from '@/components/public/SalonHeader';
 import { HeroCarousel } from '@/components/public/HeroCarousel';
 import { ServicesList } from '@/components/public/ServicesList';
 import { StaffList } from '@/components/public/StaffList';
+import { AmenitiesSection } from '@/components/public/AmenitiesSection';
 import { ContactSection } from '@/components/public/ContactSection';
 import { SalonFooter } from '@/components/public/SalonFooter';
 
@@ -103,6 +104,14 @@ export default function SalonPage() {
         {/* Staff */}
         {settings.show_staff && staff.length > 0 && (
           <StaffList staff={staff} primaryColor={settings.primary_color} />
+        )}
+
+        {/* Amenities */}
+        {settings.amenities && (
+          <AmenitiesSection
+            amenities={settings.amenities}
+            primaryColor={settings.primary_color}
+          />
         )}
 
         {/* Contact Info */}

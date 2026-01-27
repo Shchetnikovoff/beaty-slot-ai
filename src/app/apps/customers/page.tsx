@@ -19,6 +19,7 @@ import {
   TextInput,
   Title,
 } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useDebouncedValue } from '@mantine/hooks';
 import {
   IconAlertCircle,
@@ -45,7 +46,7 @@ import {
 
 import { ErrorAlert, PageHeader, Surface } from '@/components';
 import { useClients } from '@/lib/hooks/useBeautySlot';
-import { clientsService } from '@/services';
+import { clientsService, syncService } from '@/services';
 import type { Client, ClientFilterStatus, ClientsListParams } from '@/types';
 import { PATH_DASHBOARD } from '@/routes';
 
@@ -55,7 +56,7 @@ import { ClientEditModal } from './components/ClientEditModal';
 type ViewMode = 'grid' | 'list' | 'table';
 
 // Типы сортировки
-type SortField = 'name' | 'phone' | 'score' | 'status' | 'visits' | 'noshow' | 'subscription' | 'lastVisit' | null;
+type SortField = 'name' | 'phone' | 'score' | 'status' | 'visits' | 'noshow' | 'lastVisit' | null;
 type SortDirection = 'asc' | 'desc';
 
 const CLIENT_FILTERS: Array<{
@@ -130,12 +131,10 @@ const formatPhone = (phone: string): string => {
 function ClientCard({
   client,
   onEdit,
-  onToggleSubscription,
   onClick,
 }: {
   client: Client;
   onEdit: (client: Client) => void;
-  onToggleSubscription: (client: Client) => void;
   onClick: (client: Client) => void;
 }) {
   return (
@@ -166,7 +165,7 @@ function ClientCard({
               src={client.photo_url}
               size="lg"
               radius="xl"
-              color={client.has_active_subscription ? 'green' : 'gray'}
+              color={client.client_status === 'VIP' ? 'yellow' : 'blue'}
             >
               {client.name?.charAt(0).toUpperCase()}
             </Avatar>
@@ -192,20 +191,6 @@ function ClientCard({
               </Menu.Item>
               <Menu.Item leftSection={<IconEdit size={14} />} onClick={(e) => { e.stopPropagation(); onEdit(client); }}>
                 Редактировать
-              </Menu.Item>
-              <Menu.Divider />
-              <Menu.Item
-                leftSection={
-                  client.has_active_subscription ? (
-                    <IconUserX size={14} />
-                  ) : (
-                    <IconUserCheck size={14} />
-                  )
-                }
-                color={client.has_active_subscription ? 'red' : 'green'}
-                onClick={(e) => { e.stopPropagation(); onToggleSubscription(client); }}
-              >
-                {client.has_active_subscription ? 'Отключить подписку' : 'Включить подписку'}
               </Menu.Item>
             </Menu.Dropdown>
           </Menu>
@@ -247,15 +232,6 @@ function ClientCard({
             </Badge>
           )}
 
-          {client.has_active_subscription ? (
-            <Badge color="green" variant="light" size="sm">
-              Подписка
-            </Badge>
-          ) : (
-            <Badge color="gray" variant="light" size="sm">
-              Без подписки
-            </Badge>
-          )}
           {client.is_blocked && (
             <Badge color="red" variant="light" size="sm">
               Заблокирован
@@ -308,7 +284,6 @@ const sortableHeaderStyle: React.CSSProperties = {
 function ClientsTableView({
   clients,
   onEdit,
-  onToggleSubscription,
   onClick,
   sortField,
   sortDirection,
@@ -316,7 +291,6 @@ function ClientsTableView({
 }: {
   clients: Client[];
   onEdit: (client: Client) => void;
-  onToggleSubscription: (client: Client) => void;
   onClick: (client: Client) => void;
   sortField: SortField;
   sortDirection: SortDirection;
@@ -324,13 +298,12 @@ function ClientsTableView({
 }) {
   // Определяем ширину колонок для равномерного распределения
   const columnWidths = {
-    client: '16%',
-    phone: '14%',
-    score: '8%',
-    status: '12%',
-    visits: '9%',
-    noshow: '9%',
-    subscription: '10%',
+    client: '18%',
+    phone: '16%',
+    score: '10%',
+    status: '14%',
+    visits: '10%',
+    noshow: '10%',
     lastVisit: '14%',
     actions: '8%',
   };
@@ -397,17 +370,6 @@ function ClientsTableView({
               </Group>
             </th>
             <th
-              style={{ ...sortableHeaderStyle, textAlign: 'center', width: columnWidths.subscription }}
-              onClick={() => onSort('subscription')}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--mantine-color-gray-1)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-            >
-              <Group gap={4} wrap="nowrap" justify="center">
-                <span>Подписка</span>
-                <SortIcon field="subscription" sortField={sortField} sortDirection={sortDirection} />
-              </Group>
-            </th>
-            <th
               style={{ ...sortableHeaderStyle, textAlign: 'center', width: columnWidths.lastVisit }}
               onClick={() => onSort('lastVisit')}
               onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--mantine-color-gray-1)'; }}
@@ -444,7 +406,7 @@ function ClientsTableView({
                     src={client.photo_url}
                     size="sm"
                     radius="xl"
-                    color={client.client_status === 'VIP' ? 'yellow' : client.has_active_subscription ? 'green' : 'gray'}
+                    color={client.client_status === 'VIP' ? 'yellow' : 'blue'}
                   >
                     {client.name?.charAt(0).toUpperCase()}
                   </Avatar>
@@ -492,17 +454,6 @@ function ClientsTableView({
                 </Text>
               </td>
               <td style={{ padding: '12px', textAlign: 'center' }}>
-                {client.has_active_subscription ? (
-                  <Badge color="green" variant="light" size="sm">
-                    Активна
-                  </Badge>
-                ) : (
-                  <Badge color="gray" variant="light" size="sm">
-                    Нет
-                  </Badge>
-                )}
-              </td>
-              <td style={{ padding: '12px', textAlign: 'center' }}>
                 <Text size="sm" c="dimmed">
                   {client.last_visit_at
                     ? new Date(client.last_visit_at).toLocaleDateString('ru-RU')
@@ -510,22 +461,9 @@ function ClientsTableView({
                 </Text>
               </td>
               <td style={{ padding: '12px', textAlign: 'center' }}>
-                <Group gap="xs" justify="center">
-                  <ActionIcon variant="subtle" onClick={(e) => { e.stopPropagation(); onEdit(client); }}>
-                    <IconEdit size={16} />
-                  </ActionIcon>
-                  <ActionIcon
-                    variant="subtle"
-                    color={client.has_active_subscription ? 'red' : 'green'}
-                    onClick={(e) => { e.stopPropagation(); onToggleSubscription(client); }}
-                  >
-                    {client.has_active_subscription ? (
-                      <IconUserX size={16} />
-                    ) : (
-                      <IconUserCheck size={16} />
-                    )}
-                  </ActionIcon>
-                </Group>
+                <ActionIcon variant="subtle" onClick={(e) => { e.stopPropagation(); onEdit(client); }}>
+                  <IconEdit size={16} />
+                </ActionIcon>
               </td>
             </tr>
           ))}
@@ -595,10 +533,6 @@ function Customers() {
           aVal = a.no_show_count ?? 0;
           bVal = b.no_show_count ?? 0;
           break;
-        case 'subscription':
-          aVal = a.has_active_subscription ? 1 : 0;
-          bVal = b.has_active_subscription ? 1 : 0;
-          break;
         case 'lastVisit':
           aVal = a.last_visit_at ? new Date(a.last_visit_at).getTime() : 0;
           bVal = b.last_visit_at ? new Date(b.last_visit_at).getTime() : 0;
@@ -661,28 +595,58 @@ function Customers() {
     return sortClients(clientsData.items);
   }, [clientsData?.items, sortField, sortDirection]);
 
-  const handleToggleSubscription = async (client: Client) => {
-    try {
-      await clientsService.toggleSubscription(
-        client.yclients_id || String(client.id),
-        !client.has_active_subscription
-      );
-      refetchClients();
-    } catch (error) {
-      console.error('Failed to toggle subscription:', error);
-    }
-  };
-
   const handleImportFromYclients = async () => {
     setImporting(true);
+
+    notifications.show({
+      id: 'sync-started',
+      title: 'Синхронизация запущена',
+      message: 'Загрузка клиентов из YClients...',
+      color: 'blue',
+      loading: true,
+      autoClose: false,
+    });
+
     try {
-      const result = await clientsService.importFromYclients();
-      console.log('Imported:', result);
-      refetchClients();
+      // Используем syncService для запуска синхронизации
+      await syncService.startSync();
+
+      // Ждём немного и проверяем статус
+      const checkStatus = async () => {
+        const status = await syncService.getStatus();
+        if (status.is_running) {
+          // Ещё выполняется - ждём
+          setTimeout(checkStatus, 2000);
+        } else {
+          // Готово - обновляем список клиентов
+          setImporting(false);
+          refetchClients();
+
+          notifications.update({
+            id: 'sync-started',
+            title: 'Синхронизация завершена',
+            message: `Синхронизировано: ${status.clients_synced} клиентов`,
+            color: 'green',
+            loading: false,
+            autoClose: 3000,
+          });
+        }
+      };
+
+      // Даём время на старт синхронизации
+      setTimeout(checkStatus, 1000);
     } catch (error) {
-      console.error('Failed to import:', error);
-    } finally {
+      console.error('Failed to sync:', error);
       setImporting(false);
+
+      notifications.update({
+        id: 'sync-started',
+        title: 'Ошибка синхронизации',
+        message: 'Не удалось запустить синхронизацию',
+        color: 'red',
+        loading: false,
+        autoClose: 5000,
+      });
     }
   };
 
@@ -790,7 +754,6 @@ function Customers() {
               key={client.id}
               client={client}
               onEdit={handleEditClient}
-              onToggleSubscription={handleToggleSubscription}
               onClick={handleClientClick}
             />
           ))}
@@ -806,7 +769,6 @@ function Customers() {
               key={client.id}
               client={client}
               onEdit={handleEditClient}
-              onToggleSubscription={handleToggleSubscription}
               onClick={handleClientClick}
             />
           ))}
@@ -819,7 +781,6 @@ function Customers() {
         <ClientsTableView
           clients={sortedClients}
           onEdit={handleEditClient}
-          onToggleSubscription={handleToggleSubscription}
           onClick={handleClientClick}
           sortField={sortField}
           sortDirection={sortDirection}
@@ -919,10 +880,6 @@ function Customers() {
         client={selectedClient}
         opened={drawerOpened}
         onClose={handleCloseDrawer}
-        onToggleSubscription={(client) => {
-          handleToggleSubscription(client);
-          handleCloseDrawer();
-        }}
         onToggleBlock={handleToggleBlock}
       />
 

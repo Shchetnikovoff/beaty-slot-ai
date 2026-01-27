@@ -5,6 +5,7 @@ import {
   Modal,
   Stack,
   TextInput,
+  Textarea,
   Button,
   Group,
   Text,
@@ -26,6 +27,7 @@ interface AddCarouselDialogProps {
 
 export function AddCarouselDialog({ opened, onClose, onSuccess }: AddCarouselDialogProps) {
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -113,6 +115,7 @@ export function AddCarouselDialog({ opened, onClose, onSuccess }: AddCarouselDia
         image: imageFile,
         document: documentFile,
         title: title || undefined,
+        description: description || undefined,
       });
       notifications.show({
         title: 'Успешно',
@@ -134,6 +137,7 @@ export function AddCarouselDialog({ opened, onClose, onSuccess }: AddCarouselDia
 
   const handleClose = () => {
     setTitle('');
+    setDescription('');
     setImageFile(null);
     setDocumentFile(null);
     setImagePreview(null);
@@ -154,6 +158,16 @@ export function AddCarouselDialog({ opened, onClose, onSuccess }: AddCarouselDia
           placeholder="Название элемента (необязательно)"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+        />
+
+        <Textarea
+          label="Описание"
+          placeholder="Текст акции или описание (необязательно)"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          minRows={2}
+          maxRows={4}
+          autosize
         />
 
         <div>

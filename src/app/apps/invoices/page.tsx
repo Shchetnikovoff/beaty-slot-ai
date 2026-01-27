@@ -38,6 +38,10 @@ import {
   IconCheck,
   IconClock,
   IconX,
+  IconSortAscending,
+  IconSortDescending,
+  IconArrowUp,
+  IconArrowDown,
 } from '@tabler/icons-react';
 
 import { ErrorAlert, PageHeader, Surface } from '@/components';
@@ -72,6 +76,29 @@ const STATUS_COLORS: Record<PaymentStatus, string> = {
   FAILED: 'red',
   CANCELLED: 'gray',
   REFUNDED: 'orange',
+};
+
+// Типы сортировки
+type SortField = 'date' | 'amount' | 'status';
+type SortDirection = 'asc' | 'desc';
+
+const SORT_OPTIONS = [
+  { value: 'date_desc', label: 'Дата (новые)' },
+  { value: 'date_asc', label: 'Дата (старые)' },
+  { value: 'amount_desc', label: 'Сумма (по убыванию)' },
+  { value: 'amount_asc', label: 'Сумма (по возрастанию)' },
+  { value: 'status_asc', label: 'Статус (оплаченные сверху)' },
+  { value: 'status_desc', label: 'Статус (отменённые сверху)' },
+];
+
+// Приоритет статусов для сортировки (оплаченные сверху)
+const STATUS_PRIORITY: Record<PaymentStatus, number> = {
+  SUCCEEDED: 1,
+  PROCESSING: 2,
+  PENDING: 3,
+  REFUNDED: 4,
+  CANCELLED: 5,
+  FAILED: 6,
 };
 
 interface YclientsPaymentData {
@@ -289,6 +316,7 @@ function PaymentsTableView({
 function Payments() {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<string>('date_desc');
   const [selectedPayment, setSelectedPayment] = useState<PaymentFromSync | null>(null);
   const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
 
@@ -306,6 +334,37 @@ function Payments() {
     setSelectedPayment(payment);
     openModal();
   };
+
+  // Функция сортировки платежей
+  const sortPayments = (payments: PaymentFromSync[]): PaymentFromSync[] => {
+    const [field, direction] = sortBy.split('_') as [SortField, SortDirection];
+    const sorted = [...payments];
+
+    sorted.sort((a, b) => {
+      let comparison = 0;
+
+      switch (field) {
+        case 'date':
+          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          break;
+        case 'amount':
+          comparison = a.amount - b.amount;
+          break;
+        case 'status':
+          comparison = STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status];
+          break;
+        default:
+          comparison = 0;
+      }
+
+      return direction === 'desc' ? -comparison : comparison;
+    });
+
+    return sorted;
+  };
+
+  // Отсортированные платежи
+  const sortedPayments = paymentsData?.items ? sortPayments(paymentsData.items) : [];
 
   const stats = paymentsData?.stats;
 
@@ -337,7 +396,7 @@ function Payments() {
       );
     }
 
-    if (!paymentsData?.items?.length) {
+    if (!sortedPayments.length) {
       return (
         <Surface p="xl">
           <Stack align="center" gap="md">
@@ -364,13 +423,13 @@ function Payments() {
         spacing={{ base: 10, sm: 'xl' }}
         verticalSpacing={{ base: 'md', sm: 'xl' }}
       >
-        {paymentsData.items.map((payment) => (
+        {sortedPayments.map((payment) => (
           <PaymentCard key={payment.id} payment={payment} onView={handleViewPayment} />
         ))}
       </SimpleGrid>
     ) : (
       <Surface>
-        <PaymentsTableView payments={paymentsData.items} onView={handleViewPayment} />
+        <PaymentsTableView payments={sortedPayments} onView={handleViewPayment} />
       </Surface>
     );
   };
@@ -400,6 +459,13 @@ function Payments() {
                   ]}
                   style={{ width: 180 }}
                 />
+                <Select
+                  value={sortBy}
+                  onChange={(value) => setSortBy(value || 'date_desc')}
+                  data={SORT_OPTIONS}
+                  leftSection={<IconSortDescending size={16} />}
+                  style={{ width: 200 }}
+                />
                 <SegmentedControl
                   value={viewMode}
                   onChange={(value) => setViewMode(value as 'cards' | 'table')}
@@ -421,10 +487,10 @@ function Payments() {
 
           {/* Статистика */}
           {stats && (
-            <SimpleGrid cols={{ base: 2, sm: 4, lg: 6 }} spacing="md">
-              <Paper p="md" radius="md" withBorder>
-                <Group gap="xs" wrap="nowrap">
-                  <ThemeIcon size="lg" radius="md" variant="light" color="blue">
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <Paper p="md" radius="md" withBorder style={{ flex: '1 1 120px', minWidth: 120 }}>
+                <Group gap="sm" wrap="nowrap" align="center">
+                  <ThemeIcon size={36} radius="md" variant="light" color="blue">
                     <IconCreditCard size={20} />
                   </ThemeIcon>
                   <div>
@@ -434,9 +500,9 @@ function Payments() {
                 </Group>
               </Paper>
 
-              <Paper p="md" radius="md" withBorder>
-                <Group gap="xs" wrap="nowrap">
-                  <ThemeIcon size="lg" radius="md" variant="light" color="green">
+              <Paper p="md" radius="md" withBorder style={{ flex: '1 1 120px', minWidth: 120 }}>
+                <Group gap="sm" wrap="nowrap" align="center">
+                  <ThemeIcon size={36} radius="md" variant="light" color="green">
                     <IconCheck size={20} />
                   </ThemeIcon>
                   <div>
@@ -446,9 +512,9 @@ function Payments() {
                 </Group>
               </Paper>
 
-              <Paper p="md" radius="md" withBorder>
-                <Group gap="xs" wrap="nowrap">
-                  <ThemeIcon size="lg" radius="md" variant="light" color="yellow">
+              <Paper p="md" radius="md" withBorder style={{ flex: '1 1 120px', minWidth: 120 }}>
+                <Group gap="sm" wrap="nowrap" align="center">
+                  <ThemeIcon size={36} radius="md" variant="light" color="yellow">
                     <IconClock size={20} />
                   </ThemeIcon>
                   <div>
@@ -458,21 +524,21 @@ function Payments() {
                 </Group>
               </Paper>
 
-              <Paper p="md" radius="md" withBorder>
-                <Group gap="xs" wrap="nowrap">
-                  <ThemeIcon size="lg" radius="md" variant="light" color="blue">
+              <Paper p="md" radius="md" withBorder style={{ flex: '1 1 120px', minWidth: 120 }}>
+                <Group gap="sm" wrap="nowrap" align="center">
+                  <ThemeIcon size={36} radius="md" variant="light" color="blue">
                     <IconClock size={20} />
                   </ThemeIcon>
                   <div>
-                    <Text size="xs" c="dimmed">В обработке</Text>
+                    <Text size="xs" c="dimmed">Обработка</Text>
                     <Text size="lg" fw={700} c="blue">{stats.processing}</Text>
                   </div>
                 </Group>
               </Paper>
 
-              <Paper p="md" radius="md" withBorder>
-                <Group gap="xs" wrap="nowrap">
-                  <ThemeIcon size="lg" radius="md" variant="light" color="gray">
+              <Paper p="md" radius="md" withBorder style={{ flex: '1 1 120px', minWidth: 120 }}>
+                <Group gap="sm" wrap="nowrap" align="center">
+                  <ThemeIcon size={36} radius="md" variant="light" color="gray">
                     <IconX size={20} />
                   </ThemeIcon>
                   <div>
@@ -482,18 +548,18 @@ function Payments() {
                 </Group>
               </Paper>
 
-              <Paper p="md" radius="md" withBorder>
-                <Group gap="xs" wrap="nowrap">
-                  <ThemeIcon size="lg" radius="md" variant="light" color="teal">
+              <Paper p="md" radius="md" withBorder style={{ flex: '1.5 1 180px', minWidth: 180 }}>
+                <Group gap="sm" wrap="nowrap" align="center">
+                  <ThemeIcon size={36} radius="md" variant="light" color="teal">
                     <IconCurrencyRubel size={20} />
                   </ThemeIcon>
                   <div>
-                    <Text size="xs" c="dimmed">Сумма</Text>
+                    <Text size="xs" c="dimmed">Выручка</Text>
                     <Text size="lg" fw={700} c="teal">{stats.succeededAmount.toLocaleString('ru-RU')} ₽</Text>
                   </div>
                 </Group>
               </Paper>
-            </SimpleGrid>
+            </div>
           )}
 
           <Box>
@@ -502,7 +568,7 @@ function Payments() {
                 {paymentsData && (
                   <>
                     <Text size="sm" c="dimmed">
-                      Показано: <strong>{paymentsData.items.length}</strong> из <strong>{paymentsData.total}</strong>
+                      Показано: <strong>{sortedPayments.length}</strong> из <strong>{paymentsData.total}</strong>
                     </Text>
                   </>
                 )}

@@ -28,6 +28,8 @@ const ALWAYS_REAL_ENDPOINTS = [
   '/v1/admin/appointments',
   '/v1/admin/services',
   '/v1/admin/dashboard',
+  '/v1/admin/broadcasts',
+  '/v1/telegram',
 ];
 
 class ApiClient {
@@ -225,6 +227,7 @@ class ApiClient {
         method,
         headers: requestHeaders,
         body: body ? JSON.stringify(body) : undefined,
+        cache: 'no-store', // Отключаем кэширование для получения свежих данных
       });
 
       if (!response.ok) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import {
   ActionIcon,
@@ -231,23 +231,27 @@ function DocumentCard({
   );
 }
 
-function NewDocumentDrawer({
+function DocumentDrawer({
   opened,
   onClose,
-  onCreated,
+  onSave,
+  document,
+  mode,
 }: {
   opened: boolean;
   onClose: () => void;
-  onCreated: () => void;
+  onSave: (doc: Partial<Document>) => void;
+  document: Document | null;
+  mode: 'create' | 'edit' | 'view';
 }) {
   const [loading, setLoading] = useState(false);
 
   const form = useForm({
     initialValues: {
-      title: '',
-      type: 'AGREEMENT' as DocumentType,
-      content: '',
-      is_required: true,
+      title: document?.title || '',
+      type: (document?.type || 'AGREEMENT') as DocumentType,
+      content: document?.content || '',
+      is_required: document?.is_required ?? true,
     },
     validate: {
       title: (value) => (value.length < 3 ? 'Минимум 3 символа' : null),
@@ -255,25 +259,37 @@ function NewDocumentDrawer({
     },
   });
 
+  // Update form when document changes
+  useEffect(() => {
+    if (document) {
+      form.setValues({
+        title: document.title,
+        type: document.type,
+        content: document.content,
+        is_required: document.is_required,
+      });
+    } else {
+      form.reset();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [document]);
+
   const handleSubmit = async (values: typeof form.values) => {
+    if (mode === 'view') return;
+
     setLoading(true);
     try {
-      // TODO: API call to create document
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      notifications.show({
-        title: 'Документ создан',
-        message: 'Документ успешно создан как черновик',
-        color: 'green',
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      onSave({
+        ...document,
+        ...values,
       });
-
       form.reset();
-      onCreated();
       onClose();
     } catch (error) {
       notifications.show({
         title: 'Ошибка',
-        message: 'Не удалось создать документ',
+        message: 'Не удалось сохранить документ',
         color: 'red',
       });
     } finally {
@@ -281,11 +297,14 @@ function NewDocumentDrawer({
     }
   };
 
+  const isViewMode = mode === 'view';
+  const title = mode === 'create' ? 'Новый документ' : mode === 'edit' ? 'Редактирование' : 'Просмотр';
+
   return (
     <Drawer
       opened={opened}
       onClose={onClose}
-      title="Новый документ"
+      title={title}
       position="right"
       size="lg"
     >
@@ -294,7 +313,8 @@ function NewDocumentDrawer({
           <TextInput
             label="Название"
             placeholder="Название документа"
-            required
+            required={!isViewMode}
+            readOnly={isViewMode}
             {...form.getInputProps('title')}
           />
 
@@ -306,13 +326,15 @@ function NewDocumentDrawer({
               { value: 'TERMS', label: 'Правила и условия' },
               { value: 'OTHER', label: 'Другой документ' },
             ]}
+            disabled={isViewMode}
             {...form.getInputProps('type')}
           />
 
           <Textarea
             label="Содержание"
             placeholder="Текст документа..."
-            required
+            required={!isViewMode}
+            readOnly={isViewMode}
             minRows={10}
             autosize
             {...form.getInputProps('content')}
@@ -321,16 +343,23 @@ function NewDocumentDrawer({
           <Switch
             label="Обязательный документ"
             description="Клиенты должны принять этот документ для использования сервиса"
+            disabled={isViewMode}
             {...form.getInputProps('is_required', { type: 'checkbox' })}
           />
 
           <Group justify="flex-end" mt="md">
             <Button variant="light" onClick={onClose}>
-              Отмена
+              {isViewMode ? 'Закрыть' : 'Отмена'}
             </Button>
-            <Button type="submit" loading={loading} leftSection={<IconPlus size={18} />}>
-              Создать черновик
-            </Button>
+            {!isViewMode && (
+              <Button
+                type="submit"
+                loading={loading}
+                leftSection={mode === 'create' ? <IconPlus size={18} /> : <IconEdit size={18} />}
+              >
+                {mode === 'create' ? 'Создать черновик' : 'Сохранить'}
+              </Button>
+            )}
           </Group>
         </Stack>
       </form>
@@ -339,12 +368,13 @@ function NewDocumentDrawer({
 }
 
 function Documents() {
-  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
-  const [documents] = useState<Document[]>(mockDocuments);
-  const [loading] = useState(false);
+  const [documents, setDocuments] = useState<Document[]>(mockDocuments);
+  const [loading, setLoading] = useState(false);
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false);
+  const [drawerMode, setDrawerMode] = useState<'create' | 'edit' | 'view'>('create');
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
 
   const filteredDocuments = documents.filter((doc) => {
     if (statusFilter && doc.status !== statusFilter) return false;
@@ -353,75 +383,103 @@ function Documents() {
   });
 
   const handleViewDocument = (document: Document) => {
-    console.log('View document:', document);
-    // TODO: Open document view modal
+    setSelectedDocument(document);
+    setDrawerMode('view');
+    openDrawer();
   };
 
   const handleEditDocument = (document: Document) => {
-    console.log('Edit document:', document);
-    // TODO: Open document edit drawer
+    setSelectedDocument(document);
+    setDrawerMode('edit');
+    openDrawer();
+  };
+
+  const handleCreateDocument = () => {
+    setSelectedDocument(null);
+    setDrawerMode('create');
+    openDrawer();
+  };
+
+  const handleSaveDocument = (doc: Partial<Document>) => {
+    if (drawerMode === 'create') {
+      const newDoc: Document = {
+        id: Date.now(),
+        title: doc.title || '',
+        type: doc.type || 'OTHER',
+        content: doc.content || '',
+        version: 1,
+        status: 'DRAFT',
+        is_required: doc.is_required ?? false,
+        salon_id: 1,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      setDocuments(prev => [...prev, newDoc]);
+      notifications.show({
+        title: 'Документ создан',
+        message: 'Документ успешно создан как черновик',
+        color: 'green',
+      });
+    } else if (drawerMode === 'edit' && selectedDocument) {
+      setDocuments(prev => prev.map(d =>
+        d.id === selectedDocument.id
+          ? { ...d, ...doc, version: d.version + 1, updated_at: new Date().toISOString() }
+          : d
+      ));
+      notifications.show({
+        title: 'Документ обновлён',
+        message: 'Изменения сохранены',
+        color: 'green',
+      });
+    }
   };
 
   const handlePublishDocument = async (document: Document) => {
-    try {
-      // TODO: API call to publish
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      notifications.show({
-        title: 'Документ опубликован',
-        message: `"${document.title}" теперь активен`,
-        color: 'green',
-      });
-    } catch (error) {
-      notifications.show({
-        title: 'Ошибка',
-        message: 'Не удалось опубликовать документ',
-        color: 'red',
-      });
-    }
+    setDocuments(prev => prev.map(d =>
+      d.id === document.id
+        ? { ...d, status: 'ACTIVE' as DocumentStatus, published_at: new Date().toISOString() }
+        : d
+    ));
+    notifications.show({
+      title: 'Документ опубликован',
+      message: `"${document.title}" теперь активен`,
+      color: 'green',
+    });
   };
 
   const handleArchiveDocument = async (document: Document) => {
-    try {
-      // TODO: API call to archive
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      notifications.show({
-        title: 'Документ архивирован',
-        message: `"${document.title}" перемещён в архив`,
-        color: 'orange',
-      });
-    } catch (error) {
-      notifications.show({
-        title: 'Ошибка',
-        message: 'Не удалось архивировать документ',
-        color: 'red',
-      });
-    }
+    setDocuments(prev => prev.map(d =>
+      d.id === document.id
+        ? { ...d, status: 'ARCHIVED' as DocumentStatus }
+        : d
+    ));
+    notifications.show({
+      title: 'Документ архивирован',
+      message: `"${document.title}" перемещён в архив`,
+      color: 'orange',
+    });
   };
 
   const handleDeleteDocument = async (document: Document) => {
-    try {
-      // TODO: API call to delete
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      notifications.show({
-        title: 'Документ удалён',
-        message: `"${document.title}" успешно удалён`,
-        color: 'red',
-      });
-    } catch (error) {
-      notifications.show({
-        title: 'Ошибка',
-        message: 'Не удалось удалить документ',
-        color: 'red',
-      });
-    }
+    setDocuments(prev => prev.filter(d => d.id !== document.id));
+    notifications.show({
+      title: 'Документ удалён',
+      message: `"${document.title}" успешно удалён`,
+      color: 'red',
+    });
   };
 
   const handleRefresh = () => {
-    // TODO: Refetch documents from API
-  };
-
-  const handleCreated = () => {
-    // TODO: Refetch documents
+    setLoading(true);
+    setTimeout(() => {
+      setDocuments([...mockDocuments]);
+      setLoading(false);
+      notifications.show({
+        title: 'Обновлено',
+        message: 'Список документов обновлён',
+        color: 'blue',
+      });
+    }, 500);
   };
 
   const renderContent = () => {
@@ -461,7 +519,7 @@ function Documents() {
                 Сбросить фильтры
               </Button>
             ) : (
-              <Button leftSection={<IconPlus size={18} />} onClick={openDrawer}>
+              <Button leftSection={<IconPlus size={18} />} onClick={handleCreateDocument}>
                 Создать документ
               </Button>
             )}
@@ -535,7 +593,7 @@ function Documents() {
                 >
                   Обновить
                 </Button>
-                <Button leftSection={<IconPlus size={18} />} onClick={openDrawer}>
+                <Button leftSection={<IconPlus size={18} />} onClick={handleCreateDocument}>
                   Новый документ
                 </Button>
               </Group>
@@ -560,10 +618,12 @@ function Documents() {
         </Stack>
       </Container>
 
-      <NewDocumentDrawer
+      <DocumentDrawer
         opened={drawerOpened}
         onClose={closeDrawer}
-        onCreated={handleCreated}
+        onSave={handleSaveDocument}
+        document={selectedDocument}
+        mode={drawerMode}
       />
     </>
   );

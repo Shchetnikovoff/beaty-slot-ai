@@ -37,9 +37,7 @@ import { useDisclosure, useDebouncedValue } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import {
   IconCalendar,
-  IconCalendarStats,
   IconCheck,
-  IconClock,
   IconDotsVertical,
   IconEdit,
   IconEye,
@@ -53,8 +51,6 @@ import {
   IconSearch,
   IconStar,
   IconUser,
-  IconUserCheck,
-  IconUserX,
   IconX,
 } from '@tabler/icons-react';
 
@@ -142,16 +138,9 @@ function ViewStaffModal({
                 <Title order={3}>{staff.name}</Title>
                 <Text c="dimmed">{staff.specialization || ROLE_LABELS[staff.role]}</Text>
               </div>
-              <Group gap="xs">
-                <Badge color={ROLE_COLORS[staff.role]} size="lg">
-                  {ROLE_LABELS[staff.role]}
-                </Badge>
-                {staff.is_active ? (
-                  <Badge color="green" size="lg">Активен</Badge>
-                ) : (
-                  <Badge color="gray" size="lg">Неактивен</Badge>
-                )}
-              </Group>
+              <Badge color={ROLE_COLORS[staff.role]} size="lg">
+                {ROLE_LABELS[staff.role]}
+              </Badge>
             </Group>
           </div>
         </Group>
@@ -399,12 +388,6 @@ function EditStaffModal({
             placeholder="Краткое описание сотрудника..."
             rows={3}
             {...form.getInputProps('description')}
-          />
-
-          <Switch
-            label="Активен"
-            description="Неактивные сотрудники не отображаются в записи"
-            {...form.getInputProps('is_active', { type: 'checkbox' })}
           />
 
           <Divider />
@@ -665,13 +648,11 @@ function StaffCard({
   onView,
   onEdit,
   onSchedule,
-  onToggleActive,
 }: {
   staff: Staff;
   onView: (staff: Staff) => void;
   onEdit: (staff: Staff) => void;
   onSchedule: (staff: Staff) => void;
-  onToggleActive: (staff: Staff) => void;
 }) {
   return (
     <Paper p="md" radius="md" withBorder style={{ position: 'relative' }}>
@@ -692,28 +673,15 @@ function StaffCard({
           <Menu.Item leftSection={<IconCalendar size={14} />} onClick={() => onSchedule(staff)}>
             Расписание
           </Menu.Item>
-          <Menu.Divider />
-          <Menu.Item
-            leftSection={staff.is_active ? <IconUserX size={14} /> : <IconUserCheck size={14} />}
-            color={staff.is_active ? 'red' : 'green'}
-            onClick={() => onToggleActive(staff)}
-          >
-            {staff.is_active ? 'Деактивировать' : 'Активировать'}
-          </Menu.Item>
         </Menu.Dropdown>
       </Menu>
 
       <Group mb="md" style={{ paddingRight: 32 }}>
-        <Avatar src={staff.photo_url} size="lg" radius="xl" color={staff.is_active ? 'blue' : 'gray'}>
+        <Avatar src={staff.photo_url} size="lg" radius="xl" color="blue">
           {staff.name?.charAt(0).toUpperCase()}
         </Avatar>
         <div style={{ overflow: 'hidden', minWidth: 0, flex: 1 }}>
-          <Group gap="xs" mb={4}>
-            <Text fw={500} truncate style={{ flex: 1 }}>{staff.name}</Text>
-            <Badge color={staff.is_active ? 'green' : 'red'} variant="light" size="sm">
-              {staff.is_active ? 'Активен' : 'Неактивен'}
-            </Badge>
-          </Group>
+          <Text fw={500} truncate>{staff.name}</Text>
           <Text size="sm" c="dimmed" truncate>
             {staff.specialization || ROLE_LABELS[staff.role]}
           </Text>
@@ -759,13 +727,11 @@ function StaffTableView({
   onView,
   onEdit,
   onSchedule,
-  onToggleActive,
 }: {
   staffList: Staff[];
   onView: (staff: Staff) => void;
   onEdit: (staff: Staff) => void;
   onSchedule: (staff: Staff) => void;
-  onToggleActive: (staff: Staff) => void;
 }) {
   return (
     <div style={{ overflowX: 'auto' }}>
@@ -777,8 +743,7 @@ function StaffTableView({
             <Table.Th>Специализация</Table.Th>
             <Table.Th>Роль</Table.Th>
             <Table.Th ta="center">Рейтинг</Table.Th>
-            <Table.Th ta="center">Записей</Table.Th>
-            <Table.Th>Статус</Table.Th>
+            <Table.Th ta="center">Записей сегодня</Table.Th>
             <Table.Th ta="right">Действия</Table.Th>
           </Table.Tr>
         </Table.Thead>
@@ -791,7 +756,7 @@ function StaffTableView({
                     src={staff.photo_url}
                     size="sm"
                     radius="xl"
-                    color={staff.is_active ? 'blue' : 'gray'}
+                    color="blue"
                   >
                     {staff.name?.charAt(0).toUpperCase()}
                   </Avatar>
@@ -829,17 +794,6 @@ function StaffTableView({
                 <Text size="sm">{staff.appointments_count ?? '—'}</Text>
               </Table.Td>
               <Table.Td>
-                {staff.is_active ? (
-                  <Badge color="green" variant="light" size="sm">
-                    Активен
-                  </Badge>
-                ) : (
-                  <Badge color="gray" variant="light" size="sm">
-                    Неактивен
-                  </Badge>
-                )}
-              </Table.Td>
-              <Table.Td>
                 <Group gap="xs" justify="flex-end">
                   <Tooltip label="Просмотр">
                     <ActionIcon variant="subtle" onClick={() => onView(staff)}>
@@ -854,15 +808,6 @@ function StaffTableView({
                   <Tooltip label="Расписание">
                     <ActionIcon variant="subtle" onClick={() => onSchedule(staff)}>
                       <IconCalendar size={16} />
-                    </ActionIcon>
-                  </Tooltip>
-                  <Tooltip label={staff.is_active ? 'Деактивировать' : 'Активировать'}>
-                    <ActionIcon
-                      variant="subtle"
-                      color={staff.is_active ? 'red' : 'green'}
-                      onClick={() => onToggleActive(staff)}
-                    >
-                      {staff.is_active ? <IconUserX size={16} /> : <IconUserCheck size={16} />}
                     </ActionIcon>
                   </Tooltip>
                 </Group>
@@ -954,27 +899,6 @@ function Team() {
     refetchStaff();
   };
 
-  const handleToggleActive = async (staff: Staff) => {
-    const newStatus = !staff.is_active;
-    try {
-      await staffService.toggleActive(staff.id, newStatus);
-      notifications.show({
-        title: newStatus ? 'Сотрудник активирован' : 'Сотрудник деактивирован',
-        message: staff.name,
-        color: newStatus ? 'green' : 'orange',
-        icon: newStatus ? <IconUserCheck size={16} /> : <IconUserX size={16} />,
-      });
-      await refetchStaff();
-    } catch (error) {
-      notifications.show({
-        title: 'Ошибка',
-        message: 'Не удалось изменить статус сотрудника',
-        color: 'red',
-        icon: <IconX size={16} />,
-      });
-    }
-  };
-
   const renderContent = () => {
     if (staffLoading) {
       return viewMode === 'grid' ? (
@@ -1042,7 +966,6 @@ function Team() {
             onView={handleViewStaff}
             onEdit={handleEditStaff}
             onSchedule={handleScheduleStaff}
-            onToggleActive={handleToggleActive}
           />
         ))}
       </SimpleGrid>
@@ -1053,7 +976,6 @@ function Team() {
           onView={handleViewStaff}
           onEdit={handleEditStaff}
           onSchedule={handleScheduleStaff}
-          onToggleActive={handleToggleActive}
         />
       </Surface>
     );

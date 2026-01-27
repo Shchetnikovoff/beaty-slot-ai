@@ -6,7 +6,6 @@ const ROOTS_DASHBOARD = '/dashboard';
 const ROOT_APPS = '/apps';
 const ROOTS_PAGES = '/pages';
 const ROOTS_PROJECTS = '/projects';
-const ROOTS_ORDERS = '/orders';
 const ROOTS_INVOICES = '/invoices';
 const ROOTS_TASKS = '/tasks';
 const ROOTS_CALENDAR = '/calendar';
@@ -49,7 +48,6 @@ export const PATH_APPS = {
     invoice_details: (id: string): string =>
       path(ROOT_APPS, ROOTS_INVOICES + `/details/${id}`),
   },
-  orders: path(ROOT_APPS, '/orders'),
   profile: path(ROOT_APPS, '/profile'),
   projects: path(ROOT_APPS, '/projects'),
   settings: path(ROOT_APPS, '/settings'),
@@ -60,6 +58,13 @@ export const PATH_APPS = {
   products: {
     root: path(ROOT_APPS, ROOTS_PRODUCTS),
     categories: path(ROOT_APPS, ROOTS_PRODUCTS + '/categories'),
+  },
+  // Онлайн-магазин
+  shop: {
+    root: path(ROOT_APPS, '/shop'),
+    checkout: path(ROOT_APPS, '/shop/checkout'),
+    success: path(ROOT_APPS, '/shop/success'),
+    orders: path(ROOT_APPS, '/shop/orders'),
   },
   // Beauty Slot routes
   team: path(ROOT_APPS, '/team'),
@@ -89,10 +94,6 @@ export const PATH_PAGES = {
 
 export const PATH_PROJECTS = {
   root: ROOTS_PROJECTS,
-};
-
-export const PATH_ORDERS = {
-  root: ROOTS_ORDERS,
 };
 
 export const PATH_INVOICES = {

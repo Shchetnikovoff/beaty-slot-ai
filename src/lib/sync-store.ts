@@ -121,6 +121,7 @@ if (!global.__syncConfig) {
     auto_sync_enabled: false,
     sync_interval_hours: 24,
     min_visits_threshold: 3,
+    realtime_enabled: true,
   };
 }
 
@@ -197,6 +198,7 @@ export function resetSyncStore(): void {
     auto_sync_enabled: false,
     sync_interval_hours: 24,
     min_visits_threshold: 3,
+    realtime_enabled: true,
   };
   global.__currentSyncId = null;
   global.__syncedData = {

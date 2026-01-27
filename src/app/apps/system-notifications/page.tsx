@@ -8,6 +8,7 @@ import {
   Badge,
   Box,
   Button,
+  Collapse,
   Group,
   Paper,
   ScrollArea,
@@ -17,22 +18,29 @@ import {
   Text,
   Title,
   Tooltip,
+  UnstyledButton,
 } from '@mantine/core';
 import {
+  IconBell,
   IconBellOff,
+  IconCalendar,
   IconChecks,
+  IconChartBar,
+  IconChevronDown,
+  IconChevronRight,
   IconRefresh,
   IconSettings,
+  IconUsers,
 } from '@tabler/icons-react';
 
 import { ErrorAlert, PageHeader } from '@/components';
 import type { NotificationDto } from '@/types';
-import { useNotifications } from '@/lib/hooks/useApi';
+import { useSystemNotifications } from '@/lib/hooks/useApi';
 import { PATH_DASHBOARD } from '@/routes';
 
 import { NotificationItem } from './components/NotificationItem';
 
-type FilterType = 'all' | 'unread' | 'mentions' | 'comments' | 'updates';
+type FilterType = 'all' | 'bookings' | 'clients' | 'system';
 
 const items = [
   { title: 'Дашборд', href: PATH_DASHBOARD.default },
@@ -44,16 +52,22 @@ const items = [
   </Anchor>
 ));
 
+// Типы уведомлений для каждой категории
+const BOOKING_TYPES = ['mention', 'assignment', 'reminder'];
+const CLIENT_TYPES = ['invite', 'comment', 'share'];
+const SYSTEM_TYPES = ['update', 'system', 'security'];
+
 function Notifications() {
   const [filter, setFilter] = useState<FilterType>('all');
   const [localNotifications, setLocalNotifications] = useState<NotificationDto[]>([]);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
   const {
     data: notificationsData,
     loading: notificationsLoading,
     error: notificationsError,
     refetch: refetchNotifications,
-  } = useNotifications();
+  } = useSystemNotifications();
 
   // Синхронизация с загруженными данными
   useEffect(() => {
@@ -74,12 +88,24 @@ function Notifications() {
     );
   };
 
+  const toggleGroup = useCallback((groupKey: string) => {
+    setCollapsedGroups(prev => ({
+      ...prev,
+      [groupKey]: !prev[groupKey],
+    }));
+  }, []);
+
   const filteredNotifications = localNotifications.filter(
     (notification: NotificationDto) => {
-      if (filter === 'unread') return !notification.read;
-      if (filter === 'mentions') return notification.type === 'mention';
-      if (filter === 'comments') return notification.type === 'comment';
-      if (filter === 'updates') return notification.type === 'update';
+      if (filter === 'bookings') {
+        return BOOKING_TYPES.includes(notification.type);
+      }
+      if (filter === 'clients') {
+        return CLIENT_TYPES.includes(notification.type);
+      }
+      if (filter === 'system') {
+        return SYSTEM_TYPES.includes(notification.type);
+      }
       return true;
     }
   );
@@ -87,6 +113,11 @@ function Notifications() {
   const unreadCount = localNotifications.filter(
     (n: NotificationDto) => !n.read
   ).length || 0;
+
+  // Подсчёт по категориям
+  const bookingsCount = localNotifications.filter(n => BOOKING_TYPES.includes(n.type)).length;
+  const clientsCount = localNotifications.filter(n => CLIENT_TYPES.includes(n.type)).length;
+  const systemCount = localNotifications.filter(n => SYSTEM_TYPES.includes(n.type)).length;
 
   // Group notifications by date
   const groupedNotifications = filteredNotifications?.reduce((groups: Record<string, NotificationDto[]>, notification: NotificationDto) => {
@@ -142,37 +173,72 @@ function Notifications() {
             <IconBellOff size={64} color="gray" opacity={0.3} />
             <div style={{ textAlign: 'center' }}>
               <Title order={4} c="dimmed">
-                Нет уведомлений
+                {filter === 'all' ? 'Нет уведомлений' : `Нет уведомлений в категории "${
+                  filter === 'bookings' ? 'Записи' :
+                  filter === 'clients' ? 'Клиенты' : 'Система'
+                }"`}
               </Title>
               <Text size="sm" c="dimmed">
-                {filter === 'unread'
-                  ? 'Всё прочитано!'
-                  : 'Загляните позже'}
+                {localNotifications.length === 0
+                  ? 'Запустите синхронизацию YClients для получения уведомлений'
+                  : 'Уведомления появятся здесь автоматически'
+                }
               </Text>
             </div>
+            {localNotifications.length === 0 && (
+              <Button
+                variant="light"
+                leftSection={<IconRefresh size={16} />}
+                onClick={() => window.location.href = '/apps/sync'}
+              >
+                Перейти к синхронизации
+              </Button>
+            )}
           </Stack>
         </Box>
       );
     }
 
     return (
-      <Stack gap="xl">
-        {Object.entries(groupedNotifications || {}).map(([groupKey, notifications]) => (
-          <div key={groupKey}>
-            <Text size="xs" fw={700} tt="uppercase" c="dimmed" mb="sm" px="md">
-              {groupKey}
-            </Text>
-            <Stack gap={2}>
-              {notifications.map((notification: NotificationDto) => (
-                <NotificationItem
-                  key={notification.id}
-                  notification={notification}
-                  onMarkAsRead={handleMarkAsRead}
-                />
-              ))}
-            </Stack>
-          </div>
-        ))}
+      <Stack gap="md">
+        {Object.entries(groupedNotifications || {}).map(([groupKey, notifications]) => {
+          const isCollapsed = collapsedGroups[groupKey] ?? false;
+          return (
+            <div key={groupKey}>
+              <UnstyledButton
+                onClick={() => toggleGroup(groupKey)}
+                style={{ width: '100%' }}
+                px="md"
+                py="xs"
+              >
+                <Group gap="xs">
+                  {isCollapsed ? (
+                    <IconChevronRight size={14} color="gray" />
+                  ) : (
+                    <IconChevronDown size={14} color="gray" />
+                  )}
+                  <Text size="xs" fw={700} tt="uppercase" c="dimmed">
+                    {groupKey}
+                  </Text>
+                  <Badge size="xs" variant="light" color="gray">
+                    {notifications.length}
+                  </Badge>
+                </Group>
+              </UnstyledButton>
+              <Collapse in={!isCollapsed}>
+                <Stack gap={2}>
+                  {notifications.map((notification: NotificationDto) => (
+                    <NotificationItem
+                      key={notification.id}
+                      notification={notification}
+                      onMarkAsRead={handleMarkAsRead}
+                    />
+                  ))}
+                </Stack>
+              </Collapse>
+            </div>
+          );
+        })}
       </Stack>
     );
   };
@@ -180,7 +246,7 @@ function Notifications() {
   return (
     <>
       <title>Системные уведомления | Beauty Slot</title>
-      <meta name="description" content="Просмотр и управление системными уведомлениями" />
+      <meta name="description" content="Просмотр и управление системными уведомлениями на основе данных YClients" />
 
       <PageHeader
         title="Системные уведомления"
@@ -193,7 +259,7 @@ function Notifications() {
               </ActionIcon>
             </Tooltip>
             <Tooltip label="Настройки">
-              <ActionIcon variant="subtle">
+              <ActionIcon variant="subtle" component="a" href="/apps/settings">
                 <IconSettings size={18} />
               </ActionIcon>
             </Tooltip>
@@ -207,29 +273,46 @@ function Notifications() {
             <Box px="md" pt="md">
               <Group justify="space-between" mb="xs">
                 <Tabs.List>
-                  <Tabs.Tab value="all">
+                  <Tabs.Tab value="all" leftSection={<IconBell size={14} />}>
                     <Group gap={6}>
                       Все
                       {localNotifications.length > 0 && (
-                        <Badge size="sm">
+                        <Badge size="sm" variant="light">
                           {localNotifications.length}
                         </Badge>
                       )}
                     </Group>
                   </Tabs.Tab>
-                  <Tabs.Tab value="unread">
+                  <Tabs.Tab value="bookings" leftSection={<IconCalendar size={14} />}>
                     <Group gap={6}>
-                      Непрочитанные
-                      {unreadCount > 0 && (
-                        <Badge size="sm">
-                          {unreadCount}
+                      Записи
+                      {bookingsCount > 0 && (
+                        <Badge size="sm" variant="light" color="blue">
+                          {bookingsCount}
                         </Badge>
                       )}
                     </Group>
                   </Tabs.Tab>
-                  <Tabs.Tab value="mentions">Упоминания</Tabs.Tab>
-                  <Tabs.Tab value="comments">Комментарии</Tabs.Tab>
-                  <Tabs.Tab value="updates">Обновления</Tabs.Tab>
+                  <Tabs.Tab value="clients" leftSection={<IconUsers size={14} />}>
+                    <Group gap={6}>
+                      Клиенты
+                      {clientsCount > 0 && (
+                        <Badge size="sm" variant="light" color="green">
+                          {clientsCount}
+                        </Badge>
+                      )}
+                    </Group>
+                  </Tabs.Tab>
+                  <Tabs.Tab value="system" leftSection={<IconChartBar size={14} />}>
+                    <Group gap={6}>
+                      Система
+                      {systemCount > 0 && (
+                        <Badge size="sm" variant="light" color="gray">
+                          {systemCount}
+                        </Badge>
+                      )}
+                    </Group>
+                  </Tabs.Tab>
                 </Tabs.List>
 
                 {unreadCount > 0 && (

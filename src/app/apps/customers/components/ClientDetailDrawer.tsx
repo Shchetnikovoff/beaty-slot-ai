@@ -48,10 +48,8 @@ import {
   IconShare,
   IconStar,
   IconUser,
-  IconUserCheck,
   IconUserPlus,
   IconUsers,
-  IconUserX,
   IconX,
 } from '@tabler/icons-react';
 
@@ -198,7 +196,6 @@ interface ClientDetailDrawerProps {
   client: Client | null;
   opened: boolean;
   onClose: () => void;
-  onToggleSubscription?: (client: Client) => void;
   onToggleBlock?: (client: Client) => void;
   onUpdate?: (client: Client) => void;
 }
@@ -207,7 +204,6 @@ export function ClientDetailDrawer({
   client,
   opened,
   onClose,
-  onToggleSubscription,
   onToggleBlock,
   onUpdate,
 }: ClientDetailDrawerProps) {
@@ -443,33 +439,11 @@ export function ClientDetailDrawer({
             size="xs"
             variant="white"
             leftSection={<IconEdit size={14} />}
-            mb="sm"
             onClick={() => setEditModalOpened(true)}
             style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}
           >
             Редактировать данные
           </Button>
-
-          {/* Subscription status */}
-          <Paper
-            p="sm"
-            radius="md"
-            style={{
-              backgroundColor: client.has_active_subscription
-                ? 'rgba(255, 193, 7, 0.2)'
-                : 'rgba(239, 68, 68, 0.1)',
-            }}
-          >
-            <Group justify="center" gap="xs">
-              <IconCrown
-                size={18}
-                color={client.has_active_subscription ? '#ca8a04' : '#ef4444'}
-              />
-              <Text size="sm" fw={500} c={client.has_active_subscription ? 'yellow.8' : 'red.6'}>
-                {client.has_active_subscription ? 'Подписка активна' : 'Подписка не активна'}
-              </Text>
-            </Group>
-          </Paper>
         </Box>
 
         {/* Score Card - Floating */}
@@ -952,16 +926,6 @@ export function ClientDetailDrawer({
                     {client.is_blocked ? 'Разблокировать' : 'Заблокировать'}
                   </Button>
                 </Group>
-                <Button
-                  variant="light"
-                  size="md"
-                  color={client.has_active_subscription ? 'red' : 'green'}
-                  leftSection={client.has_active_subscription ? <IconUserX size={18} /> : <IconUserCheck size={18} />}
-                  onClick={() => onToggleSubscription?.(client)}
-                  fullWidth
-                >
-                  {client.has_active_subscription ? 'Отключить подписку' : 'Включить подписку'}
-                </Button>
               </Stack>
             </Paper>
           </Stack>

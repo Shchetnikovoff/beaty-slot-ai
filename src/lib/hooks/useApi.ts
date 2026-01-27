@@ -50,9 +50,14 @@ export function useEmails() {
   return useApiGet<EmailDto[]>('/api/emails');
 }
 
-// Hook for notifications
+// Hook for notifications (old mock data)
 export function useNotifications() {
   return useApiGet<NotificationDto[]>('/api/notifications');
+}
+
+// Hook for system notifications (real data from YClients)
+export function useSystemNotifications() {
+  return useApiGet<NotificationDto[]>('/api/v1/admin/system-notifications');
 }
 
 // Hook for sales

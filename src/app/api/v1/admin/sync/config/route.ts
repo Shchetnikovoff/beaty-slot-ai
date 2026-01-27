@@ -30,6 +30,7 @@ export async function PUT(request: Request) {
       auto_sync_enabled: body.auto_sync_enabled,
       sync_interval_hours: body.sync_interval_hours,
       min_visits_threshold: body.min_visits_threshold,
+      realtime_enabled: body.realtime_enabled,
     });
 
     return NextResponse.json(updatedConfig);

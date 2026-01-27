@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import {
   Badge,
@@ -13,7 +13,6 @@ import {
 } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import { IconChevronRight } from '@tabler/icons-react';
-import * as _ from 'lodash';
 import { usePathname, useRouter } from 'next/navigation';
 
 import classes from './NavLinks.module.css';
@@ -47,8 +46,15 @@ export function LinksGroup(props: LinksGroupProps) {
   const pathname = usePathname();
   const theme = useMantineTheme();
   const hasLinks = Array.isArray(links);
-  const [opened, setOpened] = useState(initiallyOpened || false);
-  const [_currentPath, setCurrentPath] = useState<string | undefined>();
+  // Инициализируем opened один раз при монтировании
+  // Открываем если есть вложенные ссылки и текущий путь совпадает с одной из них
+  const [opened, setOpened] = useState(() => {
+    if (initiallyOpened !== undefined) return initiallyOpened;
+    if (hasLinks && links) {
+      return links.some((l) => pathname.toLowerCase().startsWith(l.link.toLowerCase()));
+    }
+    return false;
+  });
   const ChevronIcon = IconChevronRight;
   const tablet_match = useMediaQuery('(max-width: 768px)');
 
@@ -223,12 +229,6 @@ export function LinksGroup(props: LinksGroupProps) {
     theme.primaryColor,
     badge,
   ]);
-
-  useEffect(() => {
-    const paths = pathname.split('/');
-    setOpened(paths.includes(label.toLowerCase()));
-    setCurrentPath(_.last(paths)?.toLowerCase() || undefined);
-  }, [pathname, label]);
 
   return <>{content}</>;
 }

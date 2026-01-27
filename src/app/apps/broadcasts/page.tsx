@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import {
   Anchor,
@@ -10,8 +10,9 @@ import {
   Container,
   Drawer,
   Group,
+  Modal,
   Paper,
-  Select,
+  Progress,
   SimpleGrid,
   Skeleton,
   Stack,
@@ -34,12 +35,13 @@ import {
   IconSend,
   IconUsers,
   IconX,
+  IconUserCheck,
 } from '@tabler/icons-react';
 
 import { ErrorAlert, PageHeader, Surface } from '@/components';
 import { useBroadcasts } from '@/lib/hooks/useBeautySlot';
 import { broadcastsService } from '@/services';
-import type { Broadcast, BroadcastTargetAudience } from '@/types';
+import type { Broadcast } from '@/types';
 import { PATH_DASHBOARD } from '@/routes';
 
 const items = [
@@ -54,7 +56,7 @@ const items = [
 
 const STATUS_LABELS = {
   DRAFT: 'Черновик',
-  SCHEDULED: 'Запланировано',
+  SCHEDULED: 'Отправляется...',
   SENT: 'Отправлено',
   FAILED: 'Ошибка',
   CANCELLED: 'Отменено',
@@ -68,20 +70,25 @@ const STATUS_COLORS = {
   CANCELLED: 'orange',
 };
 
-const AUDIENCE_LABELS = {
-  ALL: 'Все клиенты',
-  SUBSCRIBED: 'С подпиской',
-  NOT_SUBSCRIBED: 'Без подписки',
+const AUDIENCE_LABELS: Record<string, string> = {
+  ALL: 'Все клиенты с Telegram',
+  SEGMENT: 'По сегменту',
+  CUSTOM: 'Выбранные клиенты',
 };
 
 function BroadcastCard({
   broadcast,
   onView,
+  onSend,
+  sending,
 }: {
   broadcast: Broadcast;
   onView: (broadcast: Broadcast) => void;
+  onSend: (broadcast: Broadcast) => void;
+  sending: number | null;
 }) {
   const createdDate = new Date(broadcast.created_at).toLocaleDateString('ru-RU');
+  const isSending = sending === broadcast.id;
 
   return (
     <Paper p="md" radius="md" withBorder h="100%" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -91,7 +98,7 @@ function BroadcastCard({
             {broadcast.title}
           </Text>
           <Text size="sm" c="dimmed">
-            {AUDIENCE_LABELS[broadcast.target_audience]}
+            {AUDIENCE_LABELS[broadcast.target_audience] || broadcast.target_audience}
           </Text>
         </div>
         <Badge color={STATUS_COLORS[broadcast.status]} variant="light" size="lg" style={{ flexShrink: 0 }}>
@@ -130,13 +137,13 @@ function BroadcastCard({
           </Group>
         )}
 
-        {broadcast.scheduled_at && broadcast.status === 'SCHEDULED' && (
-          <Group gap="xs">
-            <IconClock size={14} />
-            <Text size="sm" c="dimmed">
-              Запланировано: {new Date(broadcast.scheduled_at).toLocaleString('ru-RU')}
+        {broadcast.status === 'SCHEDULED' && (
+          <Box>
+            <Text size="sm" c="blue" mb={4}>
+              Отправка...
             </Text>
-          </Group>
+            <Progress value={50} animated size="sm" />
+          </Box>
         )}
 
         {broadcast.sent_at && (
@@ -153,15 +160,26 @@ function BroadcastCard({
         </Text>
       </Stack>
 
-      <Button
-        variant="light"
-        fullWidth
-        mt="md"
-        leftSection={<IconBrandTelegram size={18} />}
-        onClick={() => onView(broadcast)}
-      >
-        Подробнее
-      </Button>
+      <Group mt="md" grow>
+        {broadcast.status === 'DRAFT' && (
+          <Button
+            variant="filled"
+            color="green"
+            leftSection={<IconSend size={18} />}
+            onClick={() => onSend(broadcast)}
+            loading={isSending}
+          >
+            Отправить
+          </Button>
+        )}
+        <Button
+          variant="light"
+          leftSection={<IconBrandTelegram size={18} />}
+          onClick={() => onView(broadcast)}
+        >
+          Подробнее
+        </Button>
+      </Group>
     </Paper>
   );
 }
@@ -171,6 +189,7 @@ interface LocalBroadcastStats {
   thisMonth: number;
   totalSent: number;
   deliveryRate: number;
+  linkedClients: number;
 }
 
 function StatsCard({
@@ -225,7 +244,7 @@ function NewBroadcastDrawer({
     initialValues: {
       title: '',
       message: '',
-      target_audience: 'ALL' as 'ALL' | 'SUBSCRIBED' | 'NOT_SUBSCRIBED',
+      target_audience: 'ALL' as const,
     },
     validate: {
       title: (value) => (value.length < 3 ? 'Минимум 3 символа' : null),
@@ -239,7 +258,7 @@ function NewBroadcastDrawer({
       await broadcastsService.create({
         title: values.title,
         message: values.message,
-        target_audience: values.target_audience as BroadcastTargetAudience,
+        target_audience: values.target_audience,
       });
 
       notifications.show({
@@ -251,7 +270,7 @@ function NewBroadcastDrawer({
       form.reset();
       onCreated();
       onClose();
-    } catch (error) {
+    } catch {
       notifications.show({
         title: 'Ошибка',
         message: 'Не удалось создать рассылку',
@@ -281,27 +300,26 @@ function NewBroadcastDrawer({
 
           <Textarea
             label="Сообщение"
-            placeholder="Текст сообщения для отправки в Telegram"
+            placeholder="Текст сообщения для отправки в Telegram. Поддерживается HTML: <b>жирный</b>, <i>курсив</i>"
             required
             minRows={4}
             {...form.getInputProps('message')}
           />
 
-          <Select
-            label="Аудитория"
-            data={[
-              { value: 'ALL', label: 'Все клиенты' },
-              { value: 'SUBSCRIBED', label: 'Только с активной подпиской' },
-              { value: 'NOT_SUBSCRIBED', label: 'Без активной подписки' },
-            ]}
-            {...form.getInputProps('target_audience')}
-          />
+          <Paper p="sm" withBorder bg="blue.0">
+            <Group gap="xs">
+              <IconBrandTelegram size={18} />
+              <Text size="sm">
+                Рассылка будет отправлена всем клиентам, которые авторизовались в Telegram боте
+              </Text>
+            </Group>
+          </Paper>
 
           <Group justify="flex-end" mt="md">
             <Button variant="light" onClick={onClose}>
               Отмена
             </Button>
-            <Button type="submit" loading={loading} leftSection={<IconSend size={18} />}>
+            <Button type="submit" loading={loading} leftSection={<IconPlus size={18} />}>
               Создать рассылку
             </Button>
           </Group>
@@ -313,6 +331,9 @@ function NewBroadcastDrawer({
 
 function Broadcasts() {
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false);
+  const [confirmModal, setConfirmModal] = useState<Broadcast | null>(null);
+  const [sendingId, setSendingId] = useState<number | null>(null);
+  const [linkedClients, setLinkedClients] = useState(0);
 
   const {
     data: broadcastsData,
@@ -322,6 +343,18 @@ function Broadcasts() {
   } = useBroadcasts({ limit: 100 });
 
   const broadcasts = broadcastsData?.items ?? [];
+
+  // Fetch linked clients count
+  useEffect(() => {
+    fetch('/api/v1/telegram/links')
+      .then((res) => res.json())
+      .then((data) => {
+        setLinkedClients(data.total || 0);
+      })
+      .catch(() => {
+        setLinkedClients(0);
+      });
+  }, []);
 
   // Calculate stats from broadcasts with safe division
   const totalRecipients = broadcasts.reduce((acc, b) => acc + b.recipients_count, 0);
@@ -341,14 +374,53 @@ function Broadcasts() {
     deliveryRate: totalRecipients > 0
       ? Math.round((totalSent / totalRecipients) * 100)
       : 0,
+    linkedClients,
   };
 
   const handleViewBroadcast = (broadcast: Broadcast) => {
     console.log('View broadcast:', broadcast);
   };
 
+  const handleSendClick = (broadcast: Broadcast) => {
+    setConfirmModal(broadcast);
+  };
+
+  const handleConfirmSend = async () => {
+    if (!confirmModal) return;
+
+    setSendingId(confirmModal.id);
+    setConfirmModal(null);
+
+    try {
+      const result = await broadcastsService.send(confirmModal.id);
+
+      notifications.show({
+        title: 'Рассылка отправлена',
+        message: `Доставлено: ${result.sent_count}, Ошибок: ${result.failed_count}`,
+        color: result.failed_count > 0 ? 'yellow' : 'green',
+      });
+
+      refetch();
+    } catch {
+      notifications.show({
+        title: 'Ошибка отправки',
+        message: 'Не удалось отправить рассылку. Проверьте настройки Telegram бота.',
+        color: 'red',
+      });
+    } finally {
+      setSendingId(null);
+    }
+  };
+
   const handleRefresh = () => {
     refetch();
+    // Also refresh linked clients
+    fetch('/api/v1/telegram/links')
+      .then((res) => res.json())
+      .then((data) => {
+        setLinkedClients(data.total || 0);
+      })
+      .catch(() => {});
   };
 
   const handleCreated = () => {
@@ -388,6 +460,14 @@ function Broadcasts() {
             <Text c="dimmed" ta="center">
               Создайте первую рассылку для отправки сообщений клиентам через Telegram
             </Text>
+            {linkedClients === 0 && (
+              <Paper p="md" withBorder bg="yellow.0" maw={400}>
+                <Text size="sm" ta="center">
+                  <strong>Важно:</strong> Пока нет клиентов, подключённых к боту.
+                  Попросите клиентов написать боту /start и авторизоваться по номеру телефона.
+                </Text>
+              </Paper>
+            )}
             <Button leftSection={<IconPlus size={18} />} onClick={openDrawer}>
               Создать рассылку
             </Button>
@@ -407,6 +487,8 @@ function Broadcasts() {
             key={broadcast.id}
             broadcast={broadcast}
             onView={handleViewBroadcast}
+            onSend={handleSendClick}
+            sending={sendingId}
           />
         ))}
       </SimpleGrid>
@@ -440,7 +522,13 @@ function Broadcasts() {
           />
 
           {/* Stats Cards */}
-          <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} mb="lg" style={{ alignItems: 'stretch' }}>
+          <SimpleGrid cols={{ base: 1, sm: 2, lg: 5 }} mb="lg" style={{ alignItems: 'stretch' }}>
+            <StatsCard
+              title="Подключено к боту"
+              value={stats.linkedClients}
+              icon={IconUserCheck}
+              color="teal"
+            />
             <StatsCard
               title="Всего рассылок"
               value={stats.total}
@@ -467,6 +555,20 @@ function Broadcasts() {
             />
           </SimpleGrid>
 
+          {linkedClients === 0 && broadcasts.length > 0 && (
+            <Paper p="md" withBorder bg="yellow.0">
+              <Group>
+                <IconBrandTelegram size={24} />
+                <div>
+                  <Text fw={500}>Нет подключённых клиентов</Text>
+                  <Text size="sm" c="dimmed">
+                    Попросите клиентов написать боту /start и авторизоваться по номеру телефона для получения рассылок
+                  </Text>
+                </div>
+              </Group>
+            </Paper>
+          )}
+
           <Box>
             <Group justify="space-between" mb="md">
               <Group gap="lg">
@@ -490,6 +592,44 @@ function Broadcasts() {
         onClose={closeDrawer}
         onCreated={handleCreated}
       />
+
+      {/* Confirm Send Modal */}
+      <Modal
+        opened={!!confirmModal}
+        onClose={() => setConfirmModal(null)}
+        title="Подтверждение отправки"
+        centered
+      >
+        <Stack gap="md">
+          <Text>
+            Вы уверены, что хотите отправить рассылку{' '}
+            <strong>&quot;{confirmModal?.title}&quot;</strong>?
+          </Text>
+
+          <Paper p="sm" withBorder>
+            <Text size="sm" c="dimmed" lineClamp={3}>
+              {confirmModal?.message}
+            </Text>
+          </Paper>
+
+          <Text size="sm" c="dimmed">
+            Сообщение будет отправлено <strong>{linkedClients}</strong> клиентам, подключённым к боту.
+          </Text>
+
+          <Group justify="flex-end" mt="md">
+            <Button variant="light" onClick={() => setConfirmModal(null)}>
+              Отмена
+            </Button>
+            <Button
+              color="green"
+              leftSection={<IconSend size={18} />}
+              onClick={handleConfirmSend}
+            >
+              Отправить
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </>
   );
 }
