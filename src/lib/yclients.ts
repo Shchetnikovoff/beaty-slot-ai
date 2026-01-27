@@ -123,87 +123,41 @@ export interface YclientsApiResponse<T> {
   };
 }
 
-// Кэш для user token
-let cachedUserToken: string | null = null;
-let tokenExpiresAt: number = 0;
-
 class YclientsAPI {
   // Ленивое чтение конфигурации - читаем при каждом запросе
   private get apiUrl(): string {
     return process.env.YCLIENTS_API_URL || 'https://api.yclients.com/api/v1';
   }
 
-  private get partnerToken(): string {
-    return process.env.YCLIENTS_PARTNER_TOKEN || '';
+  // Bearer токен партнёра
+  private get bearerToken(): string {
+    return process.env.YCLIENTS_BEARER_TOKEN || '';
   }
 
-  private get userLogin(): string {
-    return process.env.YCLIENTS_USER_LOGIN || '';
-  }
-
-  private get userPassword(): string {
-    return process.env.YCLIENTS_USER_PASSWORD || '';
+  // User токен (предварительно полученный)
+  private get userToken(): string {
+    return process.env.YCLIENTS_USER_TOKEN || '';
   }
 
   private get companyId(): string {
     return process.env.YCLIENTS_COMPANY_ID || '';
   }
 
-  /**
-   * Получить user token через авторизацию
-   */
-  private async getUserToken(): Promise<string> {
-    // Используем кэшированный токен если он ещё действителен
-    if (cachedUserToken && Date.now() < tokenExpiresAt) {
-      return cachedUserToken;
+  private getHeaders(): Record<string, string> {
+    // Проверяем что токены настроены
+    if (!this.bearerToken) {
+      throw new Error('YCLIENTS_BEARER_TOKEN не настроен в переменных окружения');
+    }
+    if (!this.userToken) {
+      throw new Error('YCLIENTS_USER_TOKEN не настроен в переменных окружения');
     }
 
-    // Проверяем что токен партнёра настроен
-    if (!this.partnerToken) {
-      throw new Error('YCLIENTS_PARTNER_TOKEN не настроен в переменных окружения');
-    }
+    console.log('[YClients] Используем токены (bearer:', this.bearerToken.substring(0, 8) + '..., user:', this.userToken.substring(0, 8) + '...)');
 
-    console.log('[YClients] Авторизация с логином:', this.userLogin);
-
-    const response = await fetch(`${this.apiUrl}/auth`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/vnd.api.v2+json',
-        'Authorization': `Bearer ${this.partnerToken}`,
-      },
-      body: JSON.stringify({
-        login: this.userLogin,
-        password: this.userPassword,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`YClients auth error: ${response.status} - ${error}`);
-    }
-
-    const data = await response.json();
-
-    if (!data.success || !data.data?.user_token) {
-      throw new Error('Failed to get user token from YClients');
-    }
-
-    const token: string = data.data.user_token;
-    cachedUserToken = token;
-    // Токен действителен 24 часа, обновляем за час до истечения
-    tokenExpiresAt = Date.now() + 23 * 60 * 60 * 1000;
-
-    console.log('[YClients] Авторизация успешна, токен получен');
-    return token;
-  }
-
-  private async getHeaders(): Promise<Record<string, string>> {
-    const userToken = await this.getUserToken();
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/vnd.api.v2+json',
-      'Authorization': `Bearer ${this.partnerToken}, User ${userToken}`,
+      'Authorization': `Bearer ${this.bearerToken}, User ${this.userToken}`,
     };
   }
 
@@ -212,7 +166,7 @@ class YclientsAPI {
     options: RequestInit = {}
   ): Promise<YclientsApiResponse<T>> {
     const url = `${this.apiUrl}${endpoint}`;
-    const headers = await this.getHeaders();
+    const headers = this.getHeaders();
 
     const response = await fetch(url, {
       ...options,
