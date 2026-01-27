@@ -126,30 +126,78 @@ export interface YclientsApiResponse<T> {
 // Конфигурация из environment variables
 const getConfig = () => ({
   apiUrl: process.env.YCLIENTS_API_URL || 'https://api.yclients.com/api/v1',
-  bearerToken: process.env.YCLIENTS_BEARER_TOKEN || '',
-  userToken: process.env.YCLIENTS_USER_TOKEN || '',
+  partnerToken: process.env.YCLIENTS_PARTNER_TOKEN || '',
+  userLogin: process.env.YCLIENTS_USER_LOGIN || '',
+  userPassword: process.env.YCLIENTS_USER_PASSWORD || '',
   companyId: process.env.YCLIENTS_COMPANY_ID || '',
 });
 
+// Кэш для user token
+let cachedUserToken: string | null = null;
+let tokenExpiresAt: number = 0;
+
 class YclientsAPI {
   private apiUrl: string;
-  private bearerToken: string;
-  private userToken: string;
+  private partnerToken: string;
+  private userLogin: string;
+  private userPassword: string;
   private companyId: string;
 
   constructor() {
     const config = getConfig();
     this.apiUrl = config.apiUrl;
-    this.bearerToken = config.bearerToken;
-    this.userToken = config.userToken;
+    this.partnerToken = config.partnerToken;
+    this.userLogin = config.userLogin;
+    this.userPassword = config.userPassword;
     this.companyId = config.companyId;
   }
 
-  private getHeaders(): Record<string, string> {
+  /**
+   * Получить user token через авторизацию
+   */
+  private async getUserToken(): Promise<string> {
+    // Используем кэшированный токен если он ещё действителен
+    if (cachedUserToken && Date.now() < tokenExpiresAt) {
+      return cachedUserToken;
+    }
+
+    const response = await fetch(`${this.apiUrl}/auth`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/vnd.api.v2+json',
+        'Authorization': `Bearer ${this.partnerToken}`,
+      },
+      body: JSON.stringify({
+        login: this.userLogin,
+        password: this.userPassword,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`YClients auth error: ${response.status} - ${error}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.success || !data.data?.user_token) {
+      throw new Error('Failed to get user token from YClients');
+    }
+
+    cachedUserToken = data.data.user_token;
+    // Токен действителен 24 часа, обновляем за час до истечения
+    tokenExpiresAt = Date.now() + 23 * 60 * 60 * 1000;
+
+    return cachedUserToken;
+  }
+
+  private async getHeaders(): Promise<Record<string, string>> {
+    const userToken = await this.getUserToken();
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/vnd.api.v2+json',
-      'Authorization': `Bearer ${this.bearerToken}, User ${this.userToken}`,
+      'Authorization': `Bearer ${this.partnerToken}, User ${userToken}`,
     };
   }
 
@@ -158,11 +206,12 @@ class YclientsAPI {
     options: RequestInit = {}
   ): Promise<YclientsApiResponse<T>> {
     const url = `${this.apiUrl}${endpoint}`;
+    const headers = await this.getHeaders();
 
     const response = await fetch(url, {
       ...options,
       headers: {
-        ...this.getHeaders(),
+        ...headers,
         ...(options.headers || {}),
       },
     });
