@@ -29,7 +29,7 @@ export const HOME_APPS = [
   {
     img: '/showcase/apps-orders.png',
     title: 'Заказы',
-    link: PATH_APPS.orders,
+    link: PATH_APPS.shop.orders,
   },
   {
     img: '/showcase/apps-profile.png',
