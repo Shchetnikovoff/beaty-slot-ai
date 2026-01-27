@@ -1,0 +1,45 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            cd /var/www/beauty-slot-admin || mkdir -p /var/www/beauty-slot-admin
+
+            # Clone or pull repository
+            if [ -d ".git" ]; then
+              git fetch origin main
+              git reset --hard origin/main
+            else
+              cd /var/www
+              rm -rf beauty-slot-admin
+              git clone https://github.com/Shchetnikovoff/beaty-slot-ai.git beauty-slot-admin
+              cd beauty-slot-admin
+            fi
+
+            # Install dependencies
+            npm ci
+
+            # Build project
+            npm run build
+
+            # Restart PM2 process
+            pm2 restart beauty-slot-admin || pm2 start npm --name "beauty-slot-admin" -- start
+
+            echo "Deploy completed successfully!"
