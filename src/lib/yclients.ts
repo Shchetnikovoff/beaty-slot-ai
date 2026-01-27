@@ -185,11 +185,12 @@ class YclientsAPI {
       throw new Error('Failed to get user token from YClients');
     }
 
-    cachedUserToken = data.data.user_token;
+    const token: string = data.data.user_token;
+    cachedUserToken = token;
     // Токен действителен 24 часа, обновляем за час до истечения
     tokenExpiresAt = Date.now() + 23 * 60 * 60 * 1000;
 
-    return cachedUserToken;
+    return token;
   }
 
   private async getHeaders(): Promise<Record<string, string>> {
