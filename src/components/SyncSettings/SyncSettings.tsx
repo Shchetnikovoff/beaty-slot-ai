@@ -505,48 +505,6 @@ export function SyncSettings() {
               </Paper>
             </SimpleGrid>
 
-            {/* Лента событий */}
-            <Paper withBorder p="sm" radius="md">
-              <Group justify="space-between" mb="sm">
-                <Text size="sm" fw={600}>
-                  Последние события
-                </Text>
-                <Group gap="xs">
-                  {connectionStatus === 'error' && (
-                    <Tooltip label="Переподключиться">
-                      <ActionIcon size="sm" variant="light" color="blue" onClick={handleReconnect}>
-                        <IconRefresh size={14} />
-                      </ActionIcon>
-                    </Tooltip>
-                  )}
-                  <Text size="xs" c="dimmed">
-                    {realtimeStats?.last_event_at
-                      ? `Последнее: ${formatTime(realtimeStats.last_event_at)}`
-                      : 'Ожидание событий...'}
-                  </Text>
-                </Group>
-              </Group>
-
-              <ScrollArea h={200} ref={eventScrollRef}>
-                {realtimeEvents.length === 0 ? (
-                  <Text c="dimmed" ta="center" py="xl" size="sm">
-                    {connectionStatus === 'connected'
-                      ? 'Ожидание событий из YClients...'
-                      : 'Подключитесь для получения событий'}
-                  </Text>
-                ) : (
-                  <Stack gap="xs">
-                    {realtimeEvents.map((event) => (
-                      <RealtimeEventItem
-                        key={event.id}
-                        event={event}
-                        isNew={newEventIds.has(event.id)}
-                      />
-                    ))}
-                  </Stack>
-                )}
-              </ScrollArea>
-            </Paper>
           </>
         )}
 
