@@ -123,33 +123,30 @@ export interface YclientsApiResponse<T> {
   };
 }
 
-// Конфигурация из environment variables
-const getConfig = () => ({
-  apiUrl: process.env.YCLIENTS_API_URL || 'https://api.yclients.com/api/v1',
-  partnerToken: process.env.YCLIENTS_PARTNER_TOKEN || '',
-  userLogin: process.env.YCLIENTS_USER_LOGIN || '',
-  userPassword: process.env.YCLIENTS_USER_PASSWORD || '',
-  companyId: process.env.YCLIENTS_COMPANY_ID || '',
-});
-
 // Кэш для user token
 let cachedUserToken: string | null = null;
 let tokenExpiresAt: number = 0;
 
 class YclientsAPI {
-  private apiUrl: string;
-  private partnerToken: string;
-  private userLogin: string;
-  private userPassword: string;
-  private companyId: string;
+  // Ленивое чтение конфигурации - читаем при каждом запросе
+  private get apiUrl(): string {
+    return process.env.YCLIENTS_API_URL || 'https://api.yclients.com/api/v1';
+  }
 
-  constructor() {
-    const config = getConfig();
-    this.apiUrl = config.apiUrl;
-    this.partnerToken = config.partnerToken;
-    this.userLogin = config.userLogin;
-    this.userPassword = config.userPassword;
-    this.companyId = config.companyId;
+  private get partnerToken(): string {
+    return process.env.YCLIENTS_PARTNER_TOKEN || '';
+  }
+
+  private get userLogin(): string {
+    return process.env.YCLIENTS_USER_LOGIN || '';
+  }
+
+  private get userPassword(): string {
+    return process.env.YCLIENTS_USER_PASSWORD || '';
+  }
+
+  private get companyId(): string {
+    return process.env.YCLIENTS_COMPANY_ID || '';
   }
 
   /**
@@ -160,6 +157,13 @@ class YclientsAPI {
     if (cachedUserToken && Date.now() < tokenExpiresAt) {
       return cachedUserToken;
     }
+
+    // Проверяем что токен партнёра настроен
+    if (!this.partnerToken) {
+      throw new Error('YCLIENTS_PARTNER_TOKEN не настроен в переменных окружения');
+    }
+
+    console.log('[YClients] Авторизация с логином:', this.userLogin);
 
     const response = await fetch(`${this.apiUrl}/auth`, {
       method: 'POST',
@@ -190,6 +194,7 @@ class YclientsAPI {
     // Токен действителен 24 часа, обновляем за час до истечения
     tokenExpiresAt = Date.now() + 23 * 60 * 60 * 1000;
 
+    console.log('[YClients] Авторизация успешна, токен получен');
     return token;
   }
 
