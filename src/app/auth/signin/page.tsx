@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 
 import {
   Alert,
@@ -14,6 +14,7 @@ import {
   TextProps,
   Title,
   Stack,
+  LoadingOverlay,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { IconAlertCircle, IconScissors } from '@tabler/icons-react';
@@ -30,7 +31,7 @@ const LINK_PROPS: TextProps = {
   className: classes.link,
 };
 
-function Page() {
+function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || PATH_DASHBOARD.default;
@@ -144,6 +145,14 @@ function Page() {
         </Text>
       </Surface>
     </>
+  );
+}
+
+function Page() {
+  return (
+    <Suspense fallback={<LoadingOverlay visible />}>
+      <SignInForm />
+    </Suspense>
   );
 }
 
