@@ -292,6 +292,143 @@ class YclientsAPI {
     // YClients возвращает meta.total_count, но нужно проверить
     return clients.length;
   }
+
+  /**
+   * Создать запись (appointment) в YClients
+   * Документация: https://api.yclients.com/api/v1/#tag/Zapisi/paths/~1records~1{company_id}/post
+   */
+  async createRecord(data: {
+    staff_id: number;
+    services: { id: number; cost?: number }[];
+    client: {
+      phone: string;
+      name: string;
+      email?: string;
+    };
+    datetime: string; // ISO format: 2024-01-15T10:00:00
+    comment?: string;
+    sms_remind_hours?: number;
+    email_remind_hours?: number;
+  }): Promise<YclientsRecord> {
+    const endpoint = `/records/${this.companyId}`;
+
+    // Формируем тело запроса согласно API YClients
+    const body = {
+      staff_id: data.staff_id,
+      services: data.services.map(s => ({
+        id: s.id,
+        ...(s.cost !== undefined && { cost: s.cost }),
+      })),
+      client: {
+        phone: data.client.phone,
+        name: data.client.name,
+        ...(data.client.email && { email: data.client.email }),
+      },
+      datetime: data.datetime,
+      ...(data.comment && { comment: data.comment }),
+      ...(data.sms_remind_hours !== undefined && { sms_remind_hours: data.sms_remind_hours }),
+      ...(data.email_remind_hours !== undefined && { email_remind_hours: data.email_remind_hours }),
+      // Флаг что запись онлайн
+      save_if_busy: false,
+      send_sms: true,
+    };
+
+    console.log('[YClients] Creating record:', JSON.stringify(body, null, 2));
+
+    const response = await this.request<YclientsRecord>(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+
+    console.log('[YClients] Record created:', response.data?.id);
+    return response.data;
+  }
+
+  /**
+   * Удалить (отменить) запись
+   * Документация: https://api.yclients.com/api/v1/#tag/Zapisi/paths/~1record~1{company_id}~1{record_id}/delete
+   */
+  async deleteRecord(recordId: number): Promise<boolean> {
+    const endpoint = `/record/${this.companyId}/${recordId}`;
+
+    console.log('[YClients] Deleting record:', recordId);
+
+    try {
+      await this.request<unknown>(endpoint, {
+        method: 'DELETE',
+      });
+      console.log('[YClients] Record deleted:', recordId);
+      return true;
+    } catch (error) {
+      console.error('[YClients] Failed to delete record:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Обновить запись (перенести на другое время/мастера)
+   * Документация: https://api.yclients.com/api/v1/#tag/Zapisi/paths/~1record~1{company_id}~1{record_id}/put
+   */
+  async updateRecord(
+    recordId: number,
+    data: {
+      datetime?: string;
+      staff_id?: number;
+      comment?: string;
+    }
+  ): Promise<YclientsRecord> {
+    const endpoint = `/record/${this.companyId}/${recordId}`;
+
+    const body: Record<string, unknown> = {};
+    if (data.datetime) body.datetime = data.datetime;
+    if (data.staff_id) body.staff_id = data.staff_id;
+    if (data.comment !== undefined) body.comment = data.comment;
+
+    console.log('[YClients] Updating record:', recordId, body);
+
+    const response = await this.request<YclientsRecord>(endpoint, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+
+    console.log('[YClients] Record updated:', recordId);
+    return response.data;
+  }
+
+  /**
+   * Найти или создать клиента по телефону
+   */
+  async findOrCreateClient(data: {
+    phone: string;
+    name: string;
+    email?: string;
+  }): Promise<YclientsClient> {
+    // Сначала ищем существующего клиента
+    const clients = await this.getClients({ phone: data.phone });
+
+    if (clients.length > 0) {
+      console.log('[YClients] Found existing client:', clients[0].id);
+      return clients[0];
+    }
+
+    // Создаём нового клиента
+    const endpoint = `/clients/${this.companyId}`;
+    const body = {
+      phone: data.phone,
+      name: data.name,
+      ...(data.email && { email: data.email }),
+    };
+
+    console.log('[YClients] Creating new client:', body);
+
+    const response = await this.request<YclientsClient>(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+
+    console.log('[YClients] Client created:', response.data?.id);
+    return response.data;
+  }
 }
 
 // Singleton instance

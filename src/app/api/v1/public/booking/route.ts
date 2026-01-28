@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { yclientsApi } from '@/lib/yclients';
+import { getSyncedServices, getSyncedStaff } from '@/lib/sync-store';
 
 /**
- * API для создания записи
+ * API для создания записи в YClients
  * POST /api/v1/public/booking
  *
  * Body:
@@ -38,7 +40,25 @@ interface BookingResponse {
   };
   datetime: string;
   status: 'confirmed' | 'pending';
-  yclients_record_id?: number;
+  yclients_record_id: number;
+}
+
+// Нормализация телефона в формат 79XXXXXXXXX
+function normalizePhone(phone: string): string {
+  // Убираем всё кроме цифр
+  const digits = phone.replace(/\D/g, '');
+
+  // Если начинается с 8, меняем на 7
+  if (digits.startsWith('8') && digits.length === 11) {
+    return '7' + digits.slice(1);
+  }
+
+  // Если 10 цифр без кода страны, добавляем 7
+  if (digits.length === 10) {
+    return '7' + digits;
+  }
+
+  return digits;
 }
 
 export async function POST(request: NextRequest) {
@@ -56,67 +76,111 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Валидация телефона (простая)
-    const phoneRegex = /^[\d\s\+\-\(\)]{10,20}$/;
-    if (!phoneRegex.test(body.client_phone)) {
+    // Валидация телефона
+    const normalizedPhone = normalizePhone(body.client_phone);
+    if (normalizedPhone.length < 10 || normalizedPhone.length > 15) {
       return NextResponse.json(
         { success: false, error: 'Invalid phone number format' },
         { status: 400 }
       );
     }
 
-    // TODO: Интеграция с Yclients API для создания записи
-    // const yclientsRecord = await yclientsApi.createRecord({
-    //   staff_id: body.staff_id,
-    //   services: [{ id: body.service_id }],
-    //   client: {
-    //     name: body.client_name,
-    //     phone: body.client_phone,
-    //     email: body.client_email,
-    //   },
-    //   datetime: body.datetime,
-    //   comment: body.comment,
-    // });
+    // Логируем для отладки (без полного телефона)
+    console.log('[Booking] Creating record:', {
+      service_id: body.service_id,
+      staff_id: body.staff_id,
+      datetime: body.datetime,
+      client_name: body.client_name,
+      client_phone: normalizedPhone.slice(0, 4) + '****' + normalizedPhone.slice(-2),
+      telegram_user_id: body.telegram_user_id,
+    });
 
-    // Пока возвращаем mock ответ
-    // В production здесь будет реальная запись через Yclients API
-    const mockBookingId = Date.now();
+    // Создаём запись в YClients
+    const yclientsRecord = await yclientsApi.createRecord({
+      staff_id: body.staff_id,
+      services: [{ id: body.service_id }],
+      client: {
+        phone: normalizedPhone,
+        name: body.client_name,
+        email: body.client_email,
+      },
+      datetime: body.datetime,
+      comment: body.comment
+        ? `${body.comment}${body.telegram_user_id ? ` [TG:${body.telegram_user_id}]` : ''}`
+        : body.telegram_user_id
+        ? `[TG:${body.telegram_user_id}]`
+        : undefined,
+    });
+
+    // Получаем данные услуги и мастера из кэша
+    const services = getSyncedServices();
+    const staff = getSyncedStaff();
+
+    const service = services.find((s) => s.id === body.service_id);
+    const master = staff.find((s) => s.id === body.staff_id);
 
     const response: BookingResponse = {
-      id: mockBookingId,
+      id: yclientsRecord.id,
       service: {
         id: body.service_id,
-        name: 'Услуга', // TODO: получить из Yclients
+        name: service?.title || yclientsRecord.services?.[0]?.title || 'Услуга',
       },
       staff: {
         id: body.staff_id,
-        name: 'Мастер', // TODO: получить из Yclients
+        name: master?.name || 'Мастер',
       },
       datetime: body.datetime,
-      status: 'pending', // Yclients обычно подтверждает через webhook
+      status: yclientsRecord.confirmed ? 'confirmed' : 'pending',
+      yclients_record_id: yclientsRecord.id,
     };
 
-    // Логируем для отладки
-    console.log('Booking request:', {
-      ...body,
-      client_phone: body.client_phone.replace(/\d(?=\d{4})/g, '*'), // Маскируем телефон в логах
+    console.log('[Booking] Record created successfully:', {
+      yclients_id: yclientsRecord.id,
+      service: response.service.name,
+      staff: response.staff.name,
+      datetime: response.datetime,
     });
 
     return NextResponse.json({
       success: true,
       data: response,
-      message: 'Запись успешно создана. Ожидайте подтверждения от салона.',
+      message: 'Запись успешно создана!',
     });
   } catch (error) {
-    console.error('Error creating booking:', error);
+    console.error('[Booking] Error creating booking:', error);
+
+    // Обработка специфичных ошибок YClients
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+    if (errorMessage.includes('busy') || errorMessage.includes('занят')) {
+      return NextResponse.json(
+        { success: false, error: 'Выбранное время уже занято. Пожалуйста, выберите другое время.' },
+        { status: 409 }
+      );
+    }
+
+    if (errorMessage.includes('401') || errorMessage.includes('auth')) {
+      return NextResponse.json(
+        { success: false, error: 'Ошибка авторизации. Обратитесь в салон.' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
-      { success: false, error: 'Failed to create booking' },
+      { success: false, error: 'Не удалось создать запись. Попробуйте позже.' },
       { status: 500 }
     );
   }
 }
 
-/**
- * GET /api/v1/public/booking/:id - получить статус записи
- * Этот endpoint в отдельном файле [id]/route.ts
- */
+// CORS headers for Mini App
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Telegram-Init-Data',
+    },
+  });
+}
