@@ -15,31 +15,64 @@ jobs:
 
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          YCLIENTS_BEARER_TOKEN: ${{ secrets.YCLIENTS_BEARER_TOKEN }}
+          YCLIENTS_USER_TOKEN: ${{ secrets.YCLIENTS_USER_TOKEN }}
+          YCLIENTS_COMPANY_ID: ${{ secrets.YCLIENTS_COMPANY_ID }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
+          envs: YCLIENTS_BEARER_TOKEN,YCLIENTS_USER_TOKEN,YCLIENTS_COMPANY_ID,OPENROUTER_API_KEY
           script: |
-            cd /var/www/beauty-slot-admin || mkdir -p /var/www/beauty-slot-admin
+            set -e
 
-            # Clone or pull repository
-            if [ -d ".git" ]; then
-              git fetch origin main
-              git reset --hard origin/main
-            else
-              cd /var/www
-              rm -rf beauty-slot-admin
-              git clone https://github.com/Shchetnikovoff/beaty-slot-ai.git beauty-slot-admin
-              cd beauty-slot-admin
-            fi
+            cd /var/www/beauty-slot-admin
+
+            # Pull latest code
+            git fetch origin main
+            git reset --hard origin/main
 
             # Install dependencies
-            npm ci
+            npm ci --legacy-peer-deps
+
+            # Create .env file with secrets
+            cat > .env << ENVEOF
+            NODE_ENV=production
+            NEXT_PUBLIC_API_URL=http://90.156.209.245:3000
+            YCLIENTS_BEARER_TOKEN=${YCLIENTS_BEARER_TOKEN}
+            YCLIENTS_USER_TOKEN=${YCLIENTS_USER_TOKEN}
+            YCLIENTS_COMPANY_ID=${YCLIENTS_COMPANY_ID}
+            OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+            ENVEOF
 
             # Build project
             npm run build
 
-            # Restart PM2 process
-            pm2 restart beauty-slot-admin || pm2 start npm --name "beauty-slot-admin" -- start
+            # Create ecosystem.config.js
+            cat > ecosystem.config.js << 'EOFJS'
+            module.exports = {
+              apps: [{
+                name: 'beauty-slot-admin',
+                script: 'node_modules/.bin/next',
+                args: 'start',
+                cwd: '/var/www/beauty-slot-admin',
+                env: {
+                  NODE_ENV: 'production',
+                  PORT: 3000,
+                },
+                watch: false,
+                error_file: '/var/log/beauty-slot-admin-error.log',
+                out_file: '/var/log/beauty-slot-admin-out.log',
+              }],
+            };
+            EOFJS
+
+            # Restart PM2 with fresh env vars
+            pm2 kill 2>/dev/null || true
+            pm2 start ecosystem.config.js --update-env
+            pm2 save
+            pm2 startup systemd -u root --hp /root 2>/dev/null || true
 
             echo "Deploy completed successfully!"
