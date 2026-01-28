@@ -306,6 +306,7 @@ class YclientsAPI {
       email?: string;
     };
     datetime: string; // ISO format: 2024-01-15T10:00:00
+    seance_length?: number; // Длительность в секундах
     comment?: string;
     sms_remind_hours?: number;
     email_remind_hours?: number;
@@ -325,6 +326,7 @@ class YclientsAPI {
         ...(data.client.email && { email: data.client.email }),
       },
       datetime: data.datetime,
+      ...(data.seance_length !== undefined && { seance_length: data.seance_length }),
       ...(data.comment && { comment: data.comment }),
       ...(data.sms_remind_hours !== undefined && { sms_remind_hours: data.sms_remind_hours }),
       ...(data.email_remind_hours !== undefined && { email_remind_hours: data.email_remind_hours }),

@@ -85,6 +85,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Получаем данные услуги и мастера из кэша ДО создания записи
+    const services = getSyncedServices();
+    const staff = getSyncedStaff();
+
+    const service = services.find((s) => s.id === body.service_id);
+    const master = staff.find((s) => s.id === body.staff_id);
+
+    // Получаем длительность услуги в секундах (seance_length)
+    // YClients требует это поле для создания записи
+    const seanceLength = service?.seance_length || 3600; // Default 1 hour if not found
+
     // Логируем для отладки (без полного телефона)
     console.log('[Booking] Creating record:', {
       service_id: body.service_id,
@@ -93,6 +104,7 @@ export async function POST(request: NextRequest) {
       client_name: body.client_name,
       client_phone: normalizedPhone.slice(0, 4) + '****' + normalizedPhone.slice(-2),
       telegram_user_id: body.telegram_user_id,
+      seance_length: seanceLength,
     });
 
     // Создаём запись в YClients
@@ -105,19 +117,13 @@ export async function POST(request: NextRequest) {
         email: body.client_email,
       },
       datetime: body.datetime,
+      seance_length: seanceLength,
       comment: body.comment
         ? `${body.comment}${body.telegram_user_id ? ` [TG:${body.telegram_user_id}]` : ''}`
         : body.telegram_user_id
         ? `[TG:${body.telegram_user_id}]`
         : undefined,
     });
-
-    // Получаем данные услуги и мастера из кэша
-    const services = getSyncedServices();
-    const staff = getSyncedStaff();
-
-    const service = services.find((s) => s.id === body.service_id);
-    const master = staff.find((s) => s.id === body.staff_id);
 
     const response: BookingResponse = {
       id: yclientsRecord.id,
